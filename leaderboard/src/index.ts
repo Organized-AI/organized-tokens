@@ -381,7 +381,7 @@ export default {
               started_at=excluded.started_at, ends_at=excluded.ends_at, open=1`
       ).bind(id, code, name, int(body.started_at) || now(), body.ends_at ? int(body.ends_at) : null).run();
 
-      return json({ ok: true, id, code, join: `curl -sL tokens.organizedai.vip/tokens.py -o tokens.py && python3 tokens.py --join ${code}` });
+      return json({ ok: true, id, code, join: `curl -sL tokens.organizedai.vip/tokens.py -o tokens.py && python3 tokens.py --join ${code} --as "Your Name"` });
     }
 
     if (path === "/api/workshop/close" && req.method === "POST") {

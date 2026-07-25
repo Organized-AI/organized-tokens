@@ -199,9 +199,9 @@ footer code{color:var(--gold2);background:var(--card);border:1px solid var(--lin
       <div class="step">
         <div class="step-num">1</div>
         <div class="step-body">
-          <p class="step-label">Paste this into a terminal:</p>
-          <code class="cmd" id="join-cmd">curl -sL https://tokens.organizedai.vip/tokens.py -o tokens.py &amp;&amp; python3 tokens.py --join AIIC-2026</code>
-          <p class="step-note">It asks for the name to show on the board, prints the exact payload it would upload, and waits. Read it, type <b style="color:var(--text)">join</b>, press Enter — anything else cancels. Then leave the window open: it pushes your counts automatically.</p>
+          <p class="step-label">Paste this into a terminal — put the name you want the room to see after <b style="color:var(--text)">--as</b>:</p>
+          <code class="cmd" id="join-cmd">curl -sL https://tokens.organizedai.vip/tokens.py -o tokens.py &amp;&amp; python3 tokens.py --join AIIC-2026 --as "Your Name"</code>
+          <p class="step-note">It prints the exact payload it would upload, and waits. Read it, type <b style="color:var(--text)">join</b>, press Enter — anything else cancels. Then leave the window open: it pushes your counts automatically.</p>
         </div>
       </div>
       <div class="step">
@@ -319,7 +319,7 @@ footer code{color:var(--gold2);background:var(--card);border:1px solid var(--lin
 </div>
 
 <footer>
-  <span>Join: <code id="joincmd">curl -sL tokens.organizedai.vip/tokens.py -o tokens.py &amp;&amp; python3 tokens.py --join AIIC-2026</code></span>
+  <span>Join: <code id="joincmd">curl -sL tokens.organizedai.vip/tokens.py -o tokens.py &amp;&amp; python3 tokens.py --join AIIC-2026 --as "Your Name"</code></span>
   <span id="ws">—</span>
 </footer>
 

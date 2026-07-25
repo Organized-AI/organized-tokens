@@ -560,14 +560,9 @@ def collect(since):
 
 def cmd_join(code, handle, watch_after=True, interval=60):
     if not handle:
-        # No --as given: ask, rather than making novices retype a quoted flag.
-        try:
-            handle = input("\n  What name should show on the board? ").strip()
-        except EOFError:
-            handle = ""
-        if not handle:
-            print("\n  A name is required: --join %s --as \"Your Name\"\n" % code)
-            return 1
+        print("\n  --join needs a name: --join %s --as \"Your Name\"" % code)
+        print("  Whatever you put after --as is exactly what the room sees.\n")
+        return 1
 
     since = int(datetime.now(timezone.utc).timestamp())
     sample = build_payload(collect(since - 3600), since)
@@ -578,7 +573,7 @@ def cmd_join(code, handle, watch_after=True, interval=60):
         print("    " + line)
     print("\n  Not included: prompts, completions, file paths, project names,")
     print("  repo names, or any text from a transcript. Counts and model")
-    print("  names only. Your handle is the name you just gave.")
+    print("  names only. Your handle is whatever you typed after --as.")
     print("\n  You can remove yourself at any time with:  tokens.py --leave")
 
     try:
@@ -947,8 +942,7 @@ def main():
 
     w = ap.add_argument_group("workshop leaderboard (opt-in, sends counts only)")
     w.add_argument("--join", metavar="CODE", help="join a workshop leaderboard and start watching")
-    w.add_argument("--as", dest="handle", metavar="NAME",
-                   help="the name shown on the board (asked interactively if omitted)")
+    w.add_argument("--as", dest="handle", metavar="NAME", help="the name shown on the board (required to join)")
     w.add_argument("--no-watch", action="store_true", help="join only; don't start watching")
     w.add_argument("--push", action="store_true", help="push your counts once")
     w.add_argument("--watch", action="store_true", help="push your counts on a loop")
