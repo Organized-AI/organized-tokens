@@ -1,0 +1,12 @@
+{
+  "name": "organized-tokens",
+  "version": "0.1.0",
+  "description": "Audit your own AI token spend from the session files already on your machine, then get a concrete plan for which work to move to a cheaper model.",
+  "author": {
+    "name": "Organized AI",
+    "url": "https://organizedai.vip"
+  },
+  "homepage": "https://tokens.organizedai.vip",
+  "license": "MIT",
+  "keywords": ["tokens", "cost", "audit", "tokenomics", "model-routing"]
+}

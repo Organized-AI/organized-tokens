@@ -1,0 +1,30 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "organized-tokens-leaderboard",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-07-01",
+
+  "assets": { "directory": "./public", "binding": "ASSETS" },
+
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "organized-tokens-leaderboard",
+      "database_id": "<run: npx wrangler d1 create organized-tokens-leaderboard>"
+    }
+  ],
+
+  "durable_objects": {
+    "bindings": [{ "name": "ROOM", "class_name": "Room" }]
+  },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["Room"] }],
+
+  "routes": [
+    { "pattern": "board.organizedai.vip", "custom_domain": true }
+  ],
+
+  "observability": { "enabled": true }
+
+  // ADMIN_SECRET is a secret, not a var:
+  //   npx wrangler secret put ADMIN_SECRET
+}

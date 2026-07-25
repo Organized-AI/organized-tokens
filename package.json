@@ -1,0 +1,14 @@
+{
+  "name": "organized-tokens",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Local-only AI token audit — landing page and script, served from Cloudflare Worker Assets.",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "check": "python3 -m py_compile public/tokens.py && echo 'tokens.py compiles'"
+  },
+  "devDependencies": {
+    "wrangler": "^4.0.0"
+  }
+}

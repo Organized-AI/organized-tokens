@@ -1,0 +1,279 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Organized Tokens — Leaderboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#0a0a0a; --panel:#0f140f; --rule:#1d2b1d;
+  --phos:#00ff41; --phos-dim:#0f8a2e; --paper:#dff5e2;
+  --amber:#ffb000; --muted:#6f8a72;
+  --mono:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;
+  --sans:"IBM Plex Sans",-apple-system,BlinkMacSystemFont,sans-serif;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;background:var(--ink);color:var(--paper);font-family:var(--sans);
+  min-height:100vh;display:flex;flex-direction:column;overflow:hidden;
+}
+body::after{content:"";position:fixed;inset:0;pointer-events:none;
+  background:radial-gradient(ellipse at 50% 0%,rgba(0,255,65,.05),transparent 60%)}
+
+/* ---- header ---- */
+header{
+  border-bottom:1px solid var(--rule);padding:20px 40px;
+  display:flex;justify-content:space-between;align-items:center;gap:24px;flex-wrap:wrap;
+}
+.brand{font-family:var(--mono);font-size:13px;letter-spacing:.24em;
+  text-transform:uppercase;color:var(--phos-dim)}
+.brand b{color:var(--phos)}
+.room{display:flex;gap:36px;font-family:var(--mono)}
+.room div{text-align:right}
+.room .k{font-size:26px;font-weight:700;color:var(--phos);line-height:1}
+.room .k.money{color:var(--amber)}
+.room .v{font-size:10px;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--muted);margin-top:6px}
+.status{font-family:var(--mono);font-size:10px;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--muted);display:flex;align-items:center;gap:8px}
+.led{width:8px;height:8px;border-radius:50%;background:var(--rule)}
+.led.on{background:var(--phos);box-shadow:0 0 10px var(--phos)}
+.led.off{background:#8a2e0f}
+
+/* ---- board ---- */
+main{flex:1;padding:34px 40px 0;display:flex;flex-direction:column;min-height:0}
+.board-head{display:flex;align-items:baseline;gap:18px;margin-bottom:6px}
+h1{font-family:var(--mono);font-size:clamp(24px,3.4vw,40px);font-weight:700;
+  letter-spacing:-.02em;margin:0;color:var(--paper)}
+.why{color:var(--muted);font-size:15px;max-width:60ch;margin:0 0 22px}
+.rows{flex:1;overflow:hidden;position:relative}
+.row{
+  display:grid;grid-template-columns:64px 1fr 200px 130px;align-items:center;
+  gap:20px;padding:13px 0;border-bottom:1px solid rgba(29,43,29,.6);
+}
+.rk{font-family:var(--mono);font-size:22px;color:var(--muted);font-weight:500}
+.row.top .rk{color:var(--amber)}
+.who{font-size:20px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.meter{height:9px;background:var(--rule);position:relative;overflow:hidden}
+.meter i{position:absolute;inset:0 auto 0 0;background:var(--phos-dim);width:0}
+.row.top .meter i{background:var(--phos)}
+.val{font-family:var(--mono);font-size:20px;font-weight:600;text-align:right;color:var(--phos)}
+.row.top .val{color:var(--amber)}
+.empty{color:var(--muted);font-family:var(--mono);font-size:15px;padding:40px 0}
+
+/* ---- footer ---- */
+footer{
+  border-top:1px solid var(--rule);padding:16px 40px;
+  display:flex;justify-content:space-between;align-items:center;gap:20px;flex-wrap:wrap;
+  font-family:var(--mono);font-size:12px;color:var(--muted);letter-spacing:.08em;
+}
+footer code{color:var(--phos);background:var(--panel);border:1px solid var(--rule);
+  padding:5px 11px}
+.dots{display:flex;gap:7px}
+.dots span{width:26px;height:3px;background:var(--rule)}
+.dots span.on{background:var(--phos)}
+
+@media (max-width:820px){
+  header,main,footer{padding-left:20px;padding-right:20px}
+  .row{grid-template-columns:44px 1fr 110px;gap:12px}
+  .meter{display:none}
+  .room{gap:20px}.room .k{font-size:19px}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <div class="brand"><b>OA</b> &nbsp;Organized Tokens</div>
+    <div class="status"><span class="led" id="led"></span><span id="status">connecting</span></div>
+  </div>
+  <div class="room">
+    <div><div class="k" id="r-people">0</div><div class="v">In the room</div></div>
+    <div><div class="k" id="r-turns">0</div><div class="v">Turns</div></div>
+    <div><div class="k" id="r-tokens">0</div><div class="v">Tokens</div></div>
+    <div><div class="k money" id="r-cost">$0</div><div class="v">At API rates</div></div>
+  </div>
+</header>
+
+<main>
+  <div class="board-head"><h1 id="title">Cache discipline</h1></div>
+  <p class="why" id="why">Reusing a session instead of restarting it. Highest share of
+     input served from cache wins — this is the number that actually moves your bill.</p>
+  <div class="rows" id="rows"><div class="empty">waiting for the first push…</div></div>
+</main>
+
+<footer>
+  <span>Join: <code id="joincmd">python3 tokens.py --join CODE --as "Your Name"</code></span>
+  <span class="dots" id="dots"><span class="on"></span><span></span><span></span></span>
+  <span id="ws">—</span>
+</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script>
+(function () {
+  "use strict";
+  var qs = new URLSearchParams(location.search);
+  var WORKSHOP = qs.get("w") || "aiic";
+  var ROTATE = (parseInt(qs.get("rotate"), 10) || 14) * 1000;
+  var reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  document.getElementById("ws").textContent = WORKSHOP;
+
+  /* Three boards. Order matters: the one that teaches the lesson leads, and
+     raw volume is last and labelled as the vanity metric it is. */
+  var BOARDS = [
+    { key: "cache_discipline", title: "Cache discipline",
+      why: "Reusing a session instead of restarting it. Highest share of input served from cache wins — this is the number that actually moves your bill.",
+      value: function (e) { return (e.cache_rate * 100).toFixed(1) + "%"; },
+      weight: function (e) { return e.cache_rate; } },
+    { key: "tier_discipline", title: "Tier discipline",
+      why: "Getting the work done without reaching for the top-tier model every time. Highest share of turns on Sonnet or Haiku wins.",
+      value: function (e) { return (e.tier_rate * 100).toFixed(1) + "%"; },
+      weight: function (e) { return e.tier_rate; } },
+    { key: "volume", title: "Raw volume",
+      why: "Most tokens moved. Fun to watch, not a virtue — the two boards before this one are the ones worth winning.",
+      value: function (e) { return fmtTokens(e.tokens); },
+      weight: function (e) { return e.tokens; } }
+  ];
+
+  var current = 0, data = null;
+
+  function fmtTokens(n) {
+    if (n >= 1e9) return (n / 1e9).toFixed(2) + "B";
+    if (n >= 1e6) return (n / 1e6).toFixed(1) + "M";
+    if (n >= 1e3) return (n / 1e3).toFixed(1) + "K";
+    return String(n | 0);
+  }
+  function fmtUSD(v) {
+    return "$" + (v >= 1000 ? Math.round(v).toLocaleString() : v.toFixed(2));
+  }
+
+  function countTo(el, target, fmt) {
+    var from = parseFloat(el.dataset.v || "0");
+    if (reduce || !window.gsap) { el.textContent = fmt(target); el.dataset.v = target; return; }
+    var o = { v: from };
+    gsap.to(o, { v: target, duration: .8, ease: "power2.out",
+      onUpdate: function () { el.textContent = fmt(o.v); } });
+    el.dataset.v = target;
+  }
+
+  function renderRoom(room) {
+    countTo(document.getElementById("r-people"), room.attendees, function (v) { return String(Math.round(v)); });
+    countTo(document.getElementById("r-turns"), room.total_turns, function (v) { return Math.round(v).toLocaleString(); });
+    countTo(document.getElementById("r-tokens"), room.total_tokens, fmtTokens);
+    countTo(document.getElementById("r-cost"), room.total_cost_usd, fmtUSD);
+  }
+
+  function renderBoard() {
+    var b = BOARDS[current];
+    document.getElementById("title").textContent = b.title;
+    document.getElementById("why").textContent = b.why;
+
+    Array.prototype.forEach.call(document.querySelectorAll(".dots span"), function (d, i) {
+      d.className = i === current ? "on" : "";
+    });
+
+    var rows = document.getElementById("rows");
+    var list = (data && data[b.key]) || [];
+
+    if (!list.length) {
+      rows.innerHTML = '<div class="empty">no one has pushed to this board yet…</div>';
+      return;
+    }
+
+    var peak = Math.max.apply(null, list.map(b.weight)) || 1;
+    rows.innerHTML = list.map(function (e, i) {
+      var pct = Math.max(b.weight(e) / peak * 100, 1.5);
+      return '<div class="row' + (i === 0 ? " top" : "") + '">' +
+        '<div class="rk">' + String(i + 1).padStart(2, "0") + "</div>" +
+        '<div class="who"></div>' +
+        '<div class="meter"><i data-w="' + pct.toFixed(1) + '"></i></div>' +
+        '<div class="val">' + b.value(e) + "</div></div>";
+    }).join("");
+
+    // Handles are attendee-supplied. Set them as text, never as HTML.
+    Array.prototype.forEach.call(rows.querySelectorAll(".who"), function (el, i) {
+      el.textContent = list[i].handle;
+    });
+
+    var bars = rows.querySelectorAll(".meter i");
+    if (reduce || !window.gsap) {
+      Array.prototype.forEach.call(bars, function (el) { el.style.width = el.dataset.w + "%"; });
+    } else {
+      gsap.fromTo(rows.querySelectorAll(".row"),
+        { opacity: 0, x: -12 },
+        { opacity: 1, x: 0, duration: .4, stagger: .04, ease: "power2.out" });
+      Array.prototype.forEach.call(bars, function (el, i) {
+        gsap.fromTo(el, { width: 0 },
+          { width: el.dataset.w + "%", duration: .7, delay: .05 * i, ease: "power2.out" });
+      });
+    }
+  }
+
+  function apply(payload) {
+    data = payload;
+    if (payload.room) renderRoom(payload.room);
+    renderBoard();
+  }
+
+  function setStatus(text, cls) {
+    document.getElementById("status").textContent = text;
+    document.getElementById("led").className = "led " + (cls || "");
+  }
+
+  /* ---- live socket, with polling as the fallback ---- */
+  var ws = null, pollTimer = null, retry = 0;
+
+  function poll() {
+    fetch("/api/board?w=" + encodeURIComponent(WORKSHOP), { cache: "no-store" })
+      .then(function (r) { return r.json(); })
+      .then(apply)
+      .catch(function () { setStatus("offline", "off"); });
+  }
+
+  function startPolling() {
+    if (pollTimer) return;
+    poll();
+    pollTimer = setInterval(poll, 8000);
+  }
+  function stopPolling() { clearInterval(pollTimer); pollTimer = null; }
+
+  function connect() {
+    var proto = location.protocol === "https:" ? "wss:" : "ws:";
+    try { ws = new WebSocket(proto + "//" + location.host + "/live?w=" + encodeURIComponent(WORKSHOP)); }
+    catch (e) { startPolling(); return; }
+
+    ws.onopen = function () { retry = 0; stopPolling(); setStatus("live", "on"); poll(); };
+    ws.onmessage = function (ev) {
+      try { apply(JSON.parse(ev.data)); } catch (e) { /* keep the last good board */ }
+    };
+    ws.onclose = function () {
+      startPolling();
+      retry = Math.min(retry + 1, 6);
+      // Venue wifi often blocks websockets outright. After a couple of failed
+      // attempts stop saying "reconnecting" — polling is working and the board
+      // is live, just at 8s instead of instantly.
+      setStatus(retry > 2 ? "polling" : "reconnecting", retry > 2 ? "" : "off");
+      setTimeout(connect, 1000 * retry);
+    };
+    ws.onerror = function () { try { ws.close(); } catch (e) {} };
+  }
+
+  // Keep the socket warm through idle stretches between attendee pushes.
+  setInterval(function () {
+    if (ws && ws.readyState === 1) { try { ws.send("ping"); } catch (e) {} }
+  }, 30000);
+
+  setInterval(function () { current = (current + 1) % BOARDS.length; renderBoard(); }, ROTATE);
+
+  connect();
+  startPolling();
+})();
+</script>
+</body>
+</html>

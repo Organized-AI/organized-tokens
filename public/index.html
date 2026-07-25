@@ -1,0 +1,451 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Organized Tokens — Organized AI</title>
+<meta name="description" content="One command. About ten seconds. It reads the AI session files already on your laptop, prices every token, and opens a report. Nothing is uploaded.">
+<meta property="og:title" content="Organized Tokens — Organized AI">
+<meta property="og:description" content="One command. About ten seconds. See what your AI habit actually costs.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://tokens.organizedai.vip/">
+<meta property="og:image" content="https://tokens.organizedai.vip/og.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+
+<!-- Google Tag Manager -->
+<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});
+var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;
+j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+})(window,document,'script','dataLayer','GTM-T3SL8JPK');</script>
+<!-- End Google Tag Manager -->
+
+<style>
+:root{
+  --ink:#0a0a0a;
+  --panel:#0f140f;
+  --rule:#1d2b1d;
+  --phos:#00ff41;
+  --phos-dim:#0f8a2e;
+  --paper:#dff5e2;
+  --amber:#ffb000;
+  --muted:#6f8a72;
+  --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --sans:"IBM Plex Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;background:var(--ink);color:var(--paper);
+  font:16px/1.65 var(--sans);
+  -webkit-font-smoothing:antialiased;
+  overflow-x:hidden;
+}
+/* Faint phosphor vignette — one atmospheric gesture, nothing more. */
+body::after{
+  content:"";position:fixed;inset:0;pointer-events:none;z-index:1;
+  background:radial-gradient(ellipse at 50% 0%,rgba(0,255,65,.045),transparent 62%);
+}
+.wrap{max-width:860px;margin:0 auto;padding:0 22px;position:relative;z-index:2}
+
+/* ---------- topbar ---------- */
+.topbar{
+  border-bottom:1px solid var(--rule);
+  font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;
+  color:var(--phos-dim);
+}
+.topbar .wrap{display:flex;justify-content:space-between;align-items:center;
+  height:52px;gap:16px}
+.topbar b{color:var(--phos);font-weight:700;letter-spacing:.1em}
+.topbar a{color:var(--muted);text-decoration:none}
+.topbar a:hover{color:var(--phos)}
+
+/* ---------- hero ---------- */
+.hero{padding:76px 0 20px}
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.24em;
+  text-transform:uppercase;color:var(--phos-dim);margin:0 0 20px}
+h1{
+  font-family:var(--mono);font-weight:700;
+  font-size:clamp(34px,6.4vw,60px);line-height:1.03;letter-spacing:-.035em;
+  margin:0 0 22px;color:var(--paper);max-width:14ch;
+}
+h1 em{font-style:normal;color:var(--amber)}
+.lede{font-size:17px;color:var(--muted);max-width:56ch;margin:0 0 44px}
+.lede strong{color:var(--paper);font-weight:500}
+
+/* ---------- terminal (the signature) ---------- */
+.term{
+  border:1px solid var(--rule);background:var(--panel);
+  font-family:var(--mono);font-size:13px;line-height:1.75;
+  margin:0 0 12px;box-shadow:0 0 60px rgba(0,255,65,.05);
+}
+.term-bar{
+  display:flex;align-items:center;gap:8px;
+  padding:9px 14px;border-bottom:1px solid var(--rule);
+  font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);
+}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--rule);flex:none}
+.dot.live{background:var(--phos-dim)}
+.term-body{padding:18px 16px 22px;min-height:296px;overflow-x:auto}
+.ln{white-space:pre;display:block}
+.ln.dim{color:var(--muted)}
+.ln.on{color:var(--phos)}
+.ln.money{color:var(--amber)}
+.ln.rule{color:var(--rule)}
+.prompt{color:var(--phos-dim)}
+.caret{
+  display:inline-block;width:8px;height:15px;background:var(--phos);
+  vertical-align:-3px;margin-left:2px;
+}
+.total-row{color:var(--amber);font-weight:700;font-size:15px}
+
+/* ---------- command block ---------- */
+.cmd{
+  display:flex;align-items:stretch;border:1px solid var(--phos-dim);
+  background:#08120a;margin:34px 0 10px;
+}
+.cmd code{
+  flex:1;font-family:var(--mono);font-size:clamp(12px,2.6vw,15px);
+  color:var(--phos);padding:17px 18px;overflow-x:auto;white-space:nowrap;
+}
+.copy{
+  flex:none;border:0;border-left:1px solid var(--phos-dim);
+  background:transparent;color:var(--phos);font-family:var(--mono);
+  font-size:11px;letter-spacing:.16em;text-transform:uppercase;
+  padding:0 22px;cursor:pointer;transition:background .18s,color .18s;
+}
+.copy:hover,.copy:focus-visible{background:var(--phos);color:var(--ink)}
+.copy.done{background:var(--phos);color:var(--ink)}
+.cmd-note{font-family:var(--mono);font-size:11px;color:var(--muted);
+  letter-spacing:.06em;margin:0 0 70px}
+
+/* ---------- steps ---------- */
+h2{
+  font-family:var(--mono);font-size:11px;letter-spacing:.24em;text-transform:uppercase;
+  color:var(--phos-dim);font-weight:500;
+  border-bottom:1px solid var(--rule);padding-bottom:12px;margin:0 0 6px;
+}
+.step{
+  display:grid;grid-template-columns:52px 1fr;gap:20px;
+  padding:26px 0;border-bottom:1px solid rgba(29,43,29,.6);
+}
+.step-n{
+  font-family:var(--mono);font-size:12px;color:var(--phos-dim);
+  letter-spacing:.1em;padding-top:3px;
+}
+.step h3{font-family:var(--sans);font-size:17px;font-weight:600;margin:0 0 6px}
+.step p{margin:0;color:var(--muted);font-size:15px}
+.step kbd{
+  font-family:var(--mono);font-size:12px;background:var(--panel);
+  border:1px solid var(--rule);border-radius:3px;padding:2px 7px;color:var(--paper);
+}
+
+/* ---------- trust ---------- */
+.trust{margin:70px 0 0}
+.trust-grid{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));
+  gap:1px;background:var(--rule);border:1px solid var(--rule);margin-top:24px;
+}
+.tcell{background:var(--panel);padding:22px}
+.tcell h4{
+  font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--phos);margin:0 0 9px;font-weight:500;
+}
+.tcell p{margin:0;font-size:14px;color:var(--muted);line-height:1.6}
+.tcell a{color:var(--phos-dim)}
+
+/* ---------- footer ---------- */
+footer{
+  margin-top:80px;border-top:1px solid var(--rule);padding:26px 0 60px;
+  font-family:var(--mono);font-size:11px;letter-spacing:.1em;color:var(--muted);
+}
+footer .wrap{display:flex;justify-content:space-between;flex-wrap:wrap;gap:14px}
+footer a{color:var(--phos-dim);text-decoration:none}
+footer a:hover{color:var(--phos)}
+
+/* ---------- a11y + motion ---------- */
+:focus-visible{outline:2px solid var(--phos);outline-offset:3px}
+@media (prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  *,*::before,*::after{animation-duration:.001ms!important;transition-duration:.001ms!important}
+  .caret{display:none}
+}
+@media (max-width:600px){
+  .hero{padding:52px 0 16px}
+  h1{max-width:100%}
+  .term-body{font-size:11.5px;min-height:250px}
+  .step{grid-template-columns:38px 1fr;gap:14px}
+  .cmd{flex-direction:column}
+  .copy{border-left:0;border-top:1px solid var(--phos-dim);padding:14px}
+}
+</style>
+</head>
+<body>
+
+<!-- Google Tag Manager (noscript) -->
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-T3SL8JPK"
+height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+
+<header class="topbar">
+  <div class="wrap">
+    <span><b>OA</b> &nbsp;Organized Tokens</span>
+    <a href="https://organizedai.vip">organizedai.vip</a>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <section class="hero">
+    <p class="eyebrow" data-anim>Workshop · Tokenomics</p>
+    <h1 data-anim>See what your AI habit <em>actually</em> costs.</h1>
+    <p class="lede" data-anim>
+      One command. About ten seconds. It reads the session files already sitting
+      on your laptop, prices every token at published API rates, and opens a
+      report covering your last 30 days.
+      <strong>By default nothing is uploaded, and nothing leaves the machine.</strong>
+    </p>
+
+    <div class="term" data-anim aria-hidden="true">
+      <div class="term-bar">
+        <span class="dot live"></span><span class="dot"></span><span class="dot"></span>
+        <span style="margin-left:6px">Terminal — tokens</span>
+      </div>
+      <div class="term-body" id="term"></div>
+    </div>
+
+    <div class="cmd" data-anim>
+      <code id="cmd">curl -sL tokens.organizedai.vip/tokens.py | python3</code>
+      <button class="copy" id="copy" type="button"
+              aria-label="Copy the command to your clipboard">Copy</button>
+    </div>
+    <p class="cmd-note" data-anim>
+      macOS and Linux · uses the Python already installed with your system
+    </p>
+  </section>
+
+  <section>
+    <h2 data-anim>Running it</h2>
+
+    <div class="step" data-anim>
+      <div class="step-n">01</div>
+      <div>
+        <h3>Open Terminal</h3>
+        <p>On a Mac, press <kbd>⌘</kbd> <kbd>Space</kbd>, type <em>Terminal</em>,
+           press Enter. On Linux, open your usual terminal.</p>
+      </div>
+    </div>
+
+    <div class="step" data-anim>
+      <div class="step-n">02</div>
+      <div>
+        <h3>Copy the command</h3>
+        <p>Use the Copy button above, or select the line and copy it by hand.</p>
+      </div>
+    </div>
+
+    <div class="step" data-anim>
+      <div class="step-n">03</div>
+      <div>
+        <h3>Paste it and press Enter</h3>
+        <p>Your report opens in the browser as <em>Organized Tokens</em>: every model,
+           every token, what each day cost, and which project burned it.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="trust">
+    <h2 data-anim>Before you paste a command from the internet</h2>
+    <div class="trust-grid" data-anim>
+      <div class="tcell">
+        <h4>Read it first</h4>
+        <p>The script is plain, dependency-free Python at
+          <a href="/tokens.py">tokens.organizedai.vip/tokens.py</a>.
+          Open it in a browser before you run it — it is about 400 readable lines.</p>
+      </div>
+      <div class="tcell">
+        <h4>What it reads</h4>
+        <p>Claude Code transcripts in <code>~/.claude/projects</code> and Codex
+           sessions in <code>~/.codex/sessions</code>. Token counts and model names
+           only. Every file it touched is listed at the bottom of the report.</p>
+      </div>
+      <div class="tcell">
+        <h4>What it never does</h4>
+        <p>No API keys, no credentials, no telemetry, no writes outside a single
+           HTML file in your temp folder. Run it plain and it makes no network
+           calls at all.</p>
+      </div>
+      <div class="tcell">
+        <h4>The one exception</h4>
+        <p>At a workshop you can opt into a live leaderboard with
+           <code>--join</code>. It prints the exact payload and waits for you to
+           type <em>join</em> before anything uploads &mdash; counts and model names
+           only, never prompts, paths, or project names.
+           <code>--leave</code> deletes your row and your token.</p>
+      </div>
+      <div class="tcell">
+        <h4>Going further</h4>
+        <p>Install the Organized AI marketplace to run the same audit as a skill
+           inside Claude, with recommendations on what to move to a cheaper model.</p>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>Organized AI</span>
+    <span>
+      <a href="/tokens.py">Source</a> ·
+      <a href="https://github.com/Organized-AI">GitHub</a> ·
+      <a href="https://organizedai.vip">organizedai.vip</a>
+    </span>
+  </div>
+</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+<script>
+(function () {
+  "use strict";
+  var reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var dl = (window.dataLayer = window.dataLayer || []);
+
+  /* ---------------- copy button ---------------- */
+  var cmdText = document.getElementById("cmd").textContent.trim();
+  var btn = document.getElementById("copy");
+
+  function flash() {
+    btn.textContent = "Copied";
+    btn.classList.add("done");
+    setTimeout(function () {
+      btn.textContent = "Copy";
+      btn.classList.remove("done");
+    }, 2000);
+  }
+
+  btn.addEventListener("click", function () {
+    var done = function () {
+      flash();
+      dl.push({ event: "copy_command", command_id: "tokens_install" });
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(cmdText).then(done, fallback);
+    } else {
+      fallback();
+    }
+    function fallback() {
+      var ta = document.createElement("textarea");
+      ta.value = cmdText;
+      ta.style.position = "fixed";
+      ta.style.opacity = "0";
+      document.body.appendChild(ta);
+      ta.select();
+      try { document.execCommand("copy"); done(); } catch (e) { /* no-op */ }
+      document.body.removeChild(ta);
+    }
+  });
+
+  /* ---------------- entrance ---------------- */
+  var items = document.querySelectorAll("[data-anim]");
+  if (reduce || !window.gsap) {
+    Array.prototype.forEach.call(items, function (el) { el.style.opacity = 1; });
+  } else {
+    gsap.set(items, { opacity: 0, y: 14 });
+    gsap.to(document.querySelectorAll(".hero [data-anim]"), {
+      opacity: 1, y: 0, duration: .6, ease: "power2.out", stagger: .09, delay: .15
+    });
+    if (window.ScrollTrigger) {
+      gsap.registerPlugin(ScrollTrigger);
+      Array.prototype.forEach.call(
+        document.querySelectorAll("section:not(.hero) [data-anim]"),
+        function (el) {
+          gsap.to(el, {
+            opacity: 1, y: 0, duration: .55, ease: "power2.out",
+            scrollTrigger: { trigger: el, start: "top 88%" }
+          });
+        }
+      );
+    }
+  }
+
+  /* ---------------- terminal ----------------
+     Sample output, not a live read. It shows the shape of the report so
+     people know what they are about to get before they paste anything. */
+  var term = document.getElementById("term");
+  var SCRIPT = [
+    { t: 500,  cls: "dim",  txt: "$ ", type: "curl -sL tokens.organizedai.vip/tokens.py | python3" },
+    { t: 420,  cls: "dim",  txt: "" },
+    { t: 120,  cls: "on",   txt: "  Organized Tokens" },
+    { t: 320,  cls: "dim",  txt: "  reading 74 transcript files locally…" },
+    { t: 500,  cls: "dim",  txt: "" },
+    { t: 150,  cls: "",     txt: "    claude-opus-5              18.4M     $61.20" },
+    { t: 150,  cls: "",     txt: "    claude-sonnet-5            42.1M     $38.75" },
+    { t: 150,  cls: "",     txt: "    claude-haiku-4-5           11.9M      $4.10" },
+    { t: 150,  cls: "",     txt: "    gpt-5-codex                 6.2M      $9.44" },
+    { t: 260,  cls: "rule", txt: "    ────────────────────────────────────────" },
+    { t: 200,  cls: "total-row", txt: "    TOTAL                            $113.49", count: 113.49 },
+    { t: 520,  cls: "dim",  txt: "" },
+    { t: 200,  cls: "dim",  txt: "  Report: /tmp/organized-tokens.html" },
+    { t: 260,  cls: "dim",  txt: "  Nothing was uploaded." }
+  ];
+
+  function write(cls, text) {
+    var el = document.createElement("span");
+    el.className = "ln " + cls;
+    el.textContent = text;
+    term.appendChild(el);
+    return el;
+  }
+
+  function renderAll() {
+    SCRIPT.forEach(function (s) {
+      write(s.cls, s.txt + (s.type || ""));
+    });
+  }
+
+  function play(i) {
+    if (i >= SCRIPT.length) {
+      var c = document.createElement("span");
+      c.className = "caret";
+      term.appendChild(c);
+      gsap.to(c, { opacity: 0, duration: .45, repeat: -1, yoyo: true, ease: "steps(1)" });
+      return;
+    }
+    var s = SCRIPT[i];
+    var el = write(s.cls, s.txt);
+
+    if (s.type) {
+      // Type the command character by character.
+      var typed = 0;
+      var tick = setInterval(function () {
+        typed += 1;
+        el.textContent = s.txt + s.type.slice(0, typed);
+        if (typed >= s.type.length) {
+          clearInterval(tick);
+          setTimeout(function () { play(i + 1); }, 480);
+        }
+      }, 26);
+      return;
+    }
+
+    if (s.count && window.gsap) {
+      // Count the money up — the one number the whole page exists to produce.
+      var o = { v: 0 };
+      gsap.to(o, {
+        v: s.count, duration: 1.1, ease: "power2.out",
+        onUpdate: function () {
+          el.textContent = "    TOTAL                            $" + o.v.toFixed(2);
+        }
+      });
+    }
+
+    setTimeout(function () { play(i + 1); }, s.t);
+  }
+
+  if (reduce || !window.gsap) { renderAll(); } else { setTimeout(function () { play(0); }, 700); }
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,18 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "organized-tokens",
+  "compatibility_date": "2026-07-01",
+
+  // Assets-only Worker: no `main` entrypoint needed. Cloudflare serves
+  // /index.html and /tokens.py straight from ./public.
+  "assets": {
+    "directory": "./public",
+    "not_found_handling": "single-page-application"
+  },
+
+  "routes": [
+    { "pattern": "tokens.organizedai.vip", "custom_domain": true }
+  ],
+
+  "observability": { "enabled": true }
+}
