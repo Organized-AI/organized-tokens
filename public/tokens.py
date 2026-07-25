@@ -236,6 +236,11 @@ class Tally(object):
         self.unknown_models = set()
         self.earliest = None
         self.latest = None
+        # Activity counts, not token counts: how many prompts the human typed
+        # and how many tool calls the agent made. Counts only — the text of
+        # a prompt or a tool call never leaves the parser.
+        self.prompts = 0
+        self.tool_calls = 0
 
     def record(self, model, when, project, i, o, cw, cr):
         if (i + o + cw + cr) <= 0:
@@ -265,6 +270,19 @@ def project_name(path):
     return parent.lstrip("-").replace("-", "/") if parent.startswith("-") else parent
 
 
+def _is_human_prompt(msg):
+    """A user line the human actually typed, as opposed to the tool_result
+    feedback lines the harness writes back with role=user."""
+    content = msg.get("content")
+    if isinstance(content, str):
+        return bool(content.strip())
+    if isinstance(content, list):
+        for block in content:
+            if isinstance(block, dict) and block.get("type") == "text":
+                return True
+    return False
+
+
 def read_claude(path, tally, cutoff, seen_ids):
     rows = 0
     with open(path, "r", encoding="utf-8", errors="replace") as fh:
@@ -279,12 +297,22 @@ def read_claude(path, tally, cutoff, seen_ids):
             msg = obj.get("message")
             if not isinstance(msg, dict):
                 continue
-            usage = msg.get("usage")
-            if not isinstance(usage, dict):
-                continue
 
             when = parse_ts(obj.get("timestamp") or obj.get("_audit_timestamp"))
             if cutoff and when and when < cutoff:
+                continue
+
+            if obj.get("type") == "user" and _is_human_prompt(msg):
+                # uuid dedupes replayed lines (Cowork audit files repeat them)
+                key = obj.get("uuid")
+                if not key or key not in seen_ids:
+                    if key:
+                        seen_ids.add(key)
+                    tally.prompts += 1
+                continue
+
+            usage = msg.get("usage")
+            if not isinstance(usage, dict):
                 continue
 
             key = msg.get("id") or obj.get("requestId")
@@ -293,6 +321,12 @@ def read_claude(path, tally, cutoff, seen_ids):
                     tally.dedup_hits += 1
                     continue
                 seen_ids.add(key)
+
+            content = msg.get("content")
+            if isinstance(content, list):
+                for block in content:
+                    if isinstance(block, dict) and block.get("type") == "tool_use":
+                        tally.tool_calls += 1
 
             tally.record(
                 msg.get("model") or obj.get("model") or "(unlabelled)",
@@ -327,6 +361,8 @@ def read_codex(path, tally, cutoff):
     when = None
     deltas = []
     cumulative = None
+    prompts = 0
+    tool_calls = 0
 
     with open(path, "r", encoding="utf-8", errors="replace") as fh:
         for line in fh:
@@ -349,6 +385,12 @@ def read_codex(path, tally, cutoff):
                     model = found
 
             payload = obj.get("payload") if isinstance(obj.get("payload"), dict) else obj
+
+            ptype = payload.get("type")
+            if ptype == "user_message":
+                prompts += 1
+            elif ptype in ("function_call", "custom_tool_call"):
+                tool_calls += 1
             info = payload.get("info") if isinstance(payload.get("info"), dict) else None
             if isinstance(info, dict):
                 last = info.get("last_token_usage")
@@ -368,6 +410,9 @@ def read_codex(path, tally, cutoff):
 
     if cutoff and when and when < cutoff:
         return 0
+
+    tally.prompts += prompts
+    tally.tool_calls += tool_calls
 
     def emit(u):
         cached = int(u.get("cached_input_tokens") or u.get("cache_read_input_tokens") or 0)
@@ -485,6 +530,8 @@ def build_payload(tally, since):
         "since": since,
         "turns": grand.calls,
         "cost_usd": round(sum(t.cost(price_for(m)[0]) for m, t in tally.by_model.items()), 6),
+        "prompts": tally.prompts,
+        "tool_calls": tally.tool_calls,
         "totals": {
             "input": grand.input,
             "output": grand.output,
@@ -943,6 +990,8 @@ def main():
             "window_days": args.days,
             "total_cost_usd": round(total_cost, 4),
             "files_read": len(tally.files_read),
+            "prompts": tally.prompts,
+            "tool_calls": tally.tool_calls,
             "by_model": {
                 m: {
                     "input": t.input, "output": t.output,

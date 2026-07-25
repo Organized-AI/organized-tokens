@@ -70,7 +70,7 @@ h1{font-size:clamp(28px,4vw,44px);font-weight:800;letter-spacing:-.01em;margin:6
 .step-note{color:var(--muted);font-size:11.5px;margin:6px 0 0;line-height:1.55}
 
 /* ---- room stat strip ---- */
-.room{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:22px}
+.room{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-bottom:22px}
 .room .tile{background:var(--card);border:1px solid var(--line);border-radius:8px;
   padding:13px 15px}
 .room .n{font-family:var(--mono);font-size:22px;font-weight:700}
@@ -166,7 +166,8 @@ footer{border-top:1px solid var(--line);padding:16px 20px;max-width:1040px;margi
 footer code{color:var(--gold2);background:var(--card);border:1px solid var(--line);
   padding:4px 9px;border-radius:3px}
 
-@media (max-width:640px){.room{grid-template-columns:repeat(2,1fr)}}
+@media (max-width:900px){.room{grid-template-columns:repeat(3,1fr)}}
+@media (max-width:560px){.room{grid-template-columns:repeat(2,1fr)}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
 </head>
@@ -233,6 +234,8 @@ footer code{color:var(--gold2);background:var(--card);border:1px solid var(--lin
 
   <div class="room">
     <div class="tile"><div class="n" id="r-people">0</div><div class="l">In the room</div></div>
+    <div class="tile"><div class="n" id="r-prompts">0</div><div class="l">Prompts</div></div>
+    <div class="tile"><div class="n" id="r-tools">0</div><div class="l">Tool calls</div></div>
     <div class="tile"><div class="n" id="r-turns">0</div><div class="l">Turns</div></div>
     <div class="tile"><div class="n" id="r-tokens">0</div><div class="l">Tokens</div></div>
     <div class="tile"><div class="n money" id="r-cost">$0</div><div class="l">At API rates</div></div>
@@ -260,7 +263,7 @@ footer code{color:var(--gold2);background:var(--card);border:1px solid var(--lin
 
       <div class="table-wrap">
         <table>
-          <thead><tr><th>Rank</th><th>Handle</th><th class="num">Tokens</th><th class="num">Spend</th><th>Last active</th></tr></thead>
+          <thead><tr><th>Rank</th><th>Handle</th><th class="num">Tokens</th><th class="num">Spend</th><th class="num">Prompts</th><th class="num">Tool calls</th><th>Last active</th></tr></thead>
           <tbody id="table-overview"></tbody>
         </table>
       </div>
@@ -373,8 +376,11 @@ footer code{color:var(--gold2);background:var(--card);border:1px solid var(--lin
   }
 
   function renderRoom(room) {
+    var whole = function (v) { return Math.round(v).toLocaleString(); };
     countTo(document.getElementById("r-people"), room.attendees, function (v) { return String(Math.round(v)); });
-    countTo(document.getElementById("r-turns"), room.total_turns, function (v) { return Math.round(v).toLocaleString(); });
+    countTo(document.getElementById("r-prompts"), room.total_prompts || 0, whole);
+    countTo(document.getElementById("r-tools"), room.total_tool_calls || 0, whole);
+    countTo(document.getElementById("r-turns"), room.total_turns, whole);
     countTo(document.getElementById("r-tokens"), room.total_tokens, fmtTokens);
     countTo(document.getElementById("r-cost"), room.total_cost_usd, fmtUSD);
   }
@@ -388,7 +394,7 @@ footer code{color:var(--gold2);background:var(--card);border:1px solid var(--lin
     if (!list.length) {
       document.getElementById("hero-name").textContent = "—";
       document.getElementById("hero-stats").textContent = "waiting for the first push…";
-      tbody.innerHTML = '<tr><td colspan="5" class="empty">no one has pushed yet…</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="7" class="empty">no one has pushed yet…</td></tr>';
       return;
     }
 
@@ -403,6 +409,8 @@ footer code{color:var(--gold2);background:var(--card);border:1px solid var(--lin
         '<td class="handle"></td>' +
         '<td class="num">' + fmtTokens(e.tokens) + '</td>' +
         '<td class="num">' + fmtUSD(e.cost_usd) + '</td>' +
+        '<td class="num">' + (e.prompts || 0).toLocaleString() + '</td>' +
+        '<td class="num">' + (e.tool_calls || 0).toLocaleString() + '</td>' +
         '<td class="dim">' + fmtWhen(e.updated_at) + '</td></tr>';
     }).join("");
     Array.prototype.forEach.call(tbody.querySelectorAll(".handle"), function (el, i) {

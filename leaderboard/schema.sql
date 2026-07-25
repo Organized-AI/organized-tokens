@@ -27,6 +27,8 @@ CREATE TABLE IF NOT EXISTS stats (
   cache_write INTEGER NOT NULL DEFAULT 0,
   cache_read  INTEGER NOT NULL DEFAULT 0,
   turns       INTEGER NOT NULL DEFAULT 0,
+  prompts     INTEGER NOT NULL DEFAULT 0, -- human prompts typed (count only, never text)
+  tool_calls  INTEGER NOT NULL DEFAULT 0, -- agent tool invocations (count only)
   cost_micros INTEGER NOT NULL DEFAULT 0, -- USD * 1e6, integer to dodge float drift
   by_model    TEXT NOT NULL DEFAULT '{}', -- {"claude-opus-5":{"turns":N,"cost_micros":N}}
   pushes      INTEGER NOT NULL DEFAULT 0,

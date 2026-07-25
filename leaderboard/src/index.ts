@@ -115,8 +115,8 @@ async function auth(req: Request, env: Env) {
 
 interface Row {
   handle: string; input: number; output: number; cache_write: number;
-  cache_read: number; turns: number; cost_micros: number; by_model: string;
-  updated_at: number;
+  cache_read: number; turns: number; prompts: number; tool_calls: number;
+  cost_micros: number; by_model: string; updated_at: number;
 }
 
 function boards(rows: Row[]) {
@@ -140,6 +140,8 @@ function boards(rows: Row[]) {
       handle: r.handle,
       tokens,
       turns: r.turns,
+      prompts: r.prompts,
+      tool_calls: r.tool_calls,
       cost_usd: r.cost_micros / 1e6,
       cache_rate: cacheRate,
       tier_rate: tierRate,
@@ -163,6 +165,8 @@ function boards(rows: Row[]) {
       total_tokens: enriched.reduce((a, e) => a + e.tokens, 0),
       total_cost_usd: enriched.reduce((a, e) => a + e.cost_usd, 0),
       total_turns: enriched.reduce((a, e) => a + e.turns, 0),
+      total_prompts: enriched.reduce((a, e) => a + e.prompts, 0),
+      total_tool_calls: enriched.reduce((a, e) => a + e.tool_calls, 0),
     },
   };
 }
@@ -186,7 +190,7 @@ async function broadcast(env: Env, workshopId: string) {
 async function loadBoard(env: Env, workshopId: string) {
   const { results } = await env.DB.prepare(
     `SELECT a.handle, s.input, s.output, s.cache_write, s.cache_read,
-            s.turns, s.cost_micros, s.by_model, s.updated_at
+            s.turns, s.prompts, s.tool_calls, s.cost_micros, s.by_model, s.updated_at
        FROM stats s JOIN attendees a ON a.token_hash = s.token_hash
       WHERE s.workshop_id = ?`
   ).bind(workshopId).all<Row>();
@@ -292,17 +296,21 @@ export default {
         cache_write: int(totals.cache_write),
         cache_read: int(totals.cache_read),
         turns: int(body.turns, 1_000_000),
+        prompts: int(body.prompts, 1_000_000),
+        tool_calls: int(body.tool_calls, 10_000_000),
         cost_micros: int(Math.round(Number(body.cost_usd || 0) * 1e6)),
         by_model: JSON.stringify(cleanByModel(body.by_model)),
       };
 
       await env.DB.prepare(
         `UPDATE stats SET input=?, output=?, cache_write=?, cache_read=?,
-                turns=?, cost_micros=?, by_model=?, pushes=pushes+1, updated_at=?
+                turns=?, prompts=?, tool_calls=?, cost_micros=?, by_model=?,
+                pushes=pushes+1, updated_at=?
           WHERE token_hash=?`
       ).bind(
         row.input, row.output, row.cache_write, row.cache_read,
-        row.turns, row.cost_micros, row.by_model, t, who.token_hash
+        row.turns, row.prompts, row.tool_calls, row.cost_micros, row.by_model,
+        t, who.token_hash
       ).run();
 
       await broadcast(env, who.workshop_id);
