@@ -10,7 +10,7 @@
     {
       "binding": "DB",
       "database_name": "organized-tokens-leaderboard",
-      "database_id": "<run: npx wrangler d1 create organized-tokens-leaderboard>"
+      "database_id": "6e4bc0fd-c3c9-4976-ae83-f8b99585f3ce"
     }
   ],
 
