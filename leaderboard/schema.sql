@@ -34,3 +34,16 @@ CREATE TABLE IF NOT EXISTS stats (
   FOREIGN KEY (token_hash) REFERENCES attendees(token_hash)
 );
 CREATE INDEX IF NOT EXISTS idx_stats_workshop ON stats(workshop_id, updated_at);
+
+-- Waitlist signups for the two products pitched from the habit boards:
+-- Organized Caching Layer (from the cache discipline tab) and Organized
+-- Router (from the tier discipline tab). Public, unauthenticated, opt-in —
+-- just an email against a product, nothing tied to transcript content.
+CREATE TABLE IF NOT EXISTS waitlist (
+  id          INTEGER PRIMARY KEY AUTOINCREMENT,
+  product     TEXT NOT NULL,              -- 'caching-layer' | 'router'
+  email       TEXT NOT NULL,
+  workshop_id TEXT,                       -- which workshop they signed up from, if any
+  created_at  INTEGER NOT NULL
+);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_waitlist_product_email ON waitlist(product, email);

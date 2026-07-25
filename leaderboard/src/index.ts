@@ -56,6 +56,15 @@ function cleanHandle(raw: unknown): string | null {
   return h.length >= 2 ? h : null;
 }
 
+const WAITLIST_PRODUCTS = new Set(["caching-layer", "router"]);
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+function cleanEmail(raw: unknown): string | null {
+  if (typeof raw !== "string") return null;
+  const e = raw.trim().toLowerCase().slice(0, 254);
+  return EMAIL_RE.test(e) ? e : null;
+}
+
 function int(v: unknown, max = 5_000_000_000): number {
   const n = typeof v === "number" ? v : Number(v);
   if (!Number.isFinite(n) || n < 0) return 0;
@@ -156,6 +165,22 @@ function boards(rows: Row[]) {
       total_turns: enriched.reduce((a, e) => a + e.turns, 0),
     },
   };
+}
+
+/** Push the recomputed board to the Room's live socket. Best-effort: a
+ *  broadcast failure must never fail the caller's own operation — the
+ *  projector will catch up on its next poll either way. */
+async function broadcast(env: Env, workshopId: string) {
+  try {
+    const id = env.ROOM.idFromName(workshopId);
+    await env.ROOM.get(id).fetch(
+      new Request("https://room/broadcast", {
+        method: "POST",
+        body: JSON.stringify(await loadBoard(env, workshopId)),
+        headers: { "content-type": "application/json" },
+      })
+    );
+  } catch { /* projector will pick it up on its next poll */ }
 }
 
 async function loadBoard(env: Env, workshopId: string) {
@@ -280,18 +305,7 @@ export default {
         row.turns, row.cost_micros, row.by_model, t, who.token_hash
       ).run();
 
-      // Tell the room to re-broadcast. Failure here must not fail the push —
-      // the projector reconnecting is not worth losing an attendee's data.
-      try {
-        const id = env.ROOM.idFromName(who.workshop_id);
-        await env.ROOM.get(id).fetch(
-          new Request("https://room/broadcast", {
-            method: "POST",
-            body: JSON.stringify(await loadBoard(env, who.workshop_id)),
-            headers: { "content-type": "application/json" },
-          })
-        );
-      } catch { /* projector will pick it up on its next poll */ }
+      await broadcast(env, who.workshop_id);
 
       return json({ ok: true, next_push_after: PUSH_MIN_INTERVAL });
     }
@@ -311,7 +325,32 @@ export default {
         env.DB.prepare(`DELETE FROM stats WHERE token_hash = ?`).bind(who.token_hash),
         env.DB.prepare(`DELETE FROM attendees WHERE token_hash = ?`).bind(who.token_hash),
       ]);
+      await broadcast(env, who.workshop_id);
       return json({ ok: true, removed: who.handle });
+    }
+
+    // --- waitlist: public, unauthenticated, opt-in product signup --------
+    if (path === "/api/waitlist" && req.method === "POST") {
+      const body = await readJson(req);
+      if (!body) return json({ error: "bad body" }, 400);
+
+      const product = String(body.product || "");
+      const email = cleanEmail(body.email);
+      const workshopId = body.workshop_id ? String(body.workshop_id).slice(0, 48) : null;
+
+      if (!WAITLIST_PRODUCTS.has(product)) return json({ error: "unknown product" }, 400);
+      if (!email) return json({ error: "enter a valid email" }, 400);
+
+      try {
+        await env.DB.prepare(
+          `INSERT INTO waitlist (product, email, workshop_id, created_at) VALUES (?,?,?,?)`
+        ).bind(product, email, workshopId, now()).run();
+      } catch {
+        // UNIQUE(product, email) — already on this list. Not an error from
+        // the submitter's point of view.
+      }
+
+      return json({ ok: true });
     }
 
     // --- admin: create / close a workshop --------------------------------

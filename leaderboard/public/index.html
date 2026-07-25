@@ -3,113 +3,335 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Organized Tokens — Leaderboard</title>
+<title>Organized Tokens — Workshop Leaderboard</title>
+<link rel="icon" href="https://organizedai.vip/IMG_1110.PNG">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700;800&display=swap" rel="stylesheet">
 <style>
 :root{
-  --ink:#0a0a0a; --panel:#0f140f; --rule:#1d2b1d;
-  --phos:#00ff41; --phos-dim:#0f8a2e; --paper:#dff5e2;
-  --amber:#ffb000; --muted:#6f8a72;
+  --bg:#0c0b09; --panel:#1a1814; --card:#141210; --card2:#211e18; --line:#2a2520;
+  --text:#f0ece4; --muted:#a09888; --gold:#FFE94A; --gold2:#F5D623; --amber:#C4943D;
+  --red:#ff6b6b;
   --mono:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;
-  --sans:"IBM Plex Sans",-apple-system,BlinkMacSystemFont,sans-serif;
+  --sans:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  font-variant-numeric:tabular-nums;
 }
 *{box-sizing:border-box}
+html,body{margin:0}
 body{
-  margin:0;background:var(--ink);color:var(--paper);font-family:var(--sans);
-  min-height:100vh;display:flex;flex-direction:column;overflow:hidden;
+  background:var(--bg);color:var(--text);font-family:var(--sans);
+  min-height:100vh;
 }
-body::after{content:"";position:fixed;inset:0;pointer-events:none;
-  background:radial-gradient(ellipse at 50% 0%,rgba(0,255,65,.05),transparent 60%)}
+a{color:inherit}
 
-/* ---- header ---- */
-header{
-  border-bottom:1px solid var(--rule);padding:20px 40px;
-  display:flex;justify-content:space-between;align-items:center;gap:24px;flex-wrap:wrap;
+/* ---- top nav ---- */
+.topnav{
+  position:sticky;top:0;z-index:10;background:rgba(12,11,9,.92);backdrop-filter:blur(6px);
+  border-bottom:1px solid var(--line);
 }
-.brand{font-family:var(--mono);font-size:13px;letter-spacing:.24em;
-  text-transform:uppercase;color:var(--phos-dim)}
-.brand b{color:var(--phos)}
-.room{display:flex;gap:36px;font-family:var(--mono)}
-.room div{text-align:right}
-.room .k{font-size:26px;font-weight:700;color:var(--phos);line-height:1}
-.room .k.money{color:var(--amber)}
-.room .v{font-size:10px;letter-spacing:.16em;text-transform:uppercase;
-  color:var(--muted);margin-top:6px}
-.status{font-family:var(--mono);font-size:10px;letter-spacing:.14em;
-  text-transform:uppercase;color:var(--muted);display:flex;align-items:center;gap:8px}
-.led{width:8px;height:8px;border-radius:50%;background:var(--rule)}
-.led.on{background:var(--phos);box-shadow:0 0 10px var(--phos)}
-.led.off{background:#8a2e0f}
+.nav-inner{
+  max-width:1040px;margin:0 auto;padding:16px 20px;
+  display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;
+}
+.brand{display:flex;align-items:center;gap:10px;font-family:var(--mono);font-size:13px;
+  font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:var(--text)}
+.brand img{width:30px;height:30px;border-radius:8px;border-bottom:1px solid rgba(245,214,35,.22)}
+.brand .ai{color:var(--gold2)}
+.nav-kicker{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--muted)}
 
-/* ---- board ---- */
-main{flex:1;padding:34px 40px 0;display:flex;flex-direction:column;min-height:0}
-.board-head{display:flex;align-items:baseline;gap:18px;margin-bottom:6px}
-h1{font-family:var(--mono);font-size:clamp(24px,3.4vw,40px);font-weight:700;
-  letter-spacing:-.02em;margin:0;color:var(--paper)}
-.why{color:var(--muted);font-size:15px;max-width:60ch;margin:0 0 22px}
-.rows{flex:1;overflow:hidden;position:relative}
-.row{
-  display:grid;grid-template-columns:64px 1fr 200px 130px;align-items:center;
-  gap:20px;padding:13px 0;border-bottom:1px solid rgba(29,43,29,.6);
-}
-.rk{font-family:var(--mono);font-size:22px;color:var(--muted);font-weight:500}
-.row.top .rk{color:var(--amber)}
-.who{font-size:20px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.meter{height:9px;background:var(--rule);position:relative;overflow:hidden}
-.meter i{position:absolute;inset:0 auto 0 0;background:var(--phos-dim);width:0}
-.row.top .meter i{background:var(--phos)}
-.val{font-family:var(--mono);font-size:20px;font-weight:600;text-align:right;color:var(--phos)}
-.row.top .val{color:var(--amber)}
-.empty{color:var(--muted);font-family:var(--mono);font-size:15px;padding:40px 0}
+/* ---- shell ---- */
+.shell{max-width:1040px;margin:0 auto;padding:34px 20px 70px}
+.eyebrow{color:var(--muted);font-family:var(--mono);font-size:11px;letter-spacing:.12em;
+  text-transform:uppercase}
+h1{font-size:clamp(28px,4vw,44px);font-weight:800;letter-spacing:-.01em;margin:6px 0 10px;
+  text-wrap:balance}
+.sub{color:var(--muted);font-size:14px;line-height:1.65;max-width:66ch;margin:0 0 26px}
+.sub b{color:var(--text);font-weight:600}
 
-/* ---- footer ---- */
-footer{
-  border-top:1px solid var(--rule);padding:16px 40px;
-  display:flex;justify-content:space-between;align-items:center;gap:20px;flex-wrap:wrap;
-  font-family:var(--mono);font-size:12px;color:var(--muted);letter-spacing:.08em;
-}
-footer code{color:var(--phos);background:var(--panel);border:1px solid var(--rule);
-  padding:5px 11px}
-.dots{display:flex;gap:7px}
-.dots span{width:26px;height:3px;background:var(--rule)}
-.dots span.on{background:var(--phos)}
+/* ---- join card ---- */
+.join-card{background:var(--card);border:1px solid var(--line);border-radius:8px;
+  padding:20px 22px 22px;margin-bottom:22px}
+.join-title{font-size:15px;font-weight:700;margin:2px 0 2px}
+.join-ref{color:var(--muted);font-size:12.5px;margin:0 0 16px}
+.join-ref b{color:var(--gold2);font-weight:700}
+.steps{display:flex;flex-direction:column;gap:15px}
+.step{display:flex;gap:13px}
+.step-num{flex:none;width:22px;height:22px;margin-top:1px;border-radius:50%;
+  background:var(--card2);border:1px solid var(--line);color:var(--gold2);
+  font-family:var(--mono);font-size:11px;font-weight:700;display:flex;align-items:center;
+  justify-content:center}
+.step-body{flex:1;min-width:0}
+.step-label{font-size:13.5px;color:var(--text);margin:0 0 7px}
+.cmd{display:block;background:var(--bg);border:1px solid var(--line);border-radius:5px;
+  padding:10px 12px;font-family:var(--mono);font-size:12.5px;color:var(--gold2);
+  overflow-x:auto;white-space:pre}
+.step-note{color:var(--muted);font-size:11.5px;margin:6px 0 0;line-height:1.55}
 
-@media (max-width:820px){
-  header,main,footer{padding-left:20px;padding-right:20px}
-  .row{grid-template-columns:44px 1fr 110px;gap:12px}
-  .meter{display:none}
-  .room{gap:20px}.room .k{font-size:19px}
-}
+/* ---- room stat strip ---- */
+.room{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:22px}
+.room .tile{background:var(--card);border:1px solid var(--line);border-radius:8px;
+  padding:13px 15px}
+.room .n{font-family:var(--mono);font-size:22px;font-weight:700}
+.room .n.money{color:var(--gold)}
+.room .l{color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.08em;
+  margin-top:4px}
+.status{display:flex;align-items:center;gap:8px;font-family:var(--mono);font-size:11px;
+  letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:-10px 0 20px}
+.led{width:7px;height:7px;border-radius:50%;background:var(--line)}
+.led.on{background:var(--gold);box-shadow:0 0 8px var(--gold)}
+.led.off{background:var(--red)}
+
+/* ---- tabs ---- */
+.subtabs{display:flex;gap:22px;border-bottom:1px solid var(--line);margin-bottom:20px;
+  overflow-x:auto}
+.subtabs button{display:flex;align-items:center;gap:7px;background:transparent;border:none;
+  border-bottom:2px solid transparent;color:var(--muted);font:inherit;font-size:12px;
+  font-family:var(--mono);letter-spacing:.04em;text-transform:uppercase;padding:10px 2px 9px;
+  margin-bottom:-1px;white-space:nowrap;cursor:pointer}
+.subtabs button .dot{width:6px;height:6px;border-radius:50%;background:var(--muted);flex:none}
+.subtabs button:hover{color:var(--text)}
+.subtabs button:focus-visible{outline:2px solid var(--gold2);outline-offset:2px}
+.subtabs button.neutral.active{color:var(--text);border-bottom-color:var(--muted)}
+.subtabs button.good.active{color:var(--gold2);border-bottom-color:var(--gold2)}
+.subtabs button.good.active .dot{background:var(--gold2)}
+.subtabs button.vanity.active{color:var(--amber);border-bottom-color:var(--amber)}
+.subtabs button.vanity.active .dot{background:var(--amber)}
+
+.view-title{font-size:18px;font-weight:700;margin:2px 0 4px}
+.view-desc{color:var(--muted);font-size:13px;margin:0 0 18px;max-width:60ch;line-height:1.6}
+
+.rv{display:none}
+.rv.active{display:block;animation:fade .25s ease}
+@keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+
+/* ---- overview hero + badges ---- */
+.hero{background:var(--card);border:1px solid var(--line);border-left:3px solid var(--gold);
+  border-radius:6px;padding:16px 20px;display:flex;align-items:baseline;
+  justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:18px}
+.hero-label{color:var(--muted);font-family:var(--mono);font-size:11px;text-transform:uppercase;
+  letter-spacing:.08em}
+.hero-name{font-size:20px;font-weight:700;margin-top:4px}
+.hero-stats{color:var(--gold);font-family:var(--mono);font-size:15px;text-align:right}
+.hero-stats span{color:var(--muted);font-size:11px}
+.badges{display:flex;gap:8px;margin-top:18px;flex-wrap:wrap}
+.badge{font-family:var(--mono);font-size:10px;letter-spacing:.06em;text-transform:uppercase;
+  padding:5px 9px;border:1px solid rgba(245,214,35,.3);background:rgba(245,214,35,.08);
+  color:var(--gold2);border-radius:3px}
+.badge.off{border-color:var(--line);background:transparent;color:var(--muted)}
+
+/* ---- tables ---- */
+.table-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:8px}
+table{width:100%;border-collapse:collapse;font-size:13.5px;min-width:520px}
+thead th{text-align:left;color:var(--muted);font-family:var(--mono);font-weight:600;
+  font-size:10px;text-transform:uppercase;letter-spacing:.06em;padding:10px 14px;
+  border-bottom:1px solid var(--line);background:var(--card);white-space:nowrap}
+td{padding:10px 14px;border-bottom:1px solid rgba(42,37,32,.6);white-space:nowrap}
+tbody tr:last-child td{border-bottom:none}
+tbody tr:hover{background:var(--card)}
+.rank{font-family:var(--mono);color:var(--muted)}
+.rank.r1{color:var(--gold);font-weight:700}
+.handle{font-weight:600}
+.num{text-align:right;font-family:var(--mono)}
+.dim{color:var(--muted)}
+.empty{color:var(--muted);font-size:13.5px;padding:26px 14px}
+.meter-wrap{display:flex;align-items:center;gap:8px;width:170px}
+.meter{flex:1;height:6px;background:rgba(42,37,32,.7);border-radius:3px;overflow:hidden}
+.meter>div{height:100%;border-radius:3px;background:var(--gold2);width:0}
+.metric-pct{font-family:var(--mono);font-size:12px;width:38px;text-align:right}
+
+/* ---- waitlist CTA ---- */
+.waitlist{margin-top:22px;background:var(--card2);border:1px solid var(--line);
+  border-left:3px solid var(--gold2);border-radius:6px;padding:18px 20px}
+.waitlist .k{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--gold2)}
+.waitlist h3{font-size:16px;margin:5px 0 6px}
+.waitlist p{color:var(--muted);font-size:13px;line-height:1.6;margin:0 0 14px;max-width:56ch}
+.wl-form{display:flex;gap:8px;flex-wrap:wrap}
+.wl-form input[type=email]{flex:1;min-width:220px;background:var(--bg);border:1px solid var(--line);
+  border-radius:5px;padding:10px 12px;color:var(--text);font:inherit;font-size:13.5px}
+.wl-form input[type=email]:focus{outline:2px solid var(--gold2);outline-offset:1px}
+.wl-form button{background:var(--gold);color:#1a1608;border:none;border-radius:5px;
+  padding:10px 16px;font-weight:700;font-size:13.5px;cursor:pointer;white-space:nowrap}
+.wl-form button:hover{background:var(--gold2)}
+.wl-form button:disabled{opacity:.6;cursor:default}
+.wl-note{font-size:12px;color:var(--muted);margin-top:9px;min-height:16px}
+.wl-note.ok{color:var(--gold2)}
+.wl-note.err{color:var(--red)}
+
+footer{border-top:1px solid var(--line);padding:16px 20px;max-width:1040px;margin:0 auto;
+  display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;
+  font-family:var(--mono);font-size:11.5px;color:var(--muted);letter-spacing:.04em}
+footer code{color:var(--gold2);background:var(--card);border:1px solid var(--line);
+  padding:4px 9px;border-radius:3px}
+
+@media (max-width:640px){.room{grid-template-columns:repeat(2,1fr)}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
 </head>
 <body>
 
-<header>
-  <div>
-    <div class="brand"><b>OA</b> &nbsp;Organized Tokens</div>
-    <div class="status"><span class="led" id="led"></span><span id="status">connecting</span></div>
+<nav class="topnav">
+  <div class="nav-inner">
+    <div class="brand">
+      <img src="https://organizedai.vip/IMG_1110.PNG" alt="Organized AI handshake logo" loading="eager" decoding="async">
+      ORGANIZED <span class="ai">AI</span>
+    </div>
+    <div class="nav-kicker" id="workshop-kicker">workshop leaderboard</div>
   </div>
-  <div class="room">
-    <div><div class="k" id="r-people">0</div><div class="v">In the room</div></div>
-    <div><div class="k" id="r-turns">0</div><div class="v">Turns</div></div>
-    <div><div class="k" id="r-tokens">0</div><div class="v">Tokens</div></div>
-    <div><div class="k money" id="r-cost">$0</div><div class="v">At API rates</div></div>
-  </div>
-</header>
+</nav>
 
-<main>
-  <div class="board-head"><h1 id="title">Cache discipline</h1></div>
-  <p class="why" id="why">Reusing a session instead of restarting it. Highest share of
-     input served from cache wins — this is the number that actually moves your bill.</p>
-  <div class="rows" id="rows"><div class="empty">waiting for the first push…</div></div>
-</main>
+<div class="shell">
+  <div class="eyebrow" id="eyebrow">AIIC Sales &amp; Marketing Masterclass</div>
+  <h1>Workshop Leaderboard</h1>
+  <p class="sub">Four views of one session: an at-a-glance <b>overview</b>, then three habit boards —
+    <b>cache discipline</b>, <b>tier discipline</b>, and <b>raw volume</b> (labeled as fun, not virtue).
+    Every view shows only counts and model names — no prompts, file paths, or project names ever leave
+    a participant's machine for this board.</p>
+
+  <div class="join-card">
+    <div class="eyebrow">Getting on the board</div>
+    <div class="join-title">4 commands. No install beyond Python 3, which macOS and Linux already have.</div>
+    <p class="join-ref">Workshop code <b id="join-code">AIIC-2026</b> · script served from <b>tokens.organizedai.vip</b></p>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <p class="step-label">Get the script — one time, saved to a file:</p>
+          <code class="cmd">curl -sL https://tokens.organizedai.vip/tokens.py -o tokens.py</code>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <p class="step-label">Join with the name you want shown on the board:</p>
+          <code class="cmd" id="join-cmd">python3 tokens.py --join AIIC-2026 --as "Your Name"</code>
+          <p class="step-note">Prints the exact payload before sending anything. Read it, type <b style="color:var(--text)">join</b>, press Enter. Anything else cancels — nothing is uploaded.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <p class="step-label">Start watching — this is what actually puts you on the board:</p>
+          <code class="cmd">python3 tokens.py --watch</code>
+          <p class="step-note">Leave it running in a terminal tab. Ctrl-C stops pushing — you stay listed until you leave.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">4</div>
+        <div class="step-body">
+          <p class="step-label">Done for the day? Remove yourself:</p>
+          <code class="cmd">python3 tokens.py --leave</code>
+          <p class="step-note">Takes you off the board and deletes the local credential file.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="status"><span class="led" id="led"></span><span id="status">connecting</span></div>
+
+  <div class="room">
+    <div class="tile"><div class="n" id="r-people">0</div><div class="l">In the room</div></div>
+    <div class="tile"><div class="n" id="r-turns">0</div><div class="l">Turns</div></div>
+    <div class="tile"><div class="n" id="r-tokens">0</div><div class="l">Tokens</div></div>
+    <div class="tile"><div class="n money" id="r-cost">$0</div><div class="l">At API rates</div></div>
+  </div>
+
+  <div class="subtabs" role="tablist" aria-label="Leaderboard view">
+    <button class="neutral active" onclick="showView(0)" id="view-tab-0" role="tab" aria-selected="true"><span class="dot"></span>Overview</button>
+    <button class="good" onclick="showView(1)" id="view-tab-1" role="tab" aria-selected="false"><span class="dot"></span>Cache discipline</button>
+    <button class="good" onclick="showView(2)" id="view-tab-2" role="tab" aria-selected="false"><span class="dot"></span>Tier discipline</button>
+    <button class="vanity" onclick="showView(3)" id="view-tab-3" role="tab" aria-selected="false"><span class="dot"></span>Raw volume</button>
+  </div>
+
+  <div class="rotation-views">
+    <div class="rv active" data-view="0">
+      <div class="view-title">Overview</div>
+      <p class="view-desc">Everything at a glance — current leader, aggregate totals, one ranked table. Ranked by spend.</p>
+
+      <div class="hero">
+        <div>
+          <div class="hero-label">Current leader</div>
+          <div class="hero-name" id="hero-name">—</div>
+        </div>
+        <div class="hero-stats" id="hero-stats">—</div>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Rank</th><th>Handle</th><th class="num">Tokens</th><th class="num">Spend</th><th>Last active</th></tr></thead>
+          <tbody id="table-overview"></tbody>
+        </table>
+      </div>
+
+      <div class="badges">
+        <span class="badge">D1 ON</span>
+        <span class="badge">DURABLE OBJECT ON</span>
+        <span class="badge off">KV — not used</span>
+        <span class="badge off">R2 — not used</span>
+      </div>
+    </div>
+
+    <div class="rv" data-view="1">
+      <div class="view-title">Cache discipline</div>
+      <p class="view-desc">Cache reads as a share of all input tokens — the number that actually moves a bill, and it rewards not restarting sessions.</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Rank</th><th>Handle</th><th>Cache reads</th></tr></thead>
+          <tbody id="table-cache"></tbody>
+        </table>
+      </div>
+
+      <div class="waitlist">
+        <div class="k">Coming from Organized AI</div>
+        <h3>Organized Caching Layer</h3>
+        <p>Automatic prompt-cache management for Claude Code and Codex — breakpoints placed for you, so every session gets the discount this board is measuring, without thinking about it.</p>
+        <form class="wl-form" onsubmit="return submitWaitlist(event, 'caching-layer', 'wl-note-cache')">
+          <input type="email" placeholder="you@company.com" required>
+          <button type="submit">Join waitlist</button>
+        </form>
+        <div class="wl-note" id="wl-note-cache"></div>
+      </div>
+    </div>
+
+    <div class="rv" data-view="2">
+      <div class="view-title">Tier discipline</div>
+      <p class="view-desc">Share of turns not run on the top-tier model — did you reach for Haiku or Sonnet before defaulting to the biggest model in the room?</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Rank</th><th>Handle</th><th>Non-top-tier turns</th></tr></thead>
+          <tbody id="table-tier"></tbody>
+        </table>
+      </div>
+
+      <div class="waitlist">
+        <div class="k">Coming from Organized AI</div>
+        <h3>Organized Router</h3>
+        <p>Automatic model routing per turn — sends simple work to Haiku, keeps Opus for what actually needs it. The tier discipline this board rewards, without doing it by hand.</p>
+        <form class="wl-form" onsubmit="return submitWaitlist(event, 'router', 'wl-note-tier')">
+          <input type="email" placeholder="you@company.com" required>
+          <button type="submit">Join waitlist</button>
+        </form>
+        <div class="wl-note" id="wl-note-tier"></div>
+      </div>
+    </div>
+
+    <div class="rv" data-view="3">
+      <div class="view-title">Raw volume</div>
+      <p class="view-desc">Total tokens moved. Fun to watch, not something to optimize for — labeled "just for fun" on the tab so nobody mistakes it for the point.</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Rank</th><th>Handle</th><th class="num">Tokens</th></tr></thead>
+          <tbody id="table-volume"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
 
 <footer>
-  <span>Join: <code id="joincmd">python3 tokens.py --join CODE --as "Your Name"</code></span>
-  <span class="dots" id="dots"><span class="on"></span><span></span><span></span></span>
+  <span>Join: <code id="joincmd">python3 tokens.py --join AIIC-2026 --as "Your Name"</code></span>
   <span id="ws">—</span>
 </footer>
 
@@ -119,29 +341,12 @@ footer code{color:var(--phos);background:var(--panel);border:1px solid var(--rul
   "use strict";
   var qs = new URLSearchParams(location.search);
   var WORKSHOP = qs.get("w") || "aiic";
-  var ROTATE = (parseInt(qs.get("rotate"), 10) || 14) * 1000;
   var reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   document.getElementById("ws").textContent = WORKSHOP;
 
-  /* Three boards. Order matters: the one that teaches the lesson leads, and
-     raw volume is last and labelled as the vanity metric it is. */
-  var BOARDS = [
-    { key: "cache_discipline", title: "Cache discipline",
-      why: "Reusing a session instead of restarting it. Highest share of input served from cache wins — this is the number that actually moves your bill.",
-      value: function (e) { return (e.cache_rate * 100).toFixed(1) + "%"; },
-      weight: function (e) { return e.cache_rate; } },
-    { key: "tier_discipline", title: "Tier discipline",
-      why: "Getting the work done without reaching for the top-tier model every time. Highest share of turns on Sonnet or Haiku wins.",
-      value: function (e) { return (e.tier_rate * 100).toFixed(1) + "%"; },
-      weight: function (e) { return e.tier_rate; } },
-    { key: "volume", title: "Raw volume",
-      why: "Most tokens moved. Fun to watch, not a virtue — the two boards before this one are the ones worth winning.",
-      value: function (e) { return fmtTokens(e.tokens); },
-      weight: function (e) { return e.tokens; } }
-  ];
-
-  var current = 0, data = null;
+  var data = null;
+  var currentView = 0;
 
   function fmtTokens(n) {
     if (n >= 1e9) return (n / 1e9).toFixed(2) + "B";
@@ -151,6 +356,11 @@ footer code{color:var(--phos);background:var(--panel);border:1px solid var(--rul
   }
   function fmtUSD(v) {
     return "$" + (v >= 1000 ? Math.round(v).toLocaleString() : v.toFixed(2));
+  }
+  function fmtWhen(ts) {
+    if (!ts) return "—";
+    var d = new Date(ts * 1000);
+    return d.toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
   }
 
   function countTo(el, target, fmt) {
@@ -169,57 +379,137 @@ footer code{color:var(--phos);background:var(--panel);border:1px solid var(--rul
     countTo(document.getElementById("r-cost"), room.total_cost_usd, fmtUSD);
   }
 
-  function renderBoard() {
-    var b = BOARDS[current];
-    document.getElementById("title").textContent = b.title;
-    document.getElementById("why").textContent = b.why;
+  function escapeText(s) { return String(s == null ? "" : s); }
 
-    Array.prototype.forEach.call(document.querySelectorAll(".dots span"), function (d, i) {
-      d.className = i === current ? "on" : "";
-    });
-
-    var rows = document.getElementById("rows");
-    var list = (data && data[b.key]) || [];
+  function renderOverview() {
+    var list = ((data && data.volume) || []).slice().sort(function (a, b) { return b.cost_usd - a.cost_usd; });
+    var tbody = document.getElementById("table-overview");
 
     if (!list.length) {
-      rows.innerHTML = '<div class="empty">no one has pushed to this board yet…</div>';
+      document.getElementById("hero-name").textContent = "—";
+      document.getElementById("hero-stats").textContent = "waiting for the first push…";
+      tbody.innerHTML = '<tr><td colspan="5" class="empty">no one has pushed yet…</td></tr>';
       return;
     }
 
-    var peak = Math.max.apply(null, list.map(b.weight)) || 1;
-    rows.innerHTML = list.map(function (e, i) {
-      var pct = Math.max(b.weight(e) / peak * 100, 1.5);
-      return '<div class="row' + (i === 0 ? " top" : "") + '">' +
-        '<div class="rk">' + String(i + 1).padStart(2, "0") + "</div>" +
-        '<div class="who"></div>' +
-        '<div class="meter"><i data-w="' + pct.toFixed(1) + '"></i></div>' +
-        '<div class="val">' + b.value(e) + "</div></div>";
-    }).join("");
+    var leader = list[0];
+    document.getElementById("hero-name").textContent = leader.handle;
+    document.getElementById("hero-stats").innerHTML =
+      fmtUSD(leader.cost_usd) + ' <span>spent</span> &nbsp;·&nbsp; ' + fmtTokens(leader.tokens) + ' <span>tokens</span>';
 
-    // Handles are attendee-supplied. Set them as text, never as HTML.
-    Array.prototype.forEach.call(rows.querySelectorAll(".who"), function (el, i) {
+    tbody.innerHTML = list.map(function (e, i) {
+      return '<tr>' +
+        '<td class="rank' + (i === 0 ? " r1" : "") + '">#' + (i + 1) + '</td>' +
+        '<td class="handle"></td>' +
+        '<td class="num">' + fmtTokens(e.tokens) + '</td>' +
+        '<td class="num">' + fmtUSD(e.cost_usd) + '</td>' +
+        '<td class="dim">' + fmtWhen(e.updated_at) + '</td></tr>';
+    }).join("");
+    Array.prototype.forEach.call(tbody.querySelectorAll(".handle"), function (el, i) {
+      el.textContent = list[i].handle; // attendee-supplied; text, never HTML
+    });
+  }
+
+  function renderMetricTab(key, tbodyId, valueFn) {
+    var list = (data && data[key]) || [];
+    var tbody = document.getElementById(tbodyId);
+    if (!list.length) {
+      tbody.innerHTML = '<tr><td colspan="3" class="empty">no one qualifies yet — boards need 5+ turns pushed…</td></tr>';
+      return;
+    }
+    var peak = Math.max.apply(null, list.map(valueFn)) || 1;
+    tbody.innerHTML = list.map(function (e, i) {
+      var pct = Math.max(valueFn(e) / peak * 100, 2);
+      return '<tr>' +
+        '<td class="rank' + (i === 0 ? " r1" : "") + '">#' + (i + 1) + '</td>' +
+        '<td class="handle"></td>' +
+        '<td><div class="meter-wrap"><div class="meter"><div style="width:' + pct.toFixed(1) + '%"></div></div>' +
+        '<div class="metric-pct">' + (valueFn(e) * 100).toFixed(0) + '%</div></div></td></tr>';
+    }).join("");
+    Array.prototype.forEach.call(tbody.querySelectorAll(".handle"), function (el, i) {
       el.textContent = list[i].handle;
     });
+  }
 
-    var bars = rows.querySelectorAll(".meter i");
-    if (reduce || !window.gsap) {
-      Array.prototype.forEach.call(bars, function (el) { el.style.width = el.dataset.w + "%"; });
-    } else {
-      gsap.fromTo(rows.querySelectorAll(".row"),
-        { opacity: 0, x: -12 },
-        { opacity: 1, x: 0, duration: .4, stagger: .04, ease: "power2.out" });
-      Array.prototype.forEach.call(bars, function (el, i) {
-        gsap.fromTo(el, { width: 0 },
-          { width: el.dataset.w + "%", duration: .7, delay: .05 * i, ease: "power2.out" });
-      });
+  function renderVolume() {
+    var list = ((data && data.volume) || []).slice().sort(function (a, b) { return b.tokens - a.tokens; });
+    var tbody = document.getElementById("table-volume");
+    if (!list.length) {
+      tbody.innerHTML = '<tr><td colspan="3" class="empty">no one has pushed yet…</td></tr>';
+      return;
     }
+    tbody.innerHTML = list.map(function (e, i) {
+      return '<tr><td class="rank' + (i === 0 ? " r1" : "") + '">#' + (i + 1) + '</td>' +
+        '<td class="handle"></td><td class="num">' + fmtTokens(e.tokens) + '</td></tr>';
+    }).join("");
+    Array.prototype.forEach.call(tbody.querySelectorAll(".handle"), function (el, i) {
+      el.textContent = list[i].handle;
+    });
+  }
+
+  function renderActive() {
+    if (currentView === 0) renderOverview();
+    else if (currentView === 1) renderMetricTab("cache_discipline", "table-cache", function (e) { return e.cache_rate; });
+    else if (currentView === 2) renderMetricTab("tier_discipline", "table-tier", function (e) { return e.tier_rate; });
+    else renderVolume();
   }
 
   function apply(payload) {
     data = payload;
     if (payload.room) renderRoom(payload.room);
-    renderBoard();
+    renderActive();
   }
+
+  window.showView = function (idx) {
+    currentView = idx;
+    document.querySelectorAll(".rv").forEach(function (el) {
+      el.classList.toggle("active", Number(el.dataset.view) === idx);
+    });
+    for (var i = 0; i < 4; i++) {
+      var tab = document.getElementById("view-tab-" + i);
+      tab.classList.toggle("active", i === idx);
+      tab.setAttribute("aria-selected", i === idx);
+    }
+    renderActive();
+  };
+
+  window.submitWaitlist = function (ev, product, noteId) {
+    ev.preventDefault();
+    var form = ev.target;
+    var input = form.querySelector("input[type=email]");
+    var btn = form.querySelector("button");
+    var note = document.getElementById(noteId);
+    var email = input.value.trim();
+
+    btn.disabled = true;
+    note.className = "wl-note";
+    note.textContent = "joining…";
+
+    fetch("/api/waitlist", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ product: product, email: email, workshop_id: WORKSHOP })
+    })
+      .then(function (r) { return r.json().then(function (b) { return { ok: r.ok, body: b }; }); })
+      .then(function (res) {
+        btn.disabled = false;
+        if (res.ok) {
+          note.className = "wl-note ok";
+          note.textContent = "You're on the list.";
+          form.reset();
+        } else {
+          note.className = "wl-note err";
+          note.textContent = res.body.error || "Something went wrong — try again.";
+        }
+      })
+      .catch(function () {
+        btn.disabled = false;
+        note.className = "wl-note err";
+        note.textContent = "Couldn't reach the server — try again.";
+      });
+
+    return false;
+  };
 
   function setStatus(text, cls) {
     document.getElementById("status").textContent = text;
@@ -255,21 +545,15 @@ footer code{color:var(--phos);background:var(--panel);border:1px solid var(--rul
     ws.onclose = function () {
       startPolling();
       retry = Math.min(retry + 1, 6);
-      // Venue wifi often blocks websockets outright. After a couple of failed
-      // attempts stop saying "reconnecting" — polling is working and the board
-      // is live, just at 8s instead of instantly.
       setStatus(retry > 2 ? "polling" : "reconnecting", retry > 2 ? "" : "off");
       setTimeout(connect, 1000 * retry);
     };
     ws.onerror = function () { try { ws.close(); } catch (e) {} };
   }
 
-  // Keep the socket warm through idle stretches between attendee pushes.
   setInterval(function () {
     if (ws && ws.readyState === 1) { try { ws.send("ping"); } catch (e) {} }
   }, 30000);
-
-  setInterval(function () { current = (current + 1) % BOARDS.length; renderBoard(); }, ROTATE);
 
   connect();
   startPolling();
