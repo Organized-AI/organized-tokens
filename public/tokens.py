@@ -558,10 +558,16 @@ def collect(since):
     return tally
 
 
-def cmd_join(code, handle):
+def cmd_join(code, handle, watch_after=True, interval=60):
     if not handle:
-        print("\n  --join needs a name: --join %s --as \"Your Name\"\n" % code)
-        return 1
+        # No --as given: ask, rather than making novices retype a quoted flag.
+        try:
+            handle = input("\n  What name should show on the board? ").strip()
+        except EOFError:
+            handle = ""
+        if not handle:
+            print("\n  A name is required: --join %s --as \"Your Name\"\n" % code)
+            return 1
 
     since = int(datetime.now(timezone.utc).timestamp())
     sample = build_payload(collect(since - 3600), since)
@@ -572,7 +578,7 @@ def cmd_join(code, handle):
         print("    " + line)
     print("\n  Not included: prompts, completions, file paths, project names,")
     print("  repo names, or any text from a transcript. Counts and model")
-    print("  names only. Your handle is whatever you type after --as.")
+    print("  names only. Your handle is the name you just gave.")
     print("\n  You can remove yourself at any time with:  tokens.py --leave")
 
     try:
@@ -598,8 +604,12 @@ def cmd_join(code, handle):
     print("\n  Joined %s as %s" % (res.get("workshop_name") or res["workshop"], res["handle"]))
     print("  Board: %s" % res.get("board_url", LEADERBOARD))
     print("  Credentials: %s (chmod 600)" % CRED_PATH)
-    print("\n  Now run:  python3 tokens.py --watch\n")
-    return 0
+    if not watch_after:
+        print("\n  Now run:  python3 tokens.py --watch\n")
+        return 0
+    # Joining without watching is never what anyone wants at a workshop, so
+    # flow straight into it. Ctrl-C stops pushing; --leave removes you.
+    return cmd_watch(interval)
 
 
 def cmd_push(quiet=False):
@@ -936,8 +946,10 @@ def main():
     ap.add_argument("--out", default="", help="where to write the report")
 
     w = ap.add_argument_group("workshop leaderboard (opt-in, sends counts only)")
-    w.add_argument("--join", metavar="CODE", help="join a workshop leaderboard")
-    w.add_argument("--as", dest="handle", metavar="NAME", help="the name shown on the board")
+    w.add_argument("--join", metavar="CODE", help="join a workshop leaderboard and start watching")
+    w.add_argument("--as", dest="handle", metavar="NAME",
+                   help="the name shown on the board (asked interactively if omitted)")
+    w.add_argument("--no-watch", action="store_true", help="join only; don't start watching")
     w.add_argument("--push", action="store_true", help="push your counts once")
     w.add_argument("--watch", action="store_true", help="push your counts on a loop")
     w.add_argument("--interval", type=int, default=60, help="seconds between pushes (min 20)")
@@ -946,7 +958,8 @@ def main():
     args = ap.parse_args()
 
     if args.join:
-        return cmd_join(args.join.strip().upper(), (args.handle or "").strip())
+        return cmd_join(args.join.strip().upper(), (args.handle or "").strip(),
+                        watch_after=not args.no_watch, interval=max(args.interval, 20))
     if args.leave:
         return cmd_leave()
     if args.push:

@@ -193,38 +193,23 @@ footer code{color:var(--gold2);background:var(--card);border:1px solid var(--lin
 
   <div class="join-card">
     <div class="eyebrow">Getting on the board</div>
-    <div class="join-title">4 commands. No install beyond Python 3, which macOS and Linux already have.</div>
+    <div class="join-title">One command. No install beyond Python 3, which macOS and Linux already have.</div>
     <p class="join-ref">Workshop code <b id="join-code">AIIC-2026</b> · script served from <b>tokens.organizedai.vip</b></p>
     <div class="steps">
       <div class="step">
         <div class="step-num">1</div>
         <div class="step-body">
-          <p class="step-label">Get the script — one time, saved to a file:</p>
-          <code class="cmd">curl -sL https://tokens.organizedai.vip/tokens.py -o tokens.py</code>
+          <p class="step-label">Paste this into a terminal:</p>
+          <code class="cmd" id="join-cmd">curl -sL https://tokens.organizedai.vip/tokens.py -o tokens.py &amp;&amp; python3 tokens.py --join AIIC-2026</code>
+          <p class="step-note">It asks for the name to show on the board, prints the exact payload it would upload, and waits. Read it, type <b style="color:var(--text)">join</b>, press Enter — anything else cancels. Then leave the window open: it pushes your counts automatically.</p>
         </div>
       </div>
       <div class="step">
         <div class="step-num">2</div>
         <div class="step-body">
-          <p class="step-label">Join with the name you want shown on the board:</p>
-          <code class="cmd" id="join-cmd">python3 tokens.py --join AIIC-2026 --as "Your Name"</code>
-          <p class="step-note">Prints the exact payload before sending anything. Read it, type <b style="color:var(--text)">join</b>, press Enter. Anything else cancels — nothing is uploaded.</p>
-        </div>
-      </div>
-      <div class="step">
-        <div class="step-num">3</div>
-        <div class="step-body">
-          <p class="step-label">Start watching — this is what actually puts you on the board:</p>
-          <code class="cmd">python3 tokens.py --watch</code>
-          <p class="step-note">Leave it running in a terminal tab. Ctrl-C stops pushing — you stay listed until you leave.</p>
-        </div>
-      </div>
-      <div class="step">
-        <div class="step-num">4</div>
-        <div class="step-body">
           <p class="step-label">Done for the day? Remove yourself:</p>
           <code class="cmd">python3 tokens.py --leave</code>
-          <p class="step-note">Takes you off the board and deletes the local credential file.</p>
+          <p class="step-note">Takes you off the board and deletes the local credential file. (Ctrl-C alone just stops pushing — you stay listed.)</p>
         </div>
       </div>
     </div>
@@ -334,7 +319,7 @@ footer code{color:var(--gold2);background:var(--card);border:1px solid var(--lin
 </div>
 
 <footer>
-  <span>Join: <code id="joincmd">python3 tokens.py --join AIIC-2026 --as "Your Name"</code></span>
+  <span>Join: <code id="joincmd">curl -sL tokens.organizedai.vip/tokens.py -o tokens.py &amp;&amp; python3 tokens.py --join AIIC-2026</code></span>
   <span id="ws">—</span>
 </footer>
 
