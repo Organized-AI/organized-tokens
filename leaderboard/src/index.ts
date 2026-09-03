@@ -19,6 +19,7 @@ interface Env {
   ROOM: DurableObjectNamespace;
   ASSETS: Fetcher;
   ADMIN_SECRET: string;
+  LUMA_API_KEY: string;
 }
 
 const PUSH_MIN_INTERVAL = 20; // seconds between accepted pushes per attendee
@@ -47,6 +48,19 @@ function newToken(): string {
   const b = new Uint8Array(24);
   crypto.getRandomValues(b);
   return [...b].map((x) => x.toString(16).padStart(2, "0")).join("");
+}
+
+/** Unbiased random index in [0, n) via rejection sampling — no modulo bias. */
+function randomIndex(n: number): number {
+  if (n <= 1) return 0;
+  const max = Math.floor(0x100000000 / n) * n;
+  const buf = new Uint32Array(1);
+  let x: number;
+  do {
+    crypto.getRandomValues(buf);
+    x = buf[0];
+  } while (x >= max);
+  return x % n;
 }
 
 /** Handles are shown on a projector. Keep them printable and short. */
@@ -194,7 +208,38 @@ async function loadBoard(env: Env, workshopId: string) {
        FROM stats s JOIN attendees a ON a.token_hash = s.token_hash
       WHERE s.workshop_id = ?`
   ).bind(workshopId).all<Row>();
-  return boards(results || []);
+  return { ...boards(results || []), presenters: await presentersInfo(env, workshopId) };
+}
+
+// ---------------------------------------------------------------------------
+// Presenter lottery — draws are persisted one at a time (true Fisher-Yates,
+// one step per draw) so the order survives a refresh and reads as an actual
+// live drawing rather than a shuffle computed all at once behind the scenes.
+// ---------------------------------------------------------------------------
+
+async function presentersInfo(env: Env, workshopId: string) {
+  const presentersRes = await env.DB.prepare(
+    `SELECT id, name FROM guests WHERE workshop_id = ? AND presenting = 1`
+  ).bind(workshopId).all<{ id: string; name: string }>();
+  const presenters = presentersRes.results || [];
+
+  const drawnRes = await env.DB.prepare(
+    `SELECT l.position, g.name
+       FROM lottery l JOIN guests g ON g.workshop_id = l.workshop_id AND g.id = l.guest_id
+      WHERE l.workshop_id = ? ORDER BY l.position ASC`
+  ).bind(workshopId).all<{ position: number; name: string }>();
+  const drawn = drawnRes.results || [];
+
+  const registeredRes = await env.DB.prepare(
+    `SELECT COUNT(*) as c FROM guests WHERE workshop_id = ?`
+  ).bind(workshopId).first<{ c: number }>();
+
+  return {
+    registered: registeredRes?.c || 0,
+    presenting_total: presenters.length,
+    drawn,
+    remaining: Math.max(presenters.length - drawn.length, 0),
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -390,6 +435,133 @@ export default {
       const id = String(body?.id || "");
       await env.DB.prepare(`UPDATE workshops SET open = 0 WHERE id = ?`).bind(id).run();
       return json({ ok: true, closed: id });
+    }
+
+    // --- admin: pull registrants from Luma, tag who opted in to present ---
+    if (path === "/api/luma/sync" && req.method === "POST") {
+      if (req.headers.get("x-admin-secret") !== env.ADMIN_SECRET) return json({ error: "nope" }, 401);
+      const body = await readJson(req);
+      if (!body) return json({ error: "bad body" }, 400);
+
+      const workshopId = String(body.workshop_id || "").trim();
+      const eventId = String(body.luma_event_id || "").trim();
+      // Optional: pin an exact registration_questions[].id. Omitted, this
+      // falls back to any question whose label contains "present" — good
+      // enough for one event, worth pinning if the wording is ambiguous.
+      const questionId = body.question_id ? String(body.question_id) : null;
+      if (!workshopId || !eventId) {
+        return json({ error: "workshop_id and luma_event_id are required" }, 400);
+      }
+      if (!env.LUMA_API_KEY) return json({ error: "LUMA_API_KEY not configured" }, 500);
+
+      let cursor: string | null = null;
+      let synced = 0;
+      let presenting = 0;
+      const t = now();
+      const writes: D1PreparedStatement[] = [];
+
+      for (let page = 0; page < 20; page++) {
+        const qs = new URLSearchParams({ event_api_id: eventId, pagination_limit: "50" });
+        if (cursor) qs.set("pagination_cursor", cursor);
+        let res: Response;
+        try {
+          res = await fetch(`https://api.lu.ma/public/v1/event/get-guests?${qs}`, {
+            headers: { "x-luma-api-key": env.LUMA_API_KEY, "user-agent": "organized-tokens/0.1" },
+          });
+        } catch {
+          return json({ error: "could not reach the Luma API" }, 502);
+        }
+        if (!res.ok) return json({ error: `Luma API returned ${res.status}` }, 502);
+        const data = (await res.json()) as {
+          entries?: Array<{ guest?: Record<string, any> } & Record<string, any>>;
+          has_more?: boolean;
+          next_cursor?: string;
+        };
+
+        for (const entry of data.entries || []) {
+          const g = entry.guest || entry;
+          if (g.approval_status !== "approved") continue;
+          const answers: Array<Record<string, any>> = g.registration_answers || [];
+          const isPresenting = answers.some((a) =>
+            questionId
+              ? a.question_id === questionId && a.answer === "Yes"
+              : /present/i.test(String(a.label || "")) && a.answer === "Yes"
+          );
+          writes.push(
+            env.DB.prepare(
+              `INSERT INTO guests (id, workshop_id, name, email, presenting, approval, synced_at)
+               VALUES (?,?,?,?,?,?,?)
+               ON CONFLICT(workshop_id, id) DO UPDATE SET
+                 name=excluded.name, email=excluded.email, presenting=excluded.presenting,
+                 approval=excluded.approval, synced_at=excluded.synced_at`
+            ).bind(
+              String(g.api_id || g.id || ""),
+              workshopId,
+              String(g.name || "Guest").slice(0, 80),
+              g.email ? String(g.email).slice(0, 254) : null,
+              isPresenting ? 1 : 0,
+              String(g.approval_status || ""),
+              t
+            )
+          );
+          synced++;
+          if (isPresenting) presenting++;
+        }
+
+        if (!data.has_more || !data.next_cursor) break;
+        cursor = data.next_cursor;
+      }
+
+      for (let i = 0; i < writes.length; i += 40) {
+        await env.DB.batch(writes.slice(i, i + 40));
+      }
+
+      await broadcast(env, workshopId);
+      return json({ ok: true, synced, presenting });
+    }
+
+    // --- admin: draw the next presenter, one at a time --------------------
+    if (path === "/api/lottery/draw" && req.method === "POST") {
+      if (req.headers.get("x-admin-secret") !== env.ADMIN_SECRET) return json({ error: "nope" }, 401);
+      const body = await readJson(req);
+      const workshopId = String(body?.workshop_id || "").trim();
+      if (!workshopId) return json({ error: "workshop_id required" }, 400);
+
+      const pool = await env.DB.prepare(
+        `SELECT g.id, g.name FROM guests g
+          WHERE g.workshop_id = ? AND g.presenting = 1
+            AND NOT EXISTS (
+              SELECT 1 FROM lottery l WHERE l.workshop_id = g.workshop_id AND l.guest_id = g.id
+            )`
+      ).bind(workshopId).all<{ id: string; name: string }>();
+
+      const remaining = pool.results || [];
+      if (!remaining.length) return json({ error: "no one left to draw" }, 409);
+
+      const pick = remaining[randomIndex(remaining.length)];
+
+      const posRow = await env.DB.prepare(
+        `SELECT COALESCE(MAX(position), 0) as m FROM lottery WHERE workshop_id = ?`
+      ).bind(workshopId).first<{ m: number }>();
+      const position = (posRow?.m || 0) + 1;
+
+      await env.DB.prepare(
+        `INSERT INTO lottery (workshop_id, guest_id, position, drawn_at) VALUES (?,?,?,?)`
+      ).bind(workshopId, pick.id, position, now()).run();
+
+      await broadcast(env, workshopId);
+      return json({ ok: true, position, name: pick.name, remaining: remaining.length - 1 });
+    }
+
+    // --- admin: clear the draw and start over ------------------------------
+    if (path === "/api/lottery/reset" && req.method === "POST") {
+      if (req.headers.get("x-admin-secret") !== env.ADMIN_SECRET) return json({ error: "nope" }, 401);
+      const body = await readJson(req);
+      const workshopId = String(body?.workshop_id || "").trim();
+      if (!workshopId) return json({ error: "workshop_id required" }, 400);
+      await env.DB.prepare(`DELETE FROM lottery WHERE workshop_id = ?`).bind(workshopId).run();
+      await broadcast(env, workshopId);
+      return json({ ok: true });
     }
 
     // --- static: the projector board -------------------------------------

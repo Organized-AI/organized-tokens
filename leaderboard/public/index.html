@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Organized Tokens — Workshop Leaderboard</title>
+<title>Organized AI Leaderboard</title>
 <link rel="icon" href="https://organizedai.vip/IMG_1110.PNG">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -160,6 +160,44 @@ tbody tr:hover{background:var(--card)}
 .wl-note.ok{color:var(--gold2)}
 .wl-note.err{color:var(--red)}
 
+/* ---- presenters / lottery ---- */
+.pool-strip{display:flex;gap:22px;margin-bottom:20px;font-family:var(--mono);font-size:12px;
+  color:var(--muted);flex-wrap:wrap}
+.pool-strip b{color:var(--text);font-weight:700}
+.draw-list{list-style:none;margin:0 0 24px;padding:0;display:flex;flex-direction:column;gap:8px}
+.draw-list li{display:flex;align-items:center;gap:16px;background:var(--card);
+  border:1px solid var(--line);border-radius:6px;padding:12px 18px}
+.draw-list li:first-child{border-left:3px solid var(--gold);background:var(--card2)}
+.draw-list .pos{font-family:var(--mono);font-size:20px;font-weight:800;color:var(--muted);
+  width:34px;text-align:right}
+.draw-list li:first-child .pos{color:var(--gold)}
+.draw-list .pname{font-size:16px;font-weight:600}
+.draw-empty{color:var(--muted);font-size:13.5px;padding:16px 0}
+
+.host{margin-top:8px;border:1px solid var(--line);border-radius:8px;background:var(--card)}
+.host summary{cursor:pointer;list-style:none;padding:12px 16px;font-family:var(--mono);
+  font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);
+  display:flex;align-items:center;gap:8px}
+.host summary::-webkit-details-marker{display:none}
+.host summary::before{content:"▸";color:var(--gold2)}
+.host[open] summary::before{content:"▾"}
+.host-body{padding:4px 16px 18px}
+.host-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.host-row input{background:var(--bg);border:1px solid var(--line);border-radius:5px;
+  padding:9px 11px;color:var(--text);font:inherit;font-family:var(--mono);font-size:12.5px;
+  flex:1;min-width:160px}
+.host-row input:focus{outline:2px solid var(--gold2);outline-offset:1px}
+.host-row button{background:var(--card2);border:1px solid var(--line);color:var(--text);
+  border-radius:5px;padding:9px 14px;font:inherit;font-size:12.5px;font-weight:600;
+  cursor:pointer;white-space:nowrap}
+.host-row button.primary{background:var(--gold);color:#1a1608;border-color:var(--gold)}
+.host-row button:hover{border-color:var(--gold2)}
+.host-row button:disabled{opacity:.55;cursor:default}
+.host-note{font-size:11.5px;color:var(--muted);margin:2px 0 12px;line-height:1.5}
+.host-status{font-family:var(--mono);font-size:11.5px;color:var(--muted);min-height:15px}
+.host-status.ok{color:var(--gold2)}
+.host-status.err{color:var(--red)}
+
 footer{border-top:1px solid var(--line);padding:16px 20px;max-width:1040px;margin:0 auto;
   display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;
   font-family:var(--mono);font-size:11.5px;color:var(--muted);letter-spacing:.04em}
@@ -179,13 +217,13 @@ footer code{color:var(--gold2);background:var(--card);border:1px solid var(--lin
       <img src="https://organizedai.vip/IMG_1110.PNG" alt="Organized AI handshake logo" loading="eager" decoding="async">
       ORGANIZED <span class="ai">AI</span>
     </div>
-    <div class="nav-kicker" id="workshop-kicker">workshop leaderboard</div>
+    <div class="nav-kicker" id="workshop-kicker">coworking day</div>
   </div>
 </nav>
 
 <div class="shell">
-  <div class="eyebrow" id="eyebrow">AIIC Sales &amp; Marketing Masterclass</div>
-  <h1>Workshop Leaderboard</h1>
+  <div class="eyebrow" id="eyebrow">The Ultimate Coworking Day</div>
+  <h1>Organized AI Leaderboard</h1>
   <p class="sub">Four views of one session: an at-a-glance <b>overview</b>, then three habit boards —
     <b>cache discipline</b>, <b>tier discipline</b>, and <b>raw volume</b> (labeled as fun, not virtue).
     Every view shows only counts and model names — no prompts, file paths, or project names ever leave
@@ -194,13 +232,13 @@ footer code{color:var(--gold2);background:var(--card);border:1px solid var(--lin
   <div class="join-card">
     <div class="eyebrow">Getting on the board</div>
     <div class="join-title">One command. No install beyond Python 3, which macOS and Linux already have.</div>
-    <p class="join-ref">Workshop code <b id="join-code">AIIC-2026</b> · script served from <b>tokens.organizedai.vip</b></p>
+    <p class="join-ref">Workshop code <b id="join-code">COWORK-0903</b> · script served from <b>tokens.organizedai.vip</b></p>
     <div class="steps">
       <div class="step">
         <div class="step-num">1</div>
         <div class="step-body">
           <p class="step-label">Paste this into a terminal — put the name you want the room to see after <b style="color:var(--text)">--as</b>:</p>
-          <code class="cmd" id="join-cmd">curl -sL https://tokens.organizedai.vip/tokens.py -o tokens.py &amp;&amp; python3 tokens.py --join AIIC-2026 --as "Your Name"</code>
+          <code class="cmd" id="join-cmd">curl -sL https://tokens.organizedai.vip/tokens.py -o tokens.py &amp;&amp; python3 tokens.py --join COWORK-0903 --as "Your Name"</code>
           <p class="step-note">It prints the exact payload it would upload, and waits. Read it, type <b style="color:var(--text)">join</b>, press Enter — anything else cancels. Then leave the window open: it pushes your counts automatically.</p>
         </div>
       </div>
@@ -231,6 +269,7 @@ footer code{color:var(--gold2);background:var(--card);border:1px solid var(--lin
     <button class="good" onclick="showView(1)" id="view-tab-1" role="tab" aria-selected="false"><span class="dot"></span>Cache discipline</button>
     <button class="good" onclick="showView(2)" id="view-tab-2" role="tab" aria-selected="false"><span class="dot"></span>Tier discipline</button>
     <button class="vanity" onclick="showView(3)" id="view-tab-3" role="tab" aria-selected="false"><span class="dot"></span>Raw volume</button>
+    <button class="neutral" onclick="showView(4)" id="view-tab-4" role="tab" aria-selected="false"><span class="dot"></span>Presenters</button>
   </div>
 
   <div class="rotation-views">
@@ -315,11 +354,46 @@ footer code{color:var(--gold2);background:var(--card);border:1px solid var(--lin
         </table>
       </div>
     </div>
+
+    <div class="rv" data-view="4">
+      <div class="view-title">Presenters</div>
+      <p class="view-desc">Everyone who registered on Luma and said yes to presenting a project, drawn one at a time — a real lottery, not a shuffle computed in advance.</p>
+
+      <div class="pool-strip">
+        <span><b id="p-registered">0</b> registered</span>
+        <span><b id="p-presenting">0</b> presenting</span>
+        <span><b id="p-remaining">0</b> left to draw</span>
+      </div>
+
+      <ol class="draw-list" id="draw-list">
+        <li class="draw-empty" style="list-style:none">no one has been drawn yet</li>
+      </ol>
+
+      <details class="host">
+        <summary>Host controls</summary>
+        <div class="host-body">
+          <p class="host-note">Paste the admin secret once — it's kept only in this browser's local storage, never sent anywhere except these three requests.</p>
+          <div class="host-row">
+            <input type="password" id="admin-secret" placeholder="admin secret" autocomplete="off">
+            <button onclick="saveAdminSecret()">Save</button>
+          </div>
+          <div class="host-row">
+            <input type="text" id="luma-event-id" placeholder="luma event id, e.g. evt-...">
+            <button onclick="syncLuma()" id="sync-btn">Sync from Luma</button>
+          </div>
+          <div class="host-row">
+            <button class="primary" onclick="drawNext()" id="draw-btn">Draw next presenter</button>
+            <button onclick="resetLottery()" id="reset-btn">Reset draw</button>
+          </div>
+          <div class="host-status" id="host-status"></div>
+        </div>
+      </details>
+    </div>
   </div>
 </div>
 
 <footer>
-  <span>Join: <code id="joincmd">curl -sL tokens.organizedai.vip/tokens.py -o tokens.py &amp;&amp; python3 tokens.py --join AIIC-2026 --as "Your Name"</code></span>
+  <span>Join: <code id="joincmd">curl -sL tokens.organizedai.vip/tokens.py -o tokens.py &amp;&amp; python3 tokens.py --join COWORK-0903 --as "Your Name"</code></span>
   <span id="ws">—</span>
 </footer>
 
@@ -328,7 +402,7 @@ footer code{color:var(--gold2);background:var(--card);border:1px solid var(--lin
 (function () {
   "use strict";
   var qs = new URLSearchParams(location.search);
-  var WORKSHOP = qs.get("w") || "aiic";
+  var WORKSHOP = qs.get("w") || "coworking";
   var reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   document.getElementById("ws").textContent = WORKSHOP;
@@ -440,11 +514,31 @@ footer code{color:var(--gold2);background:var(--card);border:1px solid var(--lin
     });
   }
 
+  function renderPresenters() {
+    var p = (data && data.presenters) || { registered: 0, presenting_total: 0, drawn: [], remaining: 0 };
+    document.getElementById("p-registered").textContent = p.registered;
+    document.getElementById("p-presenting").textContent = p.presenting_total;
+    document.getElementById("p-remaining").textContent = p.remaining;
+
+    var list = document.getElementById("draw-list");
+    if (!p.drawn || !p.drawn.length) {
+      list.innerHTML = '<li class="draw-empty" style="list-style:none">no one has been drawn yet</li>';
+      return;
+    }
+    list.innerHTML = p.drawn.map(function (d) {
+      return '<li><span class="pos">#' + d.position + '</span><span class="pname"></span></li>';
+    }).join("");
+    Array.prototype.forEach.call(list.querySelectorAll(".pname"), function (el, i) {
+      el.textContent = p.drawn[i].name; // Luma-supplied name; text, never HTML
+    });
+  }
+
   function renderActive() {
     if (currentView === 0) renderOverview();
     else if (currentView === 1) renderMetricTab("cache_discipline", "table-cache", function (e) { return e.cache_rate; });
     else if (currentView === 2) renderMetricTab("tier_discipline", "table-tier", function (e) { return e.tier_rate; });
-    else renderVolume();
+    else if (currentView === 3) renderVolume();
+    else renderPresenters();
   }
 
   function apply(payload) {
@@ -458,12 +552,92 @@ footer code{color:var(--gold2);background:var(--card);border:1px solid var(--lin
     document.querySelectorAll(".rv").forEach(function (el) {
       el.classList.toggle("active", Number(el.dataset.view) === idx);
     });
-    for (var i = 0; i < 4; i++) {
+    for (var i = 0; i < 5; i++) {
       var tab = document.getElementById("view-tab-" + i);
       tab.classList.toggle("active", i === idx);
       tab.setAttribute("aria-selected", i === idx);
     }
     renderActive();
+  };
+
+  /* ---- host controls: admin secret stays in this browser only ---- */
+  var ADMIN_KEY = "ot_admin_secret_" + WORKSHOP;
+  var secretInput = document.getElementById("admin-secret");
+  try {
+    var saved = localStorage.getItem(ADMIN_KEY);
+    if (saved) secretInput.value = saved;
+  } catch (e) { /* private browsing etc — just skip persistence */ }
+
+  window.saveAdminSecret = function () {
+    try { localStorage.setItem(ADMIN_KEY, secretInput.value.trim()); } catch (e) {}
+    setHostStatus("saved.", "ok");
+  };
+
+  function setHostStatus(text, cls) {
+    var el = document.getElementById("host-status");
+    el.textContent = text;
+    el.className = "host-status" + (cls ? " " + cls : "");
+  }
+
+  function adminFetch(path, extraBody) {
+    var secret = secretInput.value.trim();
+    if (!secret) { setHostStatus("enter the admin secret first.", "err"); return Promise.reject(); }
+    var body = Object.assign({ workshop_id: WORKSHOP }, extraBody || {});
+    return fetch(path, {
+      method: "POST",
+      headers: { "content-type": "application/json", "x-admin-secret": secret },
+      body: JSON.stringify(body),
+    }).then(function (r) { return r.json().then(function (b) { return { ok: r.ok, body: b }; }); });
+  }
+
+  window.syncLuma = function () {
+    var eventId = document.getElementById("luma-event-id").value.trim();
+    if (!eventId) { setHostStatus("enter the Luma event id (evt-...).", "err"); return; }
+    var btn = document.getElementById("sync-btn");
+    btn.disabled = true;
+    setHostStatus("syncing…");
+    adminFetch("/api/luma/sync", { luma_event_id: eventId })
+      .then(function (res) {
+        btn.disabled = false;
+        if (res.ok) {
+          setHostStatus("synced " + res.body.synced + " guests, " + res.body.presenting + " presenting.", "ok");
+          poll();
+        } else {
+          setHostStatus(res.body.error || "sync failed.", "err");
+        }
+      })
+      .catch(function () { btn.disabled = false; });
+  };
+
+  window.drawNext = function () {
+    var btn = document.getElementById("draw-btn");
+    btn.disabled = true;
+    setHostStatus("drawing…");
+    adminFetch("/api/lottery/draw")
+      .then(function (res) {
+        btn.disabled = false;
+        if (res.ok) {
+          setHostStatus("#" + res.body.position + " — " + res.body.name, "ok");
+          poll();
+        } else {
+          setHostStatus(res.body.error || "draw failed.", "err");
+        }
+      })
+      .catch(function () { btn.disabled = false; });
+  };
+
+  window.resetLottery = function () {
+    if (!confirm("Clear the current draw order for everyone watching this board?")) return;
+    var btn = document.getElementById("reset-btn");
+    btn.disabled = true;
+    setHostStatus("resetting…");
+    adminFetch("/api/lottery/reset")
+      .then(function (res) {
+        btn.disabled = false;
+        setHostStatus(res.ok ? "draw order cleared." : (res.body.error || "reset failed."), res.ok ? "ok" : "err");
+        if (res.ok) poll();
+      })
+      .catch(function () { btn.disabled = false; });
   };
 
   window.submitWaitlist = function (ev, product, noteId) {

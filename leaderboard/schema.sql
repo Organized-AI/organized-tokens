@@ -49,3 +49,29 @@ CREATE TABLE IF NOT EXISTS waitlist (
   created_at  INTEGER NOT NULL
 );
 CREATE UNIQUE INDEX IF NOT EXISTS idx_waitlist_product_email ON waitlist(product, email);
+
+-- Event registrants pulled from the Luma API on admin-triggered sync.
+-- Names reach the public board; emails never do — no endpoint returns them.
+CREATE TABLE IF NOT EXISTS guests (
+  id          TEXT NOT NULL,               -- Luma guest api_id, e.g. gst-...
+  workshop_id TEXT NOT NULL,
+  name        TEXT NOT NULL,
+  email       TEXT,                        -- server-side only
+  presenting  INTEGER NOT NULL DEFAULT 0,  -- answered "Yes" to the presenting question
+  approval    TEXT,                        -- Luma approval_status as of last sync
+  synced_at   INTEGER NOT NULL,
+  PRIMARY KEY (workshop_id, id)
+);
+CREATE INDEX IF NOT EXISTS idx_guests_presenting ON guests(workshop_id, presenting);
+
+-- Lottery draw order. One row per drawn presenter; position is the 1-based
+-- order they present in. A fresh draw picks uniformly among guests in
+-- `guests` (presenting=1) that have no row here yet. Clearing all rows for
+-- a workshop resets the draw.
+CREATE TABLE IF NOT EXISTS lottery (
+  workshop_id TEXT NOT NULL,
+  guest_id    TEXT NOT NULL,
+  position    INTEGER NOT NULL,
+  drawn_at    INTEGER NOT NULL,
+  PRIMARY KEY (workshop_id, guest_id)
+);
