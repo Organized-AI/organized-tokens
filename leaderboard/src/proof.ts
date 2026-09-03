@@ -309,6 +309,38 @@ export async function proofRoutes(req: Request, env: Env, auth: AuthFn): Promise
     const url = new URL(req.url);
     const path = url.pathname;
 
+    // --- assessment.organizedai.vip root -> the configurator ---------
+    // The board root is untouched: this only fires on the assessment host.
+    if (path === "/" || path === "/index.html") {
+      // html_handling is "none", so "/" must be mapped explicitly on every host.
+      const page = url.hostname.startsWith("assessment.") ? "/assess.html" : "/index.html";
+      return env.ASSETS.fetch(new Request(new URL(page, url), req));
+    }
+
+    // --- base prompt, proxied from the pinned upstream tag -----------
+    // Served from here so the page can fetch it same-origin, and so the
+    // text is always the contract at v8.0.0 rather than a vendored copy
+    // that drifts. Nothing is modified server-side; the page prepends the
+    // "Source choices for this run" block the prompt itself defines.
+    if (path === "/apply/prompt.md" && req.method === "GET") {
+      const up = await fetch(
+        "https://raw.githubusercontent.com/Runpoint-Partners/ai-work-assessment/v8.0.0/prompt.md",
+        { cf: { cacheTtl: 3600, cacheEverything: true } } as RequestInit
+      );
+      if (!up.ok) return new Response("upstream prompt unavailable", { status: 502 });
+      return new Response(await up.text(), {
+        headers: { "content-type": "text/markdown; charset=utf-8",
+                   "cache-control": "public, max-age=3600" },
+      });
+    }
+
+    // --- branding seam for a self-hosted render (src/config.js upstream)
+    if (path === "/apply/config.json") {
+      return json({ siteName: "Organized AI",
+                    siteUrl: "https://assessment.organizedai.vip/",
+                    accentColor: "#F2C000" });
+    }
+
     // --- the full sample profile ------------------------------------
     if (path === "/example" || path === "/example/") {
       return env.ASSETS.fetch(new Request(new URL("/example.html", url), req));

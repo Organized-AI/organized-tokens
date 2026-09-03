@@ -4,7 +4,9 @@
   "main": "src/index.ts",
   "compatibility_date": "2026-07-01",
 
-  "assets": { "directory": "./public", "binding": "ASSETS" },
+  // run_worker_first so the Worker can route "/" by hostname; static files
+  // still come from ASSETS via the fall-through at the end of fetch().
+  "assets": { "directory": "./public", "binding": "ASSETS", "run_worker_first": true, "html_handling": "none" },
 
   "d1_databases": [
     {
