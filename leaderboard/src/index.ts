@@ -217,6 +217,17 @@ async function loadBoard(env: Env, workshopId: string) {
 // live drawing rather than a shuffle computed all at once behind the scenes.
 // ---------------------------------------------------------------------------
 
+/** "John Van Lowe" -> "John V." — first name plus last initial, for anyone
+ *  drawn in the lottery. Luma's full registered name stays in D1; this is
+ *  purely a display transform applied where a drawn name is returned. */
+function shortName(fullName: string): string {
+  const parts = fullName.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return fullName;
+  if (parts.length === 1) return parts[0];
+  const last = parts[parts.length - 1];
+  return `${parts[0]} ${last[0].toUpperCase()}.`;
+}
+
 async function presentersInfo(env: Env, workshopId: string) {
   const presentersRes = await env.DB.prepare(
     `SELECT id, name FROM guests WHERE workshop_id = ? AND presenting = 1`
@@ -228,7 +239,7 @@ async function presentersInfo(env: Env, workshopId: string) {
        FROM lottery l JOIN guests g ON g.workshop_id = l.workshop_id AND g.id = l.guest_id
       WHERE l.workshop_id = ? ORDER BY l.position ASC`
   ).bind(workshopId).all<{ position: number; name: string }>();
-  const drawn = drawnRes.results || [];
+  const drawn = (drawnRes.results || []).map((d) => ({ position: d.position, name: shortName(d.name) }));
 
   const registeredRes = await env.DB.prepare(
     `SELECT COUNT(*) as c FROM guests WHERE workshop_id = ?`
@@ -550,7 +561,7 @@ export default {
       ).bind(workshopId, pick.id, position, now()).run();
 
       await broadcast(env, workshopId);
-      return json({ ok: true, position, name: pick.name, remaining: remaining.length - 1 });
+      return json({ ok: true, position, name: shortName(pick.name), remaining: remaining.length - 1 });
     }
 
     // --- admin: clear the draw and start over ------------------------------
