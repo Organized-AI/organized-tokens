@@ -20,7 +20,8 @@
   "migrations": [{ "tag": "v1", "new_sqlite_classes": ["Room"] }],
 
   "routes": [
-    { "pattern": "board.organizedai.vip", "custom_domain": true }
+    { "pattern": "board.organizedai.vip", "custom_domain": true },
+    { "pattern": "assessment.organizedai.vip", "custom_domain": true }
   ],
 
   "observability": { "enabled": true }

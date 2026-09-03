@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Example matching profile — Organized Proof</title>
+<meta name="description" content="A modeled sample profile rendered with the current assessment contract. Evidence derived from work, with an explicit statement of what it cannot establish.">
+<meta name="robots" content="noindex, nofollow">
+<meta property="og:title" content="Example matching profile — Organized Proof">
+<meta property="og:description" content="Show what you've built, not what you claim.">
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+<style>
+:root{
+  --bg:#0E0D09; --s1:#1A1914; --s2:#111009; --bd:#2E2D28; --track:#232219;
+  --y:#F2C000; --yd:#B38A00; --teal:#1D9E75; --teal2:#0F6E56;
+  --coral:#D85A30; --purple:#7F77DD;
+  --tx:#D4D2C8; --mu:#888780; --dm:#5A5852;
+  --m:'Space Mono','Courier New',monospace;
+  --sans:system-ui,-apple-system,'Segoe UI',sans-serif;
+  --nav:212px;
+  --xs:4px; --sm:8px; --md:14px; --lg:22px; --xl:32px; --xxl:52px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--tx);font:15px/1.62 var(--sans);-webkit-font-smoothing:antialiased}
+code{font-family:var(--m);font-size:.88em;color:#EF9F27;background:var(--s2);padding:1px 5px;border-radius:3px}
+a{color:var(--y);text-decoration:none}
+a:hover{text-decoration:underline}
+
+/* ---------- chrome ---------- */
+.topbar{position:fixed;top:0;left:0;right:0;height:52px;background:rgba(17,16,9,.95);
+  backdrop-filter:blur(8px);border-bottom:1px solid var(--bd);display:flex;align-items:center;
+  gap:11px;padding:0 var(--lg);font-family:var(--m);font-size:12.5px;z-index:100}
+.ini{background:var(--y);color:#0E0D09;font-weight:700;padding:3px 8px;border-radius:3px;letter-spacing:1px}
+.topbar .sep{color:var(--dm)}
+.topbar .r{margin-left:auto;color:var(--dm);font-size:10.5px}
+.topbar .r a{color:var(--dm)}
+.topbar .r a:hover{color:var(--y)}
+
+.side{position:fixed;top:52px;left:0;bottom:0;width:var(--nav);background:var(--s1);
+  border-right:1px solid var(--bd);overflow-y:auto;padding:var(--lg) 0}
+.side .g{font-family:var(--m);font-size:9.5px;color:var(--dm);padding:var(--md) var(--lg) 6px;letter-spacing:1.5px}
+.nl{display:block;padding:6px var(--lg);color:var(--mu);font-size:12.5px;border-left:2px solid transparent}
+.nl:hover{color:var(--tx);background:rgba(242,192,0,.04);text-decoration:none}
+.nl.on{color:var(--y);border-left-color:var(--y);background:rgba(242,192,0,.06)}
+
+main{margin-left:var(--nav);padding:52px 0 90px}
+.w{max-width:880px;padding:0 44px}
+
+/* ---------- type ---------- */
+.cm{font-family:var(--m);font-size:10.5px;color:var(--yd);letter-spacing:2px;margin-bottom:var(--md)}
+h1{font-family:var(--m);font-size:34px;color:var(--y);font-weight:700;letter-spacing:-.5px;line-height:1.15}
+h2{font-size:22px;color:var(--tx);font-weight:700;letter-spacing:-.2px;margin-bottom:var(--sm)}
+h3{font-size:15px;color:var(--tx);font-weight:700}
+.lead{color:var(--mu);max-width:620px;margin-bottom:var(--lg)}
+p{margin-bottom:var(--sm);max-width:680px;color:var(--mu)}
+.fine{font-size:12.5px;color:var(--dm);max-width:660px}
+
+.sec{padding:var(--xxl) 0;border-bottom:1px solid var(--bd)}
+.head{padding:var(--xxl) 0 var(--xl);border-bottom:1px solid var(--bd)}
+.head .hl{font-size:18px;color:var(--tx);margin-top:var(--md);max-width:620px;line-height:1.45}
+
+/* ---------- chips ---------- */
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:var(--md)}
+.chip{font-family:var(--m);font-size:9.5px;border:1px solid var(--bd);color:var(--dm);
+  padding:3px 9px;border-radius:3px;letter-spacing:.5px}
+.chip.t{color:var(--teal);border-color:var(--teal2)}
+
+/* ---------- notice ---------- */
+.notice{border:1px solid var(--bd);border-left:2px solid var(--yd);background:var(--s1);
+  border-radius:4px;padding:var(--md) var(--lg);margin-top:var(--lg)}
+.notice .k{font-family:var(--m);font-size:10px;color:var(--yd);letter-spacing:1.5px;margin-bottom:6px}
+.notice p{font-size:13px;margin:0}
+
+/* ---------- distribution ---------- */
+.dist{margin-bottom:var(--xl)}
+.dist .row{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+.dist .lab{font-family:var(--m);font-size:11px;color:var(--y);letter-spacing:1px}
+.dist .pl{margin-left:auto;font-family:var(--m);font-size:10px;color:var(--dm)}
+.dist .val{font-family:var(--m);font-size:23px;color:var(--tx);font-weight:700;margin-top:var(--sm)}
+.dist .unit{font-size:12px;color:var(--dm);margin-left:8px;font-family:var(--sans)}
+.bar{position:relative;height:5px;background:var(--track);border-radius:3px;margin-top:var(--lg)}
+.bar .mid{position:absolute;top:0;height:100%;background:var(--teal2);border-radius:3px;width:0}
+.bar .you{position:absolute;top:-4px;width:2px;height:13px;background:var(--y);opacity:0}
+.bar .you::after{content:"YOU";position:absolute;bottom:16px;left:-9px;font-family:var(--m);
+  font-size:8.5px;color:var(--y);letter-spacing:1px}
+.ends{display:flex;justify-content:space-between;font-family:var(--m);font-size:9.5px;
+  color:var(--dm);margin-top:var(--md);position:relative}
+.ends .m{position:absolute;left:50%;transform:translateX(-50%)}
+.dist .note{font-size:12.5px;color:var(--dm);margin-top:var(--md)}
+
+/* ---------- activity calendar ---------- */
+.cal{margin-top:var(--lg)}
+.cal .months{display:grid;font-family:var(--m);font-size:9px;color:var(--dm);
+  margin-bottom:6px;letter-spacing:.5px}
+.cal .trk{margin-bottom:var(--md)}
+.cal .tl{font-family:var(--m);font-size:9.5px;color:var(--dm);letter-spacing:1.5px;margin-bottom:5px}
+.cal .grid{display:grid;grid-auto-flow:column;grid-template-rows:repeat(7,1fr);gap:2px}
+.cal .c{aspect-ratio:1;border-radius:2px;background:var(--track);opacity:0}
+.cal .corr{display:grid;grid-auto-flow:column;gap:2px;height:4px;margin-top:5px}
+.cal .corr i{border-radius:1px;background:transparent}
+.cal .lg{display:flex;align-items:center;gap:6px;font-family:var(--m);font-size:9px;
+  color:var(--dm);margin-top:var(--md)}
+.cal .lg b{width:9px;height:9px;border-radius:2px;display:inline-block}
+.cal .stat{display:flex;gap:var(--xl);margin-top:var(--md);flex-wrap:wrap}
+.cal .stat div{font-family:var(--m);font-size:11px;color:var(--dm)}
+.cal .stat b{color:var(--tx);font-size:15px;display:block;margin-bottom:2px}
+.cal .cap{font-size:12.5px;color:var(--dm);margin-top:var(--md);max-width:680px}
+
+/* ---------- split ---------- */
+.split{margin:var(--lg) 0}
+.split .lbl{display:flex;justify-content:space-between;font-family:var(--m);font-size:11px;margin-bottom:var(--sm)}
+.split .l{color:var(--y)} .split .rr{color:var(--purple)}
+.sbar{display:flex;height:11px;border-radius:3px;overflow:hidden;background:var(--track)}
+.sbar i{display:block;height:100%;width:0}
+.sbar .a{background:var(--y)} .sbar .b{background:var(--purple)}
+.split .sub{display:flex;justify-content:space-between;font-size:12px;color:var(--dm);margin-top:var(--sm)}
+
+/* ---------- measures ---------- */
+.quick{display:flex;gap:var(--xxl);margin:var(--lg) 0 var(--xl)}
+.quick div{display:flex;align-items:baseline;gap:10px}
+.quick b{font-family:var(--m);font-size:26px;color:var(--tx)}
+.quick span{font-size:12.5px;color:var(--dm);max-width:170px;line-height:1.4}
+
+.meas{display:flex;gap:var(--lg);padding:var(--md) 0;border-bottom:1px solid var(--bd)}
+.meas:last-child{border-bottom:none}
+.meas .n{font-family:var(--m);font-size:10px;color:var(--yd);width:130px;flex-shrink:0;
+  letter-spacing:1px;padding-top:4px}
+.meas .b{flex:1}
+.meas .v{font-family:var(--m);font-size:17px;color:var(--tx);font-weight:700;
+  width:60px;text-align:right;flex-shrink:0}
+.meas h3{margin-bottom:4px}
+.meas p{font-size:13px;margin:0}
+
+/* ---------- class grid ---------- */
+.cls{margin-bottom:var(--lg)}
+.cls .k{font-family:var(--m);font-size:10px;color:var(--yd);letter-spacing:1.5px;margin-bottom:var(--sm)}
+.cls .g{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--md)}
+.cls .g div b{display:block;font-size:13.5px;color:var(--tx);font-weight:700}
+.cls .g div i{font-family:var(--m);font-size:11px;color:var(--y);font-style:normal}
+
+/* ---------- steps ---------- */
+.steps{display:grid;grid-template-columns:1fr 1fr;gap:var(--lg);margin-top:var(--md)}
+.step{border-left:2px solid var(--bd);padding-left:var(--md)}
+.step .n{font-family:var(--m);font-size:10px;color:var(--yd)}
+.step h3{margin:4px 0}
+.step p{font-size:13px;margin:0}
+
+.char{margin-top:var(--xl)}
+.char div{margin-bottom:var(--md)}
+.char .k{font-family:var(--m);font-size:10px;letter-spacing:1.5px;color:var(--teal);margin-bottom:4px}
+.char .k.bend{color:var(--coral)}
+.char p{font-size:13.5px;margin:0}
+
+/* ---------- entries ---------- */
+.ent{padding:var(--lg) 0;border-bottom:1px solid var(--bd)}
+.ent:last-child{border-bottom:none}
+.ent .t{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+.ent .t h3{font-size:15.5px}
+.ent .badge{margin-left:auto;font-family:var(--m);font-size:9.5px;color:var(--teal);letter-spacing:.5px}
+.ent .sub{font-size:12.5px;color:var(--dm);margin-top:3px}
+.ent .kv{margin-top:var(--md)}
+.ent .kv .k{font-family:var(--m);font-size:9.5px;color:var(--yd);letter-spacing:1.5px;margin-bottom:4px}
+.ent .kv p{font-size:13.5px;margin-bottom:var(--md)}
+
+.subj{padding:var(--md) 0;border-bottom:1px solid var(--bd)}
+.subj:last-child{border-bottom:none}
+.subj .t{display:flex;align-items:baseline;gap:12px}
+.subj .sup{margin-left:auto;font-family:var(--m);font-size:9.5px;color:var(--dm)}
+.subj p{font-size:13.5px;margin:5px 0 0}
+
+/* ---------- fit ---------- */
+.fit{padding:var(--lg) 0;border-bottom:1px solid var(--bd)}
+.fit:last-child{border-bottom:none}
+.fit .k{font-family:var(--m);font-size:10px;letter-spacing:1.5px;color:var(--y);margin-bottom:6px}
+.fit.no .k{color:var(--coral)}
+.fit p{font-size:13.5px;margin:5px 0 0}
+
+/* ---------- share card ---------- */
+.card{border:1px solid var(--bd);background:var(--s2);border-radius:4px;aspect-ratio:1200/627;
+  padding:26px 28px;display:flex;flex-direction:column;margin-top:var(--md)}
+.card .ct{display:flex;justify-content:space-between;font-family:var(--m);font-size:9.5px;color:var(--dm)}
+.card .ct em{color:var(--y);font-style:normal}
+.card .cb{display:flex;gap:var(--xl);flex:1;margin-top:var(--lg)}
+.card .cl{flex:1.3} .card .cr{flex:1}
+.card .nm{font-family:var(--m);font-size:22px;color:var(--y);font-weight:700}
+.card .hl{font-size:13px;color:var(--tx);margin-top:8px;line-height:1.45}
+.card .cs{margin-bottom:var(--md)}
+.card .cs .k{font-family:var(--m);font-size:9px;color:var(--yd);letter-spacing:1px}
+.card .cs .v{font-size:12.5px;color:var(--tx);font-weight:700;margin-top:2px;line-height:1.35}
+.card .cf{display:flex;justify-content:space-between;font-family:var(--m);font-size:8.5px;color:var(--dm)}
+.card .mini{margin-top:var(--md)}
+.card .mini .sbar{height:7px}
+.card .mini .cap{font-family:var(--m);font-size:9px;color:var(--dm);margin-top:6px}
+
+/* ---------- panel ---------- */
+.panel{border:1px solid var(--bd);border-left:2px solid var(--coral);background:var(--s1);
+  border-radius:4px;padding:var(--lg) var(--lg)}
+.panel.y{border-left-color:var(--yd)}
+.panel .k{font-family:var(--m);font-size:10px;color:var(--coral);letter-spacing:1.5px;margin-bottom:var(--md)}
+.panel.y .k{color:var(--yd)}
+.panel ul{list-style:none}
+.panel li{font-size:13.5px;color:var(--mu);padding:4px 0 4px 16px;position:relative}
+.panel li::before{content:"—";position:absolute;left:0;color:var(--dm)}
+.panel .nt{font-size:12.5px;color:var(--dm);font-style:italic;margin-top:var(--md);padding-top:var(--md);
+  border-top:1px dashed var(--bd)}
+
+/* ---------- evidence ---------- */
+.ev{display:flex;gap:var(--md);padding:var(--md) 0;border-bottom:1px solid var(--bd)}
+.ev:last-child{border-bottom:none}
+.ev .id{font-family:var(--m);font-size:11px;color:var(--y);font-weight:700;width:52px;flex-shrink:0}
+.ev .src{font-family:var(--m);font-size:9.5px;color:var(--dm);width:82px;flex-shrink:0;padding-top:2px}
+.ev p{font-size:13px;margin:0}
+
+.dl{display:flex;gap:var(--sm);margin-top:var(--lg);flex-wrap:wrap}
+.dl a{font-family:var(--m);font-size:11px;border:1px solid var(--bd);color:var(--mu);
+  padding:8px 14px;border-radius:4px}
+.dl a:hover{border-color:var(--yd);color:var(--y);text-decoration:none}
+
+footer{margin-left:var(--nav);padding:var(--lg) 44px var(--xxl);color:var(--dm);
+  font-family:var(--m);font-size:10.5px}
+
+@media(max-width:900px){
+  .side{display:none} main,footer{margin-left:0}
+  .w{padding:0 20px} h1{font-size:25px}
+  .steps,.cls .g{grid-template-columns:1fr}
+  .quick{flex-direction:column;gap:var(--md)}
+  .card{aspect-ratio:auto} .card .cb{flex-direction:column;gap:var(--lg)}
+  .meas{flex-direction:column;gap:var(--sm)} .meas .n{width:auto} .meas .v{text-align:left}
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <span class="ini">OP</span><span class="sep">/</span><span>Matching Profile</span>
+  <span class="r"><a href="/">assessment.organizedai.vip</a></span>
+</div>
+
+<nav class="side">
+  <div class="g">// PROFILE</div>
+  <a class="nl" href="#top">Overview</a>
+  <a class="nl" href="#s1">01 Agent footprint</a>
+  <a class="nl" href="#mix">Matched window</a>
+  <a class="nl" href="#cal">Activity calendar</a>
+  <a class="nl" href="#s2">02 Operating profile</a>
+  <div class="g">// CONTEXT</div>
+  <a class="nl" href="#s3">03 Career &amp; industries</a>
+  <a class="nl" href="#s4">04 Subject matter</a>
+  <div class="g">// DECISION</div>
+  <a class="nl" href="#s5">05 Matching decision</a>
+  <a class="nl" href="#s6">06 Share</a>
+  <a class="nl" href="#s7">07 Sources &amp; limits</a>
+</nav>
+
+<main>
+<div class="w">
+
+  <div class="head" id="top">
+    <div class="cm">// PROJECT-FIT PROFILE</div>
+    <h1 id="nm"></h1>
+    <div class="hl" id="hl"></div>
+    <p class="fine" id="prov" style="margin-top:14px"></p>
+    <div class="chips" id="srcs"></div>
+    <div class="notice">
+      <div class="k">// SAMPLE NOTICE</div>
+      <p id="notice"></p>
+    </div>
+  </div>
+
+  <div class="sec" id="s1">
+    <div class="cm">// 01 AGENT FOOTPRINT</div>
+    <h2>Observed agent activity</h2>
+    <p class="lead" id="fpintro"></p>
+    <div id="dists"></div>
+    <div class="panel y">
+      <div class="k">// HOW THESE CURVES ARE BUILT</div>
+      <ul id="curvenotes"></ul>
+    </div>
+  </div>
+
+  <div class="sec" id="mix">
+    <div class="cm">// MATCHED-WINDOW COMPARISON</div>
+    <h2>Normalized tool mix</h2>
+    <p class="lead" id="mixwin"></p>
+    <div class="split">
+      <div class="lbl"><span class="l" id="ml"></span><span class="rr" id="mr"></span></div>
+      <div class="sbar"><i class="a" id="ba"></i><i class="b" id="bb"></i></div>
+      <div class="sub"><span id="msl"></span><span id="msr"></span></div>
+    </div>
+    <p class="fine" id="mixnote"></p>
+  </div>
+
+  <div class="sec" id="cal">
+    <div class="cm">// ACTIVITY CAL_NDAR</div>
+    <h2>Rhythm, and where it is corroborated</h2>
+    <p class="lead">Observed sessions and authored GitHub activity over the same span.
+       Days carrying both have third-party timestamps behind them.</p>
+    <div class="cal" id="calwrap"></div>
+  </div>
+
+  <div class="sec" id="s2">
+    <div class="cm">// 02 AGENT OPERATING PROFILE</div>
+    <h2 id="ophead"></h2>
+    <p class="lead" id="opintro"></p>
+    <div class="quick" id="quick"></div>
+    <div id="measures"></div>
+
+    <div style="margin-top:var(--xl)" id="classes"></div>
+
+    <div class="cm" style="margin-top:var(--xl)">// HOW THE WORK GETS RUN</div>
+    <div class="steps" id="method"></div>
+
+    <div class="char" id="char"></div>
+  </div>
+
+  <div class="sec" id="s3">
+    <div class="cm">// 03 CAREER AND INDUSTRIES</div>
+    <h2>Where the expertise comes from</h2>
+    <p class="lead" id="carintro"></p>
+    <div id="inds"></div>
+  </div>
+
+  <div class="sec" id="s4">
+    <div class="cm">// 04 SUBJECT MATTER</div>
+    <h2>What they know</h2>
+    <p class="lead" id="subintro"></p>
+    <div id="subjs"></div>
+  </div>
+
+  <div class="sec" id="s5">
+    <div class="cm">// 05 MATCHING DECISION</div>
+    <h2>How to use this profile</h2>
+    <p class="lead" id="decintro"></p>
+    <div id="fits"></div>
+  </div>
+
+  <div class="sec" id="s6">
+    <div class="cm">// 06 SHARE</div>
+    <h2>Share the signal</h2>
+    <p class="lead" id="shintro"></p>
+    <div class="card" id="card"></div>
+    </div>
+
+  <div class="sec" id="s7">
+    <div class="cm">// 07 SOURCES AND LIMITS</div>
+    <h2>Where the data stops</h2>
+    <p class="lead" id="srcline"></p>
+    <div class="panel">
+      <div class="k">// OUTSIDE THIS EVIDENCE</div>
+      <ul id="limits"></ul>
+      <div class="nt">Every resume makes claims it cannot support. This one states its limits
+        so a reader knows how much weight to give it. Absence here is not evidence of
+        inability — it is evidence of what was not observed.</div>
+    </div>
+    <div class="cm" style="margin-top:var(--xl)">// EVIDENCE INDEX</div>
+    <div id="evs"></div>
+    <p class="fine" style="margin-top:var(--lg)" id="closing"></p>
+  </div>
+
+</div>
+</main>
+
+<footer>
+  Organized AI · derived from work, not self-reported ·
+  <span id="gen"></span>
+</footer>
+
+<script>
+const P = {
+  name:"Riley Okafor",
+  headline:"A three-time software founder who uses coding agents to decide what companies should own, and gets those systems into use.",
+  provenance:"Career context comes from LinkedIn. Current depth comes from observed agent work.",
+  sources:["LinkedIn","Sessions","Assessment"],
+  notice:"Modeled sample on the current assessment format. Names, employers, counts, and cohort placements are altered sample data. Nothing here represents a live cohort result.",
+  generated:"Generated 02 Aug 2026",
+  footprintIntro:"Cohort placement uses submitted profiles that follow the same rules. Tool mix uses identical date ranges for both tools.",
+  metrics:[
+    {label:"Captured agent activity",placement:"82nd pct · 64/64 reported",value:"580",unit:"agent sessions",you:580,low:40,high:1200,q1:160,q3:720,lowL:"40",highL:"1,200",q1L:"160",q3L:"720",note:"Captured sessions across the agent-tool windows reported in this profile."},
+    {label:"Delegation rate",placement:"76th pct · 64/64 reported",value:"48%",unit:"of scanned sessions",you:48,low:4,high:70,q1:18,q3:51,lowL:"4",highL:"70",q1L:"18",q3L:"51",note:"Same-source scanned sessions that used subagents."},
+    {label:"Parallel-work rate",placement:"88th pct · 64/64 reported",value:"74.2%",unit:"of active days",you:74.2,low:3,high:90,q1:16,q3:58,lowL:"3",highL:"90",q1L:"16",q3L:"58",note:"Observed active days with more than one interactive session."},
+    {label:"Owned into real use",placement:"95th pct · 64/64 reported",value:"100%",unit:"of work examples",you:100,low:0,high:100,q1:25,q3:75,lowL:"0",highL:"100",q1L:"25",q3L:"75",note:"Work examples that reached real use under this person's ownership."},
+    {label:"Independent verification",placement:"95th pct · 64/64 reported",value:"100%",unit:"of work examples",you:100,low:0,high:100,q1:20,q3:70,lowL:"0",highL:"100",q1L:"20",q3L:"70",note:"Work examples with a separate retained review or acceptance check."},
+    {label:"GitHub active months",placement:"91st pct · 64/64 reported",value:"12",unit:"active months",you:12,low:1,high:12,q1:5,q3:11,lowL:"1",highL:"12",q1L:"5",q3L:"11",note:"Months with authenticated authored GitHub activity in the sample year."}
+  ],
+  curveNotes:[
+    "Each curve uses only profiles reporting a compatible version of that metric, and appears once at least eight values are reported.",
+    "Agent-operating curves keep their source-compatible denominators.",
+    "Baseline activity metrics span older assessment versions.",
+    "This compares submitted evidence. It does not compare career seniority."
+  ],
+  mix:{left:"Claude Code",right:"Codex",lp:36.5,rp:63.5,ls:"196 records · 4.5/day",rs:"341 records · 7.8/day",
+    windowDays:44,cap:"537 RECORDS / 44 SHARED DAYS · 12.2 PER DAY",
+    note:"Both counts use 2026-06-11 to 2026-07-24. 537 session records fall inside the shared window. This is session-record share — not time spent, preference, quality, or completed work. Counts come from local session records, and fixed checks confirm the totals without reading the raw session text."},
+  operating:{
+    head:"Acts as the director and reviewer of an agent delivery system.",
+    intro:"How this person delegates, coordinates, owns, and checks agent work.",
+    quick:[["9","median interactive sessions per active day"],["24","peak concurrent interactive sessions"]],
+    measures:[
+      ["01 / delegation","Delegation rate","94 of 196 scanned sessions used subagents. Same-source session count.","48%"],
+      ["02 / parallel work","Multi-session active days","89 of 120 observed active days included more than one interactive session. Scheduled runs excluded.","74.2%"],
+      ["03 / delivery ownership","Owned into real use","3 of 3 work examples reached real use under this person's ownership; 2 continued into operation.","3/3"],
+      ["04 / verification","Independently checked work","3 of 3 work examples show a separate review or acceptance check. Unknown stays in the count.","3/3"]
+    ],
+    method:[
+      ["01","Frame the outcome","Starts from the operating problem, then sets scope and acceptance rules."],
+      ["02","Split owned work","Assigns bounded workstreams with explicit ownership and completion tests."],
+      ["03","Check independently","Uses a separate review before accepting material implementation results."],
+      ["04","Operate and repair","Returns to delivered systems to fix failures and improve behaviour."]
+    ],
+    character:[
+      ["what is distinctive","Uses coding agents for operating decisions as well as implementation work.",false],
+      ["reusable operating system","Reuses bounded reviewer briefs, source rules, and acceptance checks across projects.",false],
+      ["where the evidence bends","The captured sessions show direction and review, not direct code authorship.",true]
+    ]
+  },
+  classification:[
+    ["primary work surface · 3 qualifying arcs",[["Product Operations","1/3"],["Application Software","1/3"],["Workflow Integration","1/3"]]],
+    ["change type · 3 qualifying arcs",[["Operational Automation","1/3"],["New Capability","1/3"],["Experience Improvement","1/3"]]]
+  ],
+  careerIntro:"Career context establishes duration and responsibility. Observed work shows what is active now.",
+  industries:[
+    {t:"AI consulting and custom software",s:"Mid-market and private-equity-backed companies",
+     c:"Led advisory work for mid-market and private-equity-backed companies with responsibility for product and operating decisions.",
+     o:"Three classified arcs cover delivery systems, commercial workflows, client integrations, and post-launch operation.",
+     chips:["LinkedIn","Sessions"],badge:"Deep · current"},
+    {t:"Enterprise software and B2B SaaS",s:"Mobile products and conversation intelligence",
+     c:"Led enterprise product launches through two acquisitions and sustained commercial ownership.",
+     o:"Current arcs cover CRM, delivery platforms, account reporting, data repair, and a cross-platform subscription product.",
+     chips:["LinkedIn","Sessions"],badge:"Deep · sustained"},
+    {t:"Commercial fabrication and interiors",s:"Offices, hospitality, and public spaces",
+     c:"Six years as founder and chairman of a wood-and-metal fabrication company.",
+     o:"The retained agent window contains no qualifying fabrication arc, so current digital depth is not inferred.",
+     chips:["LinkedIn","Assessment"],badge:"Career depth"},
+    {t:"Consumer software",s:"Subscriptions and cross-platform release",
+     c:"Product-company history establishes commercial ownership and adoption responsibility.",
+     o:"Two arcs include payments, desktop notarization, mobile test distribution, and consumer application operations.",
+     chips:["LinkedIn","Sessions"],badge:"Working · current"}
+  ],
+  subjectIntro:"Each area names the work that supports it. Generic tool use does not qualify.",
+  subjects:[
+    {t:"Commercial product formation",sup:"Reviewed career history",x:"Connects product definition, pricing, delivery, and adoption during the first operating stage."},
+    {t:"Agent operating models",sup:"Three observed work arcs",x:"Defines worker boundaries, reusable briefs, review gates, spend controls, model routing, and recurring jobs."},
+    {t:"Professional-services operations",sup:"Two observed work arcs",x:"Builds staffing views, review preparation, account reporting, delivery vocabulary, and privacy boundaries."},
+    {t:"Evidence and data integrity",sup:"Three observed work arcs",x:"Works on schema compatibility, sync freshness, recovery, privacy limits, and reports that distinguish missing data from recorded zero."}
+  ],
+  decisionIntro:"Make the staffing decision without turning uncertainty into a score.",
+  fit:[
+    ["Strongest fit","Founder or product operator for owned software","Best for ambiguous company workflows that need a business decision, an agent operating model, and a working internal product.",["LinkedIn","Sessions"],false],
+    ["Add a specialist","When engineering risk dominates","Pair with dedicated security, database-scale, testing, continuous-integration, or reliability ownership.",["Assessment"],false],
+    ["Not shown","Direct code authorship","The retained evidence does not establish how much code this person wrote directly.",["Assessment"],true]
+  ],
+  shareIntro:"A fixed card keeps the identity, tool mix, and three hiring signals readable at feed size.",
+  cardSignals:[["agent practice","Acts as the director and reviewer of an agent delivery system."],
+               ["industry","AI consulting and custom software"],
+               ["strongest fit","Founder or product operator for owned software"]],
+  limits:[
+    "Cross-tool comparison uses only the 44-day shared window, because source retention differs between tools.",
+    "Career context is self-reported. Captured work remains the source for current depth.",
+    "This report does not independently verify business outcomes or sole authorship."
+  ],
+  evidence:[
+    {id:"ev-001",src:"Assessment",x:"Deterministic aggregation found 196 Claude and 341 Codex sessions in the exact shared 44-day window."},
+    {id:"ev-002",src:"Sessions",x:"Observed sessions and tool metadata support the agent workflow, concurrency, subagent, and reusable-review claims."},
+    {id:"ev-003",src:"Sessions",x:"Three classified arcs support current delivery, operations, product, workflow, and data-integrity claims."},
+    {id:"ev-004",src:"LinkedIn",x:"Reviewed career history supports founder, industry, operating, and product-formation context."},
+    {id:"ev-005",src:"Assessment",x:"The retained evidence does not independ                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      

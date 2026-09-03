@@ -1,3 +1,4 @@
+import { proofRoutes } from "./proof";
 /**
  * Organized Tokens — workshop leaderboard
  *
@@ -261,6 +262,10 @@ export default {
   async fetch(req: Request, env: Env): Promise<Response> {
     const url = new URL(req.url);
     const path = url.pathname;
+
+    // Organized Proof — /example, /j/<code>, /@handle, /api/assessment. Additive.
+    const proof = await proofRoutes(req, env, auth);
+    if (proof) return proof;
 
     if (req.method === "OPTIONS") return new Response(null, { headers: cors() });
 
