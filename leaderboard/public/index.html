@@ -53,9 +53,15 @@ h1{font-size:clamp(28px,4vw,44px);font-weight:800;letter-spacing:-.01em;margin:6
 /* ---- join card ---- */
 .join-card{background:var(--card);border:1px solid var(--line);border-radius:8px;
   padding:20px 22px 22px;margin-bottom:22px}
+.join-card-top{display:flex;gap:22px;justify-content:space-between;align-items:flex-start;
+  flex-wrap:wrap-reverse}
 .join-title{font-size:15px;font-weight:700;margin:2px 0 2px}
 .join-ref{color:var(--muted);font-size:12.5px;margin:0 0 16px}
 .join-ref b{color:var(--gold2);font-weight:700}
+.join-qr{flex:none;text-align:center}
+.join-qr #qr-canvas{background:#fff;padding:8px;border-radius:6px;line-height:0}
+.join-qr .l{font-family:var(--mono);font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--muted);margin-top:6px}
 .steps{display:flex;flex-direction:column;gap:15px}
 .step{display:flex;gap:13px}
 .step-num{flex:none;width:22px;height:22px;margin-top:1px;border-radius:50%;
@@ -230,9 +236,17 @@ footer code{color:var(--gold2);background:var(--card);border:1px solid var(--lin
     a participant's machine for this board.</p>
 
   <div class="join-card">
-    <div class="eyebrow">Getting on the board</div>
-    <div class="join-title">One command. No install beyond Python 3, which macOS and Linux already have.</div>
-    <p class="join-ref">Workshop code <b id="join-code">COWORK-0903</b> · script served from <b>tokens.organizedai.vip</b></p>
+    <div class="join-card-top">
+      <div>
+        <div class="eyebrow">Getting on the board</div>
+        <div class="join-title">One command. No install beyond Python 3, which macOS and Linux already have.</div>
+        <p class="join-ref">Workshop code <b id="join-code">COWORK-0903</b> · script served from <b>tokens.organizedai.vip</b></p>
+      </div>
+      <div class="join-qr">
+        <div id="qr-canvas"></div>
+        <div class="l">scan for the command</div>
+      </div>
+    </div>
     <div class="steps">
       <div class="step">
         <div class="step-num">1</div>
@@ -398,6 +412,7 @@ footer code{color:var(--gold2);background:var(--card);border:1px solid var(--lin
 </footer>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <script>
 (function () {
   "use strict";
@@ -406,6 +421,16 @@ footer code{color:var(--gold2);background:var(--card);border:1px solid var(--lin
   var reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   document.getElementById("ws").textContent = WORKSHOP;
+
+  // QR points at /join, which serves the paste-ready command as plain text
+  // (looked up fresh from D1 server-side, so it can't drift from the card above).
+  try {
+    var joinUrl = location.origin + "/join?w=" + encodeURIComponent(WORKSHOP);
+    var qr = qrcode(0, "M");
+    qr.addData(joinUrl);
+    qr.make();
+    document.getElementById("qr-canvas").innerHTML = qr.createSvgTag({ cellSize: 3.2, margin: 2 });
+  } catch (e) { document.querySelector(".join-qr").style.display = "none"; }
 
   var data = null;
   var currentView = 0;

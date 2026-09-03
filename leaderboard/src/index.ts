@@ -575,6 +575,27 @@ export default {
       return json({ ok: true });
     }
 
+    // --- join command as plain text — what the QR code points at. Paste the
+    // whole response into a terminal: the comment line is a no-op there, the
+    // second line is the command. Looks up the code fresh from D1 so it never
+    // goes stale if the workshop changes. --------------------------------
+    if (path === "/join" && req.method === "GET") {
+      const wsId = url.searchParams.get("w") || "coworking";
+      const w = await env.DB.prepare(`SELECT code, name FROM workshops WHERE id = ?`)
+        .bind(wsId).first<{ code: string; name: string }>();
+      if (!w) {
+        return new Response(`# no workshop found for id: ${wsId}\n`, {
+          status: 404,
+          headers: { "content-type": "text/plain; charset=utf-8" },
+        });
+      }
+      const cmd = `curl -sL https://tokens.organizedai.vip/tokens.py -o tokens.py && python3 tokens.py --join ${w.code} --as "Your Name"`;
+      const text = `# ${w.name} — edit "Your Name" below, then paste all of this into a terminal\n${cmd}\n`;
+      return new Response(text, {
+        headers: { "content-type": "text/plain; charset=utf-8", "cache-control": "no-store" },
+      });
+    }
+
     // --- static: the projector board -------------------------------------
     return env.ASSETS.fetch(req);
   },
