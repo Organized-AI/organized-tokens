@@ -118,7 +118,8 @@ footer a{color:var(--dm);margin:0 6px}
     <a href="#generate">Assessment</a>
     <a href="/example">Sample</a>
     <a href="https://board.organizedai.vip/">Board</a>
-    <a href="https://github.com/Runpoint-Partners/ai-work-assessment">GitHub</a>
+    <a href="https://board.organizedai.vip/talent">Talent</a>
+    <a href="https://github.com/Organized-AI/ai-work-assessment">GitHub</a>
   </nav>
 </div>
 
@@ -134,13 +135,13 @@ footer a{color:var(--dm);margin:0 6px}
   <div class="cta">
     <a class="btn p" href="#generate">Run the assessment →</a>
     <a class="btn" href="/example">See a sample profile</a>
-    <a class="btn" href="https://github.com/Runpoint-Partners/ai-work-assessment">Star on GitHub</a>
+    <a class="btn" href="https://github.com/Organized-AI/ai-work-assessment">Star on GitHub</a>
   </div>
   <div class="assure">
     <div><b>CLIENT DETAILS STAY OUT</b>Client names and identifying details are abstracted during
       extraction, and credential patterns are rejected on upload.</div>
     <div><b>OPEN SOURCE</b>MIT-licensed. Read <a href="/apply/prompt.md">the prompt</a> or
-      <a href="https://github.com/Runpoint-Partners/ai-work-assessment">the code</a> before you run it.</div>
+      <a href="https://github.com/Organized-AI/ai-work-assessment">the code</a> before you run it.</div>
   </div>
 </section>
 
@@ -168,14 +169,14 @@ footer a{color:var(--dm);margin:0 6px}
       <h4>Collect from each environment</h4>
       <p>Run the base prompt once on every environment whose local history should count.
          Each run produces one private evidence bundle. Get each machine's id first:</p>
-      <pre>npx github:Runpoint-Partners/ai-work-assessment#v8.0.0 environment-id</pre>
+      <pre>npx github:Organized-AI/ai-work-assessment#v8.0.0-organized.1 environment-id</pre>
       <h4>Bring the files together</h4>
       <p>Review the bundles, then move them into one folder on the computer where you will
          create the assessment. <b style="color:var(--tx)">Nothing is uploaded.</b></p>
-      <pre>npx github:Runpoint-Partners/ai-work-assessment#v8.0.0 validate-bundle ./ai-work-evidence-*.json</pre>
+      <pre>npx github:Organized-AI/ai-work-assessment#v8.0.0-organized.1 validate-bundle ./ai-work-evidence-*.json</pre>
       <h4>Create one assessment</h4>
       <p>Tested code validates the bundles, counts exact duplicate sessions once, and builds one profile.</p>
-      <pre>npx github:Runpoint-Partners/ai-work-assessment#v8.0.0 consolidate ./bundle-folder</pre>
+      <pre>npx github:Organized-AI/ai-work-assessment#v8.0.0-organized.1 consolidate ./bundle-folder</pre>
     </div>
 
     <h3>Choose what the assessment can use.</h3>
@@ -245,9 +246,9 @@ footer a{color:var(--dm);margin:0 6px}
      multi-environment workflow uses open-source helper v8.0.0. A fixed renderer turns the
      validated profile data into the final page. The prompt, validator, and renderer are
      MIT-licensed. Run it, fork it, or self-host it without ever talking to us. The
-     <a href="https://github.com/Runpoint-Partners/ai-work-assessment/blob/main/CHANGELOG.md">version
+     <a href="https://github.com/Organized-AI/ai-work-assessment/blob/main/CHANGELOG.md">version
      history</a> explains every current number.</p>
-  <a class="repo" href="https://github.com/Runpoint-Partners/ai-work-assessment">Runpoint-Partners/ai-work-assessment</a>
+  <a class="repo" href="https://github.com/Organized-AI/ai-work-assessment">Organized-AI/ai-work-assessment</a>
 </section>
 
 <section class="sec">
@@ -255,8 +256,10 @@ footer a{color:var(--dm);margin:0 6px}
   <div class="submit">
     <h2>The report is yours either way. <em>Sharing it</em> does two things.</h2>
     <p>Your profile gains a comparison against the unnamed cohort in your workshop room — computed
-       only after eight people have shared, never from fewer. And it sits beside your session counts
-       on the board, where the room can see what the counts alone could not say.</p>
+       only after eight people have shared, never from fewer. It sits beside your session counts
+       on the board, where the room can see what the counts alone could not say. And if you type
+       <code>share</code>, it lists you on <a href="https://board.organizedai.vip/talent">the talent
+       directory</a>, where people hiring for agentic work actually look.</p>
     <p>Sharing is a separate command, gated on a typed word, from the machine that ran the assessment:</p>
     <pre>python3 tokens.py --submit ~/Desktop/project-fit-*.html</pre>
     <p style="margin:0">Not on the board yet? <a href="https://board.organizedai.vip/">Join from your laptop first.</a>
@@ -269,8 +272,9 @@ footer a{color:var(--dm);margin:0 6px}
 <footer>
   Your session history stays local ·
   <a href="/example">Sample</a> · <a href="https://board.organizedai.vip/">Board</a> ·
+  <a href="https://board.organizedai.vip/talent">Talent</a> ·
   <a href="https://jobs.organizedai.vip/">Jobs</a> ·
-  <a href="https://github.com/Runpoint-Partners/ai-work-assessment">GitHub</a>
+  <a href="https://github.com/Organized-AI/ai-work-assessment">GitHub</a>
 </footer>
 
 <script>

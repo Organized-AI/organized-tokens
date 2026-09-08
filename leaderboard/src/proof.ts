@@ -8,7 +8,23 @@
  * Privacy: every signal is derived from columns already in `stats` and
  * already displayed publicly on the board. This is a rearrangement of counts,
  * not new collection. The board's notice holds verbatim.
+ *
+ * Talent directory: assessment profiles appear on /talent and on /@handle
+ * only when the owner submitted them with visibility=public (typed `share`
+ * in tokens.py). Submissions are validated in-Worker with the same checks
+ * the published CLI runs (vendored ./validate.js) before anything is stored.
  */
+
+// Vendored from Organized-AI/ai-work-assessment (src/validate.js); types in
+// validate.d.ts. Pure ESM, no Node APIs; the exact checks the published CLI runs.
+import {
+  ProfileError,
+  assertNoSecrets,
+  assertNoLocalEvidenceLeaks,
+  sanitizeProfile,
+  validateProfileV9,
+  validateRawProfileV9,
+} from "./validate.js";
 
 interface Env {
   DB: D1Database;
@@ -127,6 +143,73 @@ async function hasAssessment(env: Env, handle: string): Promise<{ n: number; las
   } catch { return null; }   // table may not exist yet
 }
 
+/** Latest snapshot + totals for one handle. Visibility of the LATEST
+ *  snapshot wins, so re-submitting privately unlists a public profile. */
+async function loadLatestAssessment(env: Env, handle: string): Promise<
+  { n: number; last: number; visibility: string; profile: any } | null
+> {
+  try {
+    const count = await env.DB.prepare(
+      `SELECT COUNT(*) AS n, MAX(created_at) AS last FROM assessments WHERE handle = ?1`
+    ).bind(handle).first<{ n: number; last: number }>();
+    if (!count || !count.n) return null;
+    const row = await env.DB.prepare(
+      `SELECT payload, visibility FROM assessments WHERE handle = ?1
+       ORDER BY snapshot_seq DESC LIMIT 1`
+    ).bind(handle).first<{ payload: string; visibility: string }>();
+    let profile: any = null;
+    try { profile = row ? JSON.parse(row.payload) : null; } catch { profile = null; }
+    return { n: count.n, last: count.last, visibility: row?.visibility || "private", profile };
+  } catch { return null; }   // table may not exist yet
+}
+
+type TalentEntry = {
+  handle: string; name: string; headline: string; fit: string; fit_summary: string;
+  specialist: string; industries: string[]; subjects: string[]; capabilities: string[];
+  shared_at: number; last_session: string;
+};
+
+/** Display fields only - never the raw payload, never evidence ids. */
+function entryFromPayload(handle: string, raw: string, created_at: number): TalentEntry | null {
+  try {
+    const p = JSON.parse(raw);
+    const pv = p?.profile_view || {};
+    const mi = p?.matching_index || {};
+    const labels = (list: any) =>
+      (Array.isArray(list) ? list : []).map((x: any) => String(x?.label || "")).filter(Boolean);
+    return {
+      handle,
+      name: String(p?.name || handle),
+      headline: String(p?.headline || p?.focus || ""),
+      fit: String(pv?.matching?.strongest_fit?.label || ""),
+      fit_summary: String(pv?.matching?.strongest_fit?.summary || ""),
+      specialist: String(pv?.matching?.add_specialist?.label || ""),
+      industries: labels(pv?.industries),
+      subjects: labels(pv?.subject_matter),
+      capabilities: labels(mi?.capabilities),
+      shared_at: created_at,
+      last_session: String(p?.cadence?.last_session || p?.generated_at || ""),
+    };
+  } catch { return null; }
+}
+
+/** Latest public snapshot per handle. A bad row is skipped, never fatal. */
+async function listPublicTalent(env: Env): Promise<TalentEntry[]> {
+  try {
+    const r = await env.DB.prepare(
+      `SELECT a.handle, a.payload, a.created_at
+         FROM assessments a
+         JOIN (SELECT handle, MAX(snapshot_seq) AS maxseq FROM assessments GROUP BY handle) latest
+           ON latest.handle = a.handle AND latest.maxseq = a.snapshot_seq
+        WHERE a.visibility = 'public'
+        ORDER BY a.created_at DESC LIMIT 200`
+    ).all<{ handle: string; payload: string; created_at: number }>();
+    return (r.results || [])
+      .map((row) => entryFromPayload(row.handle, row.payload, row.created_at))
+      .filter((e): e is TalentEntry => !!e);
+  } catch { return []; }   // table may not exist yet
+}
+
 /* ------------------------------------------------------------------ */
 /* Pages                                                               */
 /* ------------------------------------------------------------------ */
@@ -166,10 +249,24 @@ overflow-x:auto;font-family:var(--m);font-size:12px;color:var(--tx);margin:0}
 .badge{display:inline-block;font-family:var(--m);font-size:9.5px;padding:2px 8px;border-radius:3px;
 border:1px solid var(--bd);color:var(--dm);margin-left:8px}
 .badge.on{color:var(--teal);border-color:#0f6e56}
+.tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.tag{font-family:var(--m);font-size:10px;letter-spacing:.06em;padding:3px 8px;border-radius:3px;
+border:1px solid var(--bd);color:var(--mu)}
+.tag.gold{color:var(--y);border-color:rgba(242,192,0,.4)}
+.fit{background:var(--s1);border:1px solid var(--bd);border-left:3px solid var(--y);border-radius:6px;
+padding:14px 16px;margin-bottom:9px}
+.fit .k{font-family:var(--m);font-size:10.5px;color:var(--y);letter-spacing:1px}
+.fit h5{font-size:15px;color:var(--tx);margin:5px 0 4px;font-weight:600}
+.fit p{font-size:13px;color:var(--mu);margin:0}
+.hero-q{font-size:15px;color:var(--tx);line-height:1.6;border-left:2px solid var(--y);
+padding:2px 0 2px 14px;margin:10px 0 18px}
+.lims{margin:6px 0 0;padding-left:18px}
+.lims li{font-size:13px;color:var(--mu);margin-bottom:6px}
+.shared{font-family:var(--m);font-size:10px;color:var(--dm);letter-spacing:1px;margin-top:14px}
 @media(max-width:680px){.gaps{grid-template-columns:1fr}}
 `;
 
-function profilePage(r: Row, signals: Signal[], assessed: { n: number; last: number } | null): string {
+function profilePage(r: Row, signals: Signal[], assessed: { n: number; last: number } | null, shared: any | null): string {
   const shown = signals.filter((s) => !("absent" in s)).length;
   const sig = signals.map((s) => {
     if ("absent" in s) return `<div class="sig abs">
@@ -196,6 +293,8 @@ function profilePage(r: Row, signals: Signal[], assessed: { n: number; last: num
       : `<span class="badge">SESSION COUNTS</span>`}
   </div>
 
+  ${shared ? assessmentSection(shared, assessed) : ""}
+
   <h2>How the agent gets operated</h2>
   <p class="lead">${shown} of ${signals.length} reported. Each carries its numerator and
      denominator so the arithmetic is checkable. No percentile, ranking, or comparison
@@ -212,11 +311,43 @@ function profilePage(r: Row, signals: Signal[], assessed: { n: number; last: num
     <h3>// GO DEEPER</h3>
     <p>Work arcs need a model reading raw session history — a counter cannot do it.
        This runs locally, uploads nothing, and writes a report you keep.</p>
-    <pre>npx github:Runpoint-Partners/ai-work-assessment#v8.0.0</pre>
+    <pre>npx github:Organized-AI/ai-work-assessment#v8.0.0-organized.1</pre>
     <div class="fine">See what it produces:
       <a href="https://assessment.organizedai.vip/example">an example profile</a></div>
   </div>
 </div></body></html>`;
+}
+
+/** The shared assessment, rendered from the stored payload's visible contract
+ *  (profile_view). Only called when the owner's latest snapshot is public. */
+function assessmentSection(p: any, assessed: { n: number; last: number } | null): string {
+  const pv = p?.profile_view || {};
+  const m = pv?.matching || {};
+  const industries = (Array.isArray(pv?.industries) ? pv.industries : [])
+    .map((i: any) => String(i?.label || "")).filter(Boolean);
+  const subjects = (Array.isArray(pv?.subject_matter) ? pv.subject_matter : [])
+    .map((s: any) => String(s?.label || "")).filter(Boolean);
+  const limits = (Array.isArray(pv?.limits) ? pv.limits : [])
+    .map((l: any) => String(l?.summary || "")).filter(Boolean);
+  const when = assessed?.last
+    ? new Date(assessed.last * 1000).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+    : "";
+
+  const fit = (k: string, label: string, body: string) => body ? `<div class="fit">
+      <div class="k">${esc(k)}</div><h5>${esc(label)}</h5><p>${esc(body)}</p></div>` : "";
+
+  return `
+  <h2>AI Work Assessment</h2>
+  ${p?.name ? `<p class="lead" style="color:var(--tx);font-size:16px;margin-bottom:2px"><b>${esc(p.name)}</b></p>` : ""}
+  ${p?.headline ? `<p class="lead">${esc(p.headline)}</p>` : ""}
+  ${pv?.hero?.thesis ? `<div class="hero-q">${esc(pv.hero.thesis)}</div>` : ""}
+  ${fit("STRONGEST FIT", String(m?.strongest_fit?.label || ""), String(m?.strongest_fit?.summary || ""))}
+  ${fit("ADD A SPECIALIST WHEN", String(m?.add_specialist?.label || ""), String(m?.add_specialist?.summary || ""))}
+  ${fit("NOT SHOWN BY THE EVIDENCE", String(m?.not_shown?.label || ""), String(m?.not_shown?.summary || ""))}
+  ${industries.length ? `<div class="tags">${industries.map((i: string) => `<span class="tag gold">${esc(i)}</span>`).join("")}</div>` : ""}
+  ${subjects.length ? `<div class="tags">${subjects.map((s: string) => `<span class="tag">${esc(s)}</span>`).join("")}</div>` : ""}
+  ${limits.length ? `<h2>Limits, stated by the assessment</h2><ul class="lims">${limits.map((l: string) => `<li>${esc(l)}</li>`).join("")}</ul>` : ""}
+  <div class="shared">SHARED BY THE OWNER · ${esc(when)} · VALIDATED AGAINST PROFILE SCHEMA 9 ON INTAKE</div>`;
 }
 
 function joinPage(code: string, name: string): string {
@@ -262,7 +393,7 @@ button.ghost{background:transparent;border:1px solid var(--bd);color:var(--mu)}
     <p>Counts show how you operate an agent. They cannot say what you built. That
        needs a model reading your session history — it runs locally and uploads
        nothing until you separately choose to share it.</p>
-    <pre>npx github:Runpoint-Partners/ai-work-assessment#v8.0.0</pre>
+    <pre>npx github:Organized-AI/ai-work-assessment#v8.0.0-organized.1</pre>
     <button class="ghost" id="copy2">Copy command</button>
     <div class="msg" id="cm2"></div>
     <p style="margin-top:12px;font-size:13px;color:var(--dm)">See what it produces:
@@ -279,7 +410,7 @@ function cp(text,msgId){const m=document.getElementById(msgId);
   if(navigator.clipboard)navigator.clipboard.writeText(text).then(done).catch(()=>{m.textContent="Select and copy manually.";});
   else m.textContent="Select and copy manually.";}
 document.getElementById("copy").onclick=()=>cp(document.getElementById("cmd").textContent,"cm");
-document.getElementById("copy2").onclick=()=>cp("npx github:Runpoint-Partners/ai-work-assessment#v8.0.0","cm2");
+document.getElementById("copy2").onclick=()=>cp("npx github:Organized-AI/ai-work-assessment#v8.0.0-organized.1","cm2");
 </script></body></html>`;
 }
 
@@ -287,14 +418,171 @@ document.getElementById("copy2").onclick=()=>cp("npx github:Runpoint-Partners/ai
 /* Assessment intake                                                   */
 /* ------------------------------------------------------------------ */
 
-const SECRETS = [
-  /\bsk-[A-Za-z0-9_-]{20,}/, /\bAKIA[0-9A-Z]{16}\b/, /\bgh[pousr]_[A-Za-z0-9]{36,}/,
-  /\bxox[baprs]-[A-Za-z0-9-]{10,}/, /-----BEGIN [A-Z ]*PRIVATE KEY-----/,
-  /\beyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\./,
-];
+/* Secret-pattern and local-evidence scanning now lives in the vendored
+   validator (assertNoSecrets / assertNoLocalEvidenceLeaks), called on every
+   intake above. A scrub that misses one pattern ships it — so the whole
+   submission is rejected instead. */
 
-/** Reject the whole submission. A scrub that misses one pattern ships it. */
-const hasSecret = (raw: string) => SECRETS.some((re) => re.test(raw));
+/* ------------------------------------------------------------------ */
+/* Talent directory                                                    */
+/* ------------------------------------------------------------------ */
+
+const TALENT_CSS = `
+:root{--bg:#0c0b09;--panel:#1a1814;--card:#141210;--card2:#211e18;--line:#2a2520;
+--text:#f0ece4;--muted:#a09888;--gold:#FFE94A;--gold2:#F5D623;--amber:#C4943D;
+--mono:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;
+--sans:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+*{box-sizing:border-box;margin:0}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:100vh}
+a{color:inherit}
+.topnav{position:sticky;top:0;z-index:10;background:rgba(12,11,9,.92);backdrop-filter:blur(6px);
+border-bottom:1px solid var(--line)}
+.nav-inner{max-width:1040px;margin:0 auto;padding:16px 20px;display:flex;align-items:center;
+justify-content:space-between;gap:16px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:10px;font-family:var(--mono);font-size:13px;
+font-weight:800;letter-spacing:.16em;text-transform:uppercase;text-decoration:none}
+.brand img{width:30px;height:30px;border-radius:8px}
+.brand .ai{color:var(--gold2)}
+.nav-links{display:flex;gap:18px;font-family:var(--mono);font-size:11px;letter-spacing:.1em;
+text-transform:uppercase}
+.nav-links a{color:var(--muted);text-decoration:none}
+.nav-links a.on{color:var(--gold2)}
+.shell{max-width:1040px;margin:0 auto;padding:34px 20px 70px}
+.eyebrow{color:var(--muted);font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase}
+h1{font-size:clamp(28px,4vw,44px);font-weight:800;letter-spacing:-.01em;margin:6px 0 10px;text-wrap:balance}
+.sub{color:var(--muted);font-size:14px;line-height:1.65;max-width:66ch;margin:0 0 18px}
+.sub b{color:var(--text);font-weight:600}
+.note{display:grid;grid-template-columns:auto 1fr;gap:12px 16px;align-items:start;
+background:linear-gradient(135deg,rgba(245,214,35,.09),rgba(20,18,16,.8));
+border:1px solid rgba(245,214,35,.25);border-left:3px solid var(--gold2);border-radius:6px;
+padding:13px 16px;margin:0 0 26px;max-width:900px}
+.note .k{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;
+color:var(--gold2);white-space:nowrap;padding-top:2px}
+.note p{color:var(--muted);font-size:12.5px;line-height:1.55;margin:0}
+.note b{color:var(--text);font-weight:600}
+.searchrow{display:flex;align-items:center;gap:14px;margin-bottom:22px;flex-wrap:wrap}
+#q{flex:1;min-width:240px;background:var(--card);border:1px solid var(--line);border-radius:6px;
+padding:12px 14px;color:var(--text);font-family:var(--mono);font-size:13px;outline:none}
+#q:focus{border-color:var(--gold2)}
+#q::placeholder{color:var(--muted)}
+.count{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:20px 22px;margin-bottom:14px}
+.card:hover{border-color:#3a352d}
+.card-top{display:flex;justify-content:space-between;align-items:baseline;gap:14px;flex-wrap:wrap}
+.name{font-size:17px;font-weight:700}
+.name a{text-decoration:none}
+.name a:hover{color:var(--gold)}
+.handle{font-family:var(--mono);font-size:11.5px;color:var(--muted)}
+.when{font-family:var(--mono);font-size:10.5px;color:var(--muted);letter-spacing:.05em;white-space:nowrap}
+.headline{color:var(--muted);font-size:13.5px;line-height:1.6;margin:6px 0 14px}
+.fit{background:var(--card2);border-left:3px solid var(--gold2);border-radius:5px;padding:11px 14px;margin-bottom:12px}
+.fit .k{font-family:var(--mono);font-size:9.5px;letter-spacing:.12em;color:var(--gold2);text-transform:uppercase}
+.fit .v{font-size:14px;font-weight:600;margin:3px 0 2px}
+.fit .s{font-size:12.5px;color:var(--muted);line-height:1.55}
+.tags{display:flex;flex-wrap:wrap;gap:6px}
+.tag{font-family:var(--mono);font-size:10px;letter-spacing:.05em;padding:3px 9px;border-radius:3px;
+border:1px solid var(--line);color:var(--muted)}
+.tag.gold{color:var(--gold);border-color:rgba(245,214,35,.35)}
+.card-foot{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:14px;
+padding-top:12px;border-top:1px solid var(--line);flex-wrap:wrap}
+.caps{font-family:var(--mono);font-size:10.5px;color:var(--muted);letter-spacing:.03em}
+.proflink{font-family:var(--mono);font-size:11px;color:var(--gold2);text-decoration:none;
+letter-spacing:.08em;text-transform:uppercase}
+.empty{background:var(--card);border:1px dashed var(--line);border-radius:8px;padding:34px 26px;text-align:center}
+.empty h3{font-size:16px;margin-bottom:8px}
+.empty p{color:var(--muted);font-size:13px;line-height:1.6;max-width:52ch;margin:0 auto 14px}
+.empty pre{display:inline-block;background:var(--bg);border:1px solid var(--line);border-radius:5px;
+padding:10px 14px;font-family:var(--mono);font-size:12px;color:var(--gold2);text-align:left}
+footer{max-width:1040px;margin:0 auto;padding:0 20px 40px;color:var(--muted);
+font-family:var(--mono);font-size:10.5px;letter-spacing:.06em}
+footer a{color:var(--muted)}
+`;
+
+function talentPage(entries: TalentEntry[]): string {
+  const escAttr = esc;
+  const cards = entries.map((e) => {
+    const when = new Date(e.shared_at * 1000)
+      .toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+    const profileUrl = `https://assessment.organizedai.vip/@${encodeURIComponent(e.handle)}`;
+    return `<div class="card">
+  <div class="card-top">
+    <div><span class="name"><a href="${escAttr(profileUrl)}">${esc(e.name)}</a></span>
+      <span class="handle">@${esc(e.handle)}</span></div>
+    <span class="when">shared ${esc(when)}</span>
+  </div>
+  ${e.headline ? `<div class="headline">${esc(e.headline)}</div>` : ""}
+  ${e.fit ? `<div class="fit"><div class="k">Strongest fit</div><div class="v">${esc(e.fit)}</div>
+    ${e.fit_summary ? `<div class="s">${esc(e.fit_summary)}</div>` : ""}</div>` : ""}
+  ${e.industries.length ? `<div class="tags">${e.industries.map((i) => `<span class="tag gold">${esc(i)}</span>`).join("")}</div>` : ""}
+  ${e.subjects.length ? `<div class="tags" style="margin-top:6px">${e.subjects.map((s) => `<span class="tag">${esc(s)}</span>`).join("")}</div>` : ""}
+  <div class="card-foot">
+    <span class="caps">${e.capabilities.length ? esc(e.capabilities.join(" · ")) : ""}</span>
+    <a class="proflink" href="${escAttr(profileUrl)}">Full profile →</a>
+  </div>
+</div>`;
+  }).join("\n");
+
+  const empty = `<div class="empty">
+  <h3>No shared profiles yet</h3>
+  <p>Profiles appear here when someone runs the AI Work Assessment on their own
+     machine and chooses <b>share</b> at submission. Nothing is listed any other way.</p>
+  <pre>npx github:Organized-AI/ai-work-assessment#v8.0.0-organized.1</pre>
+</div>`;
+
+  return `<!DOCTYPE html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Talent — evidence-based AI work profiles | Organized AI</title>
+<meta name="description" content="Public, owner-shared AI Work Assessment profiles: what people build with agents, how they verify it, and where they fit.">
+<link rel="icon" href="https://organizedai.vip/IMG_1110.PNG">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>${TALENT_CSS}</style></head><body>
+<nav class="topnav"><div class="nav-inner">
+  <a class="brand" href="/"><img src="https://organizedai.vip/IMG_1110.PNG" alt="Organized AI logo">ORGANIZED <span class="ai">AI</span></a>
+  <div class="nav-links"><a href="/">Board</a><a class="on" href="/talent">Talent</a>
+    <a href="https://assessment.organizedai.vip/">Assessment</a>
+    <a href="https://jobs.organizedai.vip/">Jobs</a></div>
+</div></nav>
+<div class="shell">
+  <div class="eyebrow">board.organizedai.vip/talent</div>
+  <h1>Hire for evidence, not claims.</h1>
+  <p class="sub">Every profile here ran <b>locally on its owner's machine</b> — their own agent
+     history, GitHub activity, and optional career context — and was shared by explicit typed
+     consent. No scores, no ranks, no percentiles: what they build, how they direct and verify
+     agent work, the industries their work supports, and what the evidence does not show.</p>
+  <div class="note"><span class="k">Consent</span>
+    <p>A profile is listed only while its owner's <b>latest</b> submission is public. Re-submitting
+       privately unlists it, and <b>python3 tokens.py --leave</b> removes everything. Cohort
+       placement unlocks only at eight or more shared profiles — below that, publishing a
+       distribution would re-identify people.</p></div>
+  <div class="searchrow">
+    <input id="q" type="search" placeholder="Search fit, industry, subject, capability…" autocomplete="off">
+    <span class="count" id="count"></span>
+  </div>
+  <div id="cards">${entries.length ? cards : empty}</div>
+</div>
+<footer>ORGANIZED AI · PROFILES ARE OWNER-REVIEWED AND SELF-SHARED ·
+  <a href="https://assessment.organizedai.vip/">RUN THE ASSESSMENT</a>
+</footer>
+<script>
+var q = document.getElementById("q"), cards = document.getElementById("cards"),
+    count = document.getElementById("count");
+var all = Array.prototype.slice.call(cards.querySelectorAll(".card"));
+function apply() {
+  var needle = (q.value || "").toLowerCase(), shown = 0;
+  all.forEach(function (c) {
+    var hit = !needle || c.textContent.toLowerCase().indexOf(needle) !== -1;
+    c.style.display = hit ? "" : "none";
+    if (hit) shown++;
+  });
+  count.textContent = all.length ? shown + " / " + all.length + " profiles" : "";
+}
+if (q) q.addEventListener("input", apply);
+apply();
+</script>
+</body></html>`;
+}
 
 /* ------------------------------------------------------------------ */
 /* Router                                                              */
@@ -317,14 +605,14 @@ export async function proofRoutes(req: Request, env: Env, auth: AuthFn): Promise
       return env.ASSETS.fetch(new Request(new URL(page, url), req));
     }
 
-    // --- base prompt, proxied from the pinned upstream tag -----------
+    // --- base prompt, proxied from the pinned distribution tag --------
     // Served from here so the page can fetch it same-origin, and so the
     // text is always the contract at v8.0.0 rather than a vendored copy
     // that drifts. Nothing is modified server-side; the page prepends the
     // "Source choices for this run" block the prompt itself defines.
     if (path === "/apply/prompt.md" && req.method === "GET") {
       const up = await fetch(
-        "https://raw.githubusercontent.com/Runpoint-Partners/ai-work-assessment/v8.0.0/prompt.md",
+        "https://raw.githubusercontent.com/Organized-AI/ai-work-assessment/v8.0.0-organized.1/prompt.md",
         { cf: { cacheTtl: 3600, cacheEverything: true } } as RequestInit
       );
       if (!up.ok) return new Response("upstream prompt unavailable", { status: 502 });
@@ -361,10 +649,31 @@ export async function proofRoutes(req: Request, env: Env, auth: AuthFn): Promise
       const handle = decodeURIComponent(h[1]);
       const row = await loadRow(env, handle);
       if (!row) return html("<p style='font-family:monospace;padding:40px'>not found</p>", 404);
-      return html(profilePage(row, buildSignals(row), await hasAssessment(env, handle)));
+      const latest = await loadLatestAssessment(env, handle);
+      const shared = latest && latest.visibility === "public" ? latest.profile : null;
+      return html(profilePage(row, buildSignals(row),
+        latest ? { n: latest.n, last: latest.last } : null, shared));
     }
 
-    // --- assessment intake: bearer-authenticated, typed-word gated client-side
+    // --- talent directory: the hiring surface --------------------------
+    if ((path === "/talent" || path === "/talent/") && req.method === "GET") {
+      if (url.hostname.startsWith("assessment.")) {
+        return new Response(null, {
+          status: 302,
+          headers: { location: "https://board.organizedai.vip/talent" },
+        });
+      }
+      return html(talentPage(await listPublicTalent(env)));
+    }
+    if (path === "/api/talent" && req.method === "GET") {
+      const profiles = await listPublicTalent(env);
+      return json({ count: profiles.length, profiles });
+    }
+
+    // --- assessment intake: bearer-authenticated, consent via ?visibility=
+    // ?visibility=public lists the profile on /talent and /@handle; anything
+    // else stores privately (cohort-only). Validated with the vendored
+    // schema-v9 checks before anything is stored.
     if (path === "/api/assessment" && req.method === "POST") {
       const who = await auth(req, env);
       if (!who) return json({ error: "unknown token" }, 401);
@@ -374,15 +683,30 @@ export async function proofRoutes(req: Request, env: Env, auth: AuthFn): Promise
       if (len > MAX_ASSESSMENT) return json({ error: "too large" }, 413);
 
       const raw = await req.text();
-      if (hasSecret(raw)) return json({ error: "secret_detected", stored: false }, 422);
+      const visibility = url.searchParams.get("visibility") === "public" ? "public" : "private";
 
       let body: any;
-      try { body = JSON.parse(raw); } catch { return json({ error: "bad json" }, 400); }
-      if (Number(body?.schema_version) !== SCHEMA_VERSION) {
-        return json({ error: "schema_version_mismatch", expected: SCHEMA_VERSION }, 422);
+      try {
+        assertNoSecrets(raw);
+        assertNoLocalEvidenceLeaks(raw);
+        body = JSON.parse(raw);
+        // The same sequence the published CLI runs: raw contract, sanitize,
+        // then the full schema-v9 validator.
+        validateRawProfileV9(body);
+        sanitizeProfile(body);
+        if (Number(body?.schema_version) !== SCHEMA_VERSION) {
+          return json({ error: "schema_version_mismatch", expected: SCHEMA_VERSION }, 422);
+        }
+        const arcs = body.work_arcs || body.arcs;
+        if (!Array.isArray(arcs) || !arcs.length) return json({ error: "no_work_arcs" }, 422);
+        validateProfileV9(body);
+      } catch (e: any) {
+        if (e instanceof ProfileError) {
+          return json({ error: e.error || e.message, code: e.code }, e.status || 422);
+        }
+        if (e instanceof SyntaxError) return json({ error: "bad json" }, 400);
+        throw e;
       }
-      const arcs = body.work_arcs || body.arcs;
-      if (!Array.isArray(arcs) || !arcs.length) return json({ error: "no_work_arcs" }, 422);
 
       // Strip anything the collector attached for its own use; keep the contract.
       delete body._cohort; delete body._handle;
@@ -393,13 +717,13 @@ export async function proofRoutes(req: Request, env: Env, auth: AuthFn): Promise
 
       const created = Math.floor(Date.now() / 1000);
       await env.DB.prepare(
-        `INSERT INTO assessments (id, handle, workshop_id, snapshot_seq, payload, created_at)
-         VALUES (?1, ?2, ?3, ?4, ?5, ?6)`
+        `INSERT INTO assessments (id, handle, workshop_id, snapshot_seq, payload, visibility, created_at)
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)`
       ).bind(crypto.randomUUID(), who.handle, who.workshop_id, seq?.n || 1,
-             JSON.stringify(body), created).run();
+             JSON.stringify(body), visibility, created).run();
 
-      return json({ ok: true, handle: who.handle, snapshot_seq: seq?.n || 1,
-                    url: `${url.origin}/@${encodeURIComponent(who.handle)}` }, 201);
+      return json({ ok: true, handle: who.handle, snapshot_seq: seq?.n || 1, visibility,
+                    url: `https://assessment.organizedai.vip/@${encodeURIComponent(who.handle)}` }, 201);
     }
 
     if (path === "/api/assessment" && req.method === "DELETE") {

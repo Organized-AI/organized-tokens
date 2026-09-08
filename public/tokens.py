@@ -29,11 +29,18 @@ Workshop leaderboard (opt-in, off by default)
     python3 tokens.py --push                         # push once
     python3 tokens.py --leave                        # delete your row, forget the token
 
---join is the ONLY thing in this script that touches the network, and it asks
-before it does. It sends counts and model names. It does not send prompts,
-completions, file paths, project names, or anything read out of a transcript
-other than the numbers. The exact payload is printed for you to read before
-the first upload.
+Share an AI Work Assessment (opt-in, off by default)
+----------------------------------------------------
+    python3 tokens.py --submit path/to/report.html   # publish or store your profile
+
+--join, --push, --watch, --submit, and --leave are the ONLY things in this
+script that touch the network, and each asks before it does. Counts uploads
+send counts and model names -- never prompts, completions, file paths, project
+names, or anything read out of a transcript other than the numbers. --submit
+sends only the structured profile payload embedded in the assessment's HTML
+report, after printing a summary and waiting for a typed word: "share"
+publishes it to the talent directory, "keep" stores it privately. The exact
+counts payload is printed for you to read before the first upload.
 
 Requires only the Python 3 that ships with macOS and most Linux distros.
 Stdlib only — no pip install, no venv.
@@ -45,6 +52,7 @@ import argparse
 import glob
 import json
 import os
+import re
 import sys
 import tempfile
 import webbrowser
@@ -656,9 +664,99 @@ def cmd_leave():
     except OSError:
         pass
     if status == 200:
-        print("\n  Removed %s from the board. Local token deleted.\n" % res.get("removed", creds["handle"]))
+        print("\n  Removed %s from the board, assessment included. Local token deleted.\n" % res.get("removed", creds["handle"]))
     else:
         print("\n  Local token deleted. Server said: %s\n" % res.get("error", "status %s" % status))
+    return 0
+
+
+PROFILE_DATA_RE = re.compile(
+    r'<script type="application/json" id="profile-data">([\s\S]*?)</script>')
+
+
+def extract_profile(path):
+    """The assessment's HTML report carries its structured payload in one
+    script block. That payload -- and nothing else on the page -- is what a
+    submission sends."""
+    try:
+        with open(path, "r", encoding="utf-8") as fh:
+            text = fh.read()
+    except OSError:
+        return None
+    m = PROFILE_DATA_RE.search(text)
+    if not m:
+        return None
+    try:
+        return json.loads(m.group(1))
+    except ValueError:
+        return None
+
+
+def cmd_submit(patterns):
+    creds = load_creds()
+    if not creds:
+        print("\n  Not on the board. Join first — your profile sits beside your")
+        print("  session counts:  python3 tokens.py --join CODE --as \"Your Name\"\n")
+        return 1
+
+    files = []
+    for pat in patterns:
+        files.extend(glob.glob(os.path.expanduser(pat)))
+    files = [f for f in files if os.path.isfile(f)]
+    if not files:
+        print("\n  No file matched. Pass the HTML report the assessment wrote, e.g.")
+        print("    python3 tokens.py --submit ~/Desktop/project-fit-*.html\n")
+        return 1
+    if len(files) > 1:
+        files.sort(key=os.path.getmtime)
+        print("\n  Several files matched — using the newest: %s" % files[-1])
+    path = files[-1]
+
+    profile = extract_profile(path)
+    if not profile:
+        print("\n  No embedded profile data found in %s." % path)
+        print("  Pass the HTML report the assessment wrote — the payload rides inside it.\n")
+        return 1
+
+    pv = profile.get("profile_view") or {}
+    fit = ((pv.get("matching") or {}).get("strongest_fit") or {}).get("label") or ""
+    name = str(profile.get("name") or "(unnamed)")
+    arcs = profile.get("work_arcs") or []
+    size_kb = len(json.dumps(profile)) / 1024
+
+    print("\n  About to submit this assessment profile:")
+    print("    file            %s" % path)
+    print("    name            %s" % name)
+    print("    strongest fit   %s" % (fit or "—"))
+    print("    work arcs       %d" % len(arcs))
+    print("    payload size    %.0f KB" % size_kb)
+    print("\n  What leaves this machine: the structured profile payload only. No")
+    print("  raw session text, no file paths, no raw LinkedIn data. The server")
+    print("  re-validates it against the published schema and rejects it whole")
+    print("  if anything looks like a credential.")
+    print("\n  Type:")
+    print("    share  publish it — listed on board.organizedai.vip/talent and shown")
+    print("           on your public profile page")
+    print("    keep   store it privately — counts toward the cohort, listed nowhere")
+    print("  Anything else cancels. Remove everything later with --leave.")
+    try:
+        answer = input("\n  share or keep? ").strip().lower()
+    except EOFError:
+        answer = ""
+    if answer not in ("share", "keep"):
+        print("\n  Cancelled. Nothing was uploaded.\n")
+        return 1
+
+    visibility = "public" if answer == "share" else "private"
+    status, res = http("POST", "/api/assessment?visibility=" + visibility,
+                       profile, token=creds["token"], timeout=30)
+    if status not in (200, 201):
+        print("\n  Not stored. The server said: %s\n" % res.get("error", "status %s" % status))
+        return 1
+    print("\n  Stored as snapshot %s (%s)." % (res.get("snapshot_seq", "?"), visibility))
+    if visibility == "public":
+        print("  You are listed:  https://board.organizedai.vip/talent")
+    print("  Your profile:    %s\n" % res.get("url", ""))
     return 0
 
 
@@ -947,7 +1045,10 @@ def main():
     w.add_argument("--push", action="store_true", help="push your counts once")
     w.add_argument("--watch", action="store_true", help="push your counts on a loop")
     w.add_argument("--interval", type=int, default=60, help="seconds between pushes (min 20)")
-    w.add_argument("--leave", action="store_true", help="remove yourself from the board")
+    w.add_argument("--leave", action="store_true",
+                   help="remove yourself from the board (assessment included)")
+    w.add_argument("--submit", metavar="REPORT.html", nargs="+",
+                   help="submit an AI Work Assessment report (asks share-or-keep first)")
 
     args = ap.parse_args()
 
@@ -956,6 +1057,8 @@ def main():
                         watch_after=not args.no_watch, interval=max(args.interval, 20))
     if args.leave:
         return cmd_leave()
+    if args.submit:
+        return cmd_submit(args.submit)
     if args.push:
         return cmd_push()
     if args.watch:

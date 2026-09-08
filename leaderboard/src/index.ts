@@ -394,6 +394,12 @@ export default {
         env.DB.prepare(`DELETE FROM stats WHERE token_hash = ?`).bind(who.token_hash),
         env.DB.prepare(`DELETE FROM attendees WHERE token_hash = ?`).bind(who.token_hash),
       ]);
+      // Leaving removes everything, assessments included. Separate try: the
+      // table predates migration 002 on databases that never applied it.
+      try {
+        await env.DB.prepare(`DELETE FROM assessments WHERE handle = ? AND workshop_id = ?`)
+          .bind(who.handle, who.workshop_id).run();
+      } catch { /* assessments table not present yet */ }
       await broadcast(env, who.workshop_id);
       return json({ ok: true, removed: who.handle });
     }
