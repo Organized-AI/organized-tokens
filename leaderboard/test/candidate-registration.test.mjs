@@ -4,7 +4,7 @@ import {DatabaseSync} from 'node:sqlite';
 import {readFileSync} from 'node:fs';
 import {candidateRoutes,CONSENT_VERSION} from '../src/candidate-registration.ts';
 import {publicAssessmentRoutes,PUBLIC_CONSENT} from '../src/public-assessments.ts';
-import {matchJobs,candidateSummary,liveRoles} from '../src/job-matching.ts';
+import {matchJobs,candidateSummary,liveRoles,supportedCapabilities} from '../src/job-matching.ts';
 const fixture=JSON.parse(readFileSync(new URL('./fixtures/profile-v9.sample.json',import.meta.url)));
 function setup(t){
  const sqlite=new DatabaseSync(':memory:');t.after(()=>sqlite.close());for(const file of ['004_candidate_registrations.sql','005_public_assessments.sql'])sqlite.exec(readFileSync(new URL('../migrations/'+file,import.meta.url),'utf8'));
@@ -138,4 +138,43 @@ test('Niceboard results envelopes are accepted only after account identity and v
   return s.fetcher(url,options);
  };
  assert.equal((await candidateRoutes(request(),s.env,f)).status,201);
+});
+
+test('incidental software keywords do not suggest unsupported hardware, sales, or community specialties',()=>{
+ const description_html='Build APIs, agent workflows, automation, testing, and data pipelines.';
+ const roles=['AI/ML Hardware Architect, Cloud, Silicon','Enterprise Account Executive','Community Manager','Research Scientist'].map((title,i)=>({id:i+1,title,company_name:'Fictional',description_html}));
+ assert.deepEqual(matchJobs(fixture,roles),[]);
+});
+test('matching favors work named in the role title and does not repeat topics or duplicate listings',()=>{
+ const generic={id:1,title:'Program Associate',company_name:'Fictional',description_html:'Assist with API integration and agent workflows.'};
+ const engineer={id:2,title:'Agent orchestration engineer',company_name:'Fictional',description_html:'Build agent workflows and APIs.',apply_url:'https://example.invalid/role/engineer'};
+ const matches=matchJobs(fixture,[generic,engineer,{...engineer,id:3}]);
+ assert.equal(matches[0].id,'2');assert.equal(matches.filter(m=>m.title===engineer.title).length,1);
+ for(const m of matches)assert.equal(new Set(m.reasons.map(r=>r.topic)).size,m.reasons.length);
+ assert.deepEqual(matchJobs(fixture,[{...generic,description_html:'Our company uses APIs.'}]),[]);
+});
+
+test('a sparse duplicate does not hide the relevant version of a listing',()=>{
+ const sparse={id:201,title:'Program Associate',company_name:'Fictional',description_html:'',apply_url:'https://example.invalid/jobs/201'};
+ const rich={...sparse,id:202,description_html:'Build agent orchestration and automation.'};
+ for(const roles of [[sparse,rich],[rich,sparse]]){
+  const result=matchJobs(fixture,roles);
+  assert.equal(result.length,1);assert.equal(result[0].id,'202');
+ }
+});
+
+test('uncited arcs cannot introduce matching topics and each reason cites its own supporting arcs',()=>{
+ const p=structuredClone(fixture);
+ p.work_arcs=[
+  {...p.work_arcs[0],id:'arc-1',label:'Automation',primary_surface:'application-software',change_type:'new-capability',evidence:['Automated a recurring task.']},
+  {...p.work_arcs[1],id:'arc-2',label:'Data pipelines',primary_surface:'data-models',change_type:'new-capability',evidence:['Built data pipelines.']},
+ ];
+ p.evidence_index=[{id:'automation-only',source:'sessions',arc_ids:['arc-1']},{id:'data-only',source:'sessions',arc_ids:['arc-2']}];
+ p.matching_index.capabilities=[{tag:'delivery',label:'Delivered systems',depth:'working',arc_ids:['arc-1','arc-2'],evidence_ids:['automation-only']}];
+ const dataRole={id:301,title:'Data engineer',company_name:'Fictional',description_html:'Build data pipelines.'};
+ assert.deepEqual(matchJobs(p,[dataRole]),[]);
+ assert.deepEqual(supportedCapabilities(p)[0].arc_ids,['arc-1']);
+ p.matching_index.capabilities[0].evidence_ids.push('data-only');
+ const reason=matchJobs(p,[dataRole])[0].reasons[0];
+ assert.deepEqual(reason.arc_ids,['arc-2']);assert.deepEqual(reason.evidence_ids,['data-only']);
 });

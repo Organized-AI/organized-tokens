@@ -1,14 +1,14 @@
 /** Explainable opportunity suggestions, not a hiring decision or talent score. */
-type Role = {id:number|string;title:string;company_name:string;company_slug?:string;slug?:string;location_name?:string;description_html?:string;expires_on?:string;anonymity_enabled?:boolean};
+type Role = {id:number|string;title:string;company_name:string;company_slug?:string;slug?:string;location_name?:string;description_html?:string;expires_on?:string;apply_url?:string;anonymity_enabled?:boolean};
 const vocabulary: [string,RegExp][] = [
  ['agent workflows',/\b(?:agent(?:ic|s)?|orchestrat\w*|multi.agent|llm|large language models?)\b/i],
  ['automation',/\bautomat\w*\b/i],
  ['data systems',/\b(?:data (?:pipeline|model|integration|engineer|platform)\w*|etl|ingestion)\b/i],
  ['APIs and integrations',/\b(?:apis?|integrations?|webhooks?)\b/i],
  ['product delivery',/\b(?:product (?:operations?|development|ownership|management)|product (?:lead|manager)|roadmap)\b/i],
- ['web applications',/\b(?:web (?:applications?|development)|frontend|front.end|full.stack|react|next\.js)\b/i],
+ ['web applications',/\b(?:web (?:applications?|development)|frontend|front.end|full.stack|react|next\.js|websites?|live site|dashboard|widget|quiz funnel)\b/i],
  ['infrastructure and operations',/\b(?:infrastructure|devops|reliability|deployment|distributed systems|linux|kubernetes)\b/i],
- ['testing and quality',/\b(?:testing|quality assurance|test automation|verification|sdet)\b/i],
+ ['testing and quality',/\b(?:testing|quality assurance|test automation|verification|sdet|acceptance|evaluation|qa)\b/i],
  ['marketing measurement',/\b(?:marketing|conversion|attribution|analytics)\b/i],
  ['media production',/\b(?:video|audio|media processing|rendering)\b/i],
 ];
@@ -18,12 +18,18 @@ export function supportedCapabilities(profile:any) {
  const evidence=new Map((profile.evidence_index||[]).map((item:any)=>[item.id,item]));
  return (profile.matching_index?.capabilities||[]).flatMap((cap:any)=>{
   if(!['deep','working'].includes(cap.depth))return [];
-  const work=(cap.arc_ids||[]).map((id:string)=>arcs.get(id)).filter((arc:any)=>arc && ['working-prototype','deployed','live-use','ongoing-operation','merged','released'].includes(arc.delivery_state));
-  const ids=(cap.evidence_ids||[]).filter((id:string)=>{const item:any=evidence.get(id);return item && ['sessions','assessment'].includes(item.source) && (item.arc_ids||[]).some((arcId:string)=>work.some((arc:any)=>arc.id===arcId));});
-  if (!work.length||!ids.length) return [];
-  // Capability labels and completed-work descriptions, not career titles or personal data.
-  const text=[cap.tag,cap.label,...work.flatMap((a:any)=>[a.label,...(a.evidence||[])])].join(' ');
-  return [{label:plain(cap.label),evidence_ids:ids,arc_ids:work.map((a:any)=>a.id),delivery_states:[...new Set(work.map((a:any)=>a.delivery_state))],topics:vocabulary.filter(([,re])=>re.test(text)).map(([name])=>name)}];
+  const completed=(cap.arc_ids||[]).map((id:string)=>arcs.get(id)).filter((arc:any)=>arc && ['working-prototype','deployed','live-use','ongoing-operation','merged','released'].includes(arc.delivery_state));
+  const cited=(cap.evidence_ids||[]).map((id:string)=>evidence.get(id)).filter((item:any)=>item && ['sessions','assessment'].includes(item.source));
+  const work=completed.filter((arc:any)=>cited.some((item:any)=>(item.arc_ids||[]).includes(arc.id)));
+  if(!work.length)return [];
+  const supporting=(subset:any[])=>({evidence_ids:cited.filter((item:any)=>(item.arc_ids||[]).some((id:string)=>subset.some((arc:any)=>arc.id===id))).map((item:any)=>item.id),arc_ids:subset.map((a:any)=>a.id),delivery_states:[...new Set(subset.map((a:any)=>a.delivery_state))]});
+  const topicEvidence:Record<string,any>={};
+  for(const [name,re] of vocabulary){
+   const labelMatch=re.test([cap.tag,cap.label].join(' '));
+   const topicArcs=labelMatch?work:work.filter((a:any)=>re.test([a.label,String(a.primary_surface||'').replaceAll('-',' '),String(a.change_type||'').replaceAll('-',' '),...(a.evidence||[])].join(' ')));
+   if(topicArcs.length)topicEvidence[name]=supporting(topicArcs);
+  }
+  return [{label:plain(cap.label),...supporting(work),topics:Object.keys(topicEvidence),topic_evidence:topicEvidence}];
  });
 }
 export function candidateSummary(profile:any) {
@@ -33,25 +39,41 @@ export function candidateSummary(profile:any) {
   'Ask the candidate for their full assessment report.'];
  return lines.join('\n').slice(0,2000);
 }
+// Specialist roles need matching evidence in the capability itself, not incidental
+// references to software in a hardware, research, sales or community description.
+const specialties:[RegExp,RegExp][]=[
+ [/\bcuda\b/i,/\bcuda\b/i],
+ [/\b(?:compiler|kernel)\b/i,/\b(?:compiler|kernel)\b/i],
+ [/\b(?:hardware|silicon|asic|rtl|chip|semiconductor)\b/i,/\b(?:hardware design|silicon|asic|rtl|chip design|semiconductor)\b/i],
+ [/\b(?:research scientist|research engineer)\b/i,/\b(?:machine learning research|model research|research experiments|model training|fine.tuning)\b/i],
+ [/\b(?:sales|account executive|business development|customer success)\b/i,/\b(?:sales|business development|customer success|commercial partnerships)\b/i],
+ [/\b(?:community manager|developer relations|developer advocate|recruiter)\b/i,/\b(?:community|developer relations|developer advocacy|recruiting)\b/i],
+];
 export function matchJobs(profile:any,roles:Role[],now=Date.now()) {
  const caps=supportedCapabilities(profile);
- const seen=new Set();
+ const capabilityLabels=caps.map((c:any)=>c.label).join(' ');
+ const seen=new Set(),seenListings=new Set();
  return roles.flatMap(role=>{
   if(!role.id||seen.has(String(role.id))||role.anonymity_enabled) return [];
-  seen.add(String(role.id));
   if(role.expires_on && Date.parse(role.expires_on)<now) return [];
+  seen.add(String(role.id));
+  const title=plain(role.title);
+  if(specialties.some(([roleType,evidence])=>roleType.test(title)&&!evidence.test(capabilityLabels)))return [];
+  const listingKey=role.apply_url?`${plain(role.company_name).toLowerCase()}|${title.toLowerCase()}|${role.apply_url}`:null;
   const text=plain(role.description_html);
-  const jobText=plain(role.title)+' '+text;
-  const topics=vocabulary.filter(([,re])=>re.test(jobText));
-  const reasons=caps.flatMap((cap:any)=>{
-   const topic=topics.find(([name])=>cap.topics.includes(name));
-   if(!topic)return [];
-   const at=jobText.search(topic[1]);
-   return [{capability:cap.label,evidence_ids:cap.evidence_ids,arc_ids:cap.arc_ids,delivery_states:cap.delivery_states,topic:topic[0],job_excerpt:jobText.slice(Math.max(0,at-75),at+180)}];
+  const jobText=title+' '+text;
+  // Count each overlapping area once. Several capabilities pointing at the same
+  // word in a job description do not create several independent fit signals.
+  const topics=vocabulary.filter(([name,re])=>re.test(jobText)&&caps.some((cap:any)=>cap.topics.includes(name)));
+  const titleTopics=topics.filter(([,re])=>re.test(title));
+  if(!titleTopics.length&&topics.length<2)return [];
+  const ordered=[...titleTopics,...topics.filter(t=>!titleTopics.includes(t))];
+  const reasons=ordered.map(([topic,re])=>{
+   const cap=caps.find((c:any)=>c.topics.includes(topic)&&re.test(c.label))||caps.find((c:any)=>c.topics.includes(topic));const at=jobText.search(re);
+   return {capability:cap.label,...cap.topic_evidence[topic],topic,job_excerpt:jobText.slice(Math.max(0,at-75),at+180)};
   });
-  if(!reasons.length)return [];
-  return [{id:String(role.id),title:plain(role.title),company:plain(role.company_name),location:plain(role.location_name),url:`https://jobs.organizedai.vip/job/${encodeURIComponent(String(role.id))}-${encodeURIComponent(role.slug||'')}-${encodeURIComponent(role.company_slug||'')}`,reasons:reasons.slice(0,3),limits:['Potential fit from overlapping work evidence; no application has been sent.','Confirm required technologies, experience, location, work authorization and compensation with the employer.',plain(profile.profile_view?.matching?.not_shown?.summary)].filter(Boolean)}];
- }).sort((a,b)=>b.reasons.length-a.reasons.length||a.title.localeCompare(b.title)).slice(0,8);
+  return [{id:String(role.id),title,company:plain(role.company_name),location:plain(role.location_name),url:`https://jobs.organizedai.vip/job/${encodeURIComponent(String(role.id))}-${encodeURIComponent(role.slug||'')}-${encodeURIComponent(role.company_slug||'')}`,reasons:reasons.slice(0,3),limits:['Potential fit from overlapping work evidence; no application has been sent.','Job-board listing status is not independent confirmation that the employer is still hiring.','Confirm required technologies, experience, location, work authorization and compensation with the employer.',plain(profile.profile_view?.matching?.not_shown?.summary)].filter(Boolean),listingKey,titleOverlap:titleTopics.length,topicOverlap:topics.length}];
+ }).sort((a,b)=>b.titleOverlap-a.titleOverlap||b.topicOverlap-a.topicOverlap||a.title.localeCompare(b.title)).filter(m=>{if(!m.listingKey)return true;if(seenListings.has(m.listingKey))return false;seenListings.add(m.listingKey);return true;}).slice(0,8).map(({listingKey,titleOverlap,topicOverlap,...match})=>match);
 }
 export async function liveRoles(fetcher:typeof fetch=fetch):Promise<Role[]> {
  const roles:Role[]=[];let expected:number|undefined;
