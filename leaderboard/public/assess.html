@@ -1,282 +1,271 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>AI Work Assessment — show what you've built | Organized AI</title>
-<meta name="description" content="Run one prompt in your own coding agent. It reads your local session history, GitHub activity, and optionally LinkedIn, then writes one HTML file to your machine. Nothing is submitted automatically.">
-<meta property="og:title" content="AI Work Assessment — show what you've built, not what you claim">
+<title>Organized Proof — show what you've built, not what you claim</title>
+<meta name="description" content="Run one prompt in your own coding agent. It reads your local session history, GitHub activity, and optionally LinkedIn, then writes one evidence-based HTML profile to your machine. Nothing is submitted automatically.">
+<meta property="og:title" content="Organized Proof — an evidence-based profile of your actual AI work">
 <meta property="og:description" content="One prompt, run in your own coding agent, builds an evidence-based profile of your real AI work. Local by default. You decide what to share.">
-<meta name="theme-color" content="#0e0d09">
-<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+<meta name="theme-color" content="#0c0b09">
 <style>
-:root{--bg:#0E0D09;--s1:#1A1914;--s2:#111009;--bd:#2E2D28;--y:#F2C000;--yd:#B38A00;
---teal:#1D9E75;--teal2:#0F6E56;--coral:#D85A30;--tx:#D4D2C8;--mu:#888780;--dm:#5A5852;
---m:'Space Mono','Courier New',monospace;--sans:system-ui,-apple-system,'Segoe UI',sans-serif;
---xs:4px;--sm:8px;--md:14px;--lg:22px;--xl:32px;--xxl:52px}
-*{box-sizing:border-box;margin:0;padding:0}
-html{scroll-behavior:smooth}
-body{background:var(--bg);color:var(--tx);font:15.5px/1.62 var(--sans);-webkit-font-smoothing:antialiased}
-a{color:var(--y);text-decoration:none}a:hover{text-decoration:underline}
-code{font-family:var(--m);font-size:.88em;color:#EF9F27;background:var(--s2);padding:1px 5px;border-radius:3px}
-em{color:var(--y);font-style:normal}
-
-.top{position:sticky;top:0;background:rgba(17,16,9,.95);backdrop-filter:blur(8px);border-bottom:1px solid var(--bd);
-display:flex;align-items:center;gap:11px;height:52px;padding:0 var(--lg);font-family:var(--m);font-size:12.5px;z-index:50}
-.ini{background:var(--y);color:#0E0D09;font-weight:700;padding:3px 8px;border-radius:3px;letter-spacing:1px}
-.top nav{margin-left:auto;display:flex;gap:var(--lg);font-size:11.5px}
-.top nav a{color:var(--mu)}.top nav a:hover{color:var(--y);text-decoration:none}
-
-.w{max-width:900px;margin:0 auto;padding:0 var(--lg)}
-.hero{padding:var(--xxl) 0 var(--xl);border-bottom:1px solid var(--bd)}
-.kick{font-family:var(--m);font-size:11px;color:var(--dm);letter-spacing:1px}
-h1{font-family:var(--m);font-size:40px;color:var(--y);font-weight:700;letter-spacing:-.6px;line-height:1.12;margin:var(--md) 0 var(--lg)}
-h1 em{color:var(--tx)}
-.hero p{color:var(--mu);font-size:17px;max-width:660px;margin-bottom:var(--lg)}
-.cta{display:flex;flex-wrap:wrap;gap:var(--sm);margin-bottom:var(--lg)}
-.btn{font-family:var(--m);font-size:12.5px;padding:12px 18px;border-radius:5px;border:1px solid var(--bd);color:var(--mu)}
-.btn.p{background:var(--y);color:#0E0D09;border-color:var(--y);font-weight:700}
-.btn:hover{text-decoration:none;border-color:var(--yd);color:var(--y)}.btn.p:hover{background:#FFD21A;color:#0E0D09}
-.assure{display:flex;flex-wrap:wrap;gap:var(--xl);font-size:13px;color:var(--mu)}
-.assure b{color:var(--tx);display:block;font-family:var(--m);font-size:11px;letter-spacing:.5px;margin-bottom:2px}
-
-.sec{padding:var(--xxl) 0;border-bottom:1px solid var(--bd)}
-.cm{font-family:var(--m);font-size:10.5px;color:var(--yd);letter-spacing:2px;margin-bottom:var(--md)}
-h2{font-size:26px;color:var(--tx);font-weight:700;letter-spacing:-.3px;margin-bottom:var(--sm);line-height:1.2}
-.lead{color:var(--mu);max-width:640px;margin-bottom:var(--lg)}
-
+:root{--bg:#0c0b09;--surface:#1a1814;--line:#2a2520;--muted:#746c5d;--text:#f0ece4;--yellow:#f5d623;--cream:#fffcf4;--ink:#16170f;--gutter:clamp(22px,5vw,80px);--sans:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;--mono:"JetBrains Mono",ui-monospace,monospace}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--bg);color:var(--text);font:15px/1.7 var(--sans)}a{color:inherit;text-decoration:none}a:hover{text-decoration:underline}.skip{position:absolute;left:-9999px}
+.topbar{height:84px;padding:0 var(--gutter);display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,.04);position:sticky;top:0;background:rgba(12,11,9,.94);backdrop-filter:blur(12px);z-index:8}
+.brand{font:700 14px var(--mono);letter-spacing:-.04em}.brand b{color:var(--yellow)}
+.topbar nav{display:flex;gap:40px;color:#c9c4b9;font-size:13px}
+.menu{font-size:13px}
+.hero{min-height:calc(100vh - 84px);padding:68px var(--gutter) 58px;position:relative;overflow:hidden}
+.hero canvas{position:absolute;inset:0;width:100%;height:100%;opacity:.55}
+.hero>*:not(canvas){position:relative}
+.hero-meta{display:flex;justify-content:space-between;font:11px var(--mono);color:#c1bbaf;gap:14px;flex-wrap:wrap}
+.pill{border:1px solid #37342e;border-radius:999px;padding:7px 14px;white-space:nowrap}
+.hero-content{min-height:570px;display:grid;grid-template-columns:1fr 280px;gap:80px;align-items:end}
+.hero h1{font-size:clamp(58px,7.2vw,112px);line-height:.86;letter-spacing:-.065em;font-weight:400;margin:32px 0 0}
+.hero h1 mark{background:none;color:var(--yellow)}
+.hero-aside{padding-bottom:40px;font-size:16px;color:#d0cabe}
+.button{display:inline-block;margin-top:25px;border:1px solid currentColor;border-radius:999px;padding:13px 22px;font-size:13px}
+.button.light{background:var(--cream);color:var(--ink);border:0}
+.button:hover{text-decoration:none}
+.editorial{padding:110px var(--gutter)}
+.editorial.light{background:var(--cream);color:var(--ink)}
+.editorial.dark{background:#10100b;color:var(--text)}
+.editorial.event{background:var(--yellow);color:var(--ink)}
+.kicker{display:flex;justify-content:space-between;border-top:1px solid currentColor;padding-top:15px;font:11px var(--mono);letter-spacing:.08em;gap:14px;flex-wrap:wrap}
+.intro{display:grid;grid-template-columns:1.4fr .6fr;gap:90px;margin:95px 0}
+.intro h2{font-size:clamp(48px,6vw,86px);line-height:.96;letter-spacing:-.055em;font-weight:400;margin:0}
+.intro p{font-size:18px;align-self:end;margin:0}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid rgba(0,0,0,.2)}
+.stats div{padding:30px 0}
+.stats b{display:block;font-size:56px;font-weight:400}
+.stats span{font:11px var(--mono)}
+.chapter-grid{display:grid;grid-template-columns:repeat(3,1fr);border-top:1px solid rgba(0,0,0,.2)}
+.chapter-card{min-height:280px;padding:30px;border-right:1px solid rgba(0,0,0,.2)}
+.chapter-card:last-child{border-right:0}
+.chapter-card>span,.eyebrow{font:10px var(--mono);color:#6f6e63}
+.chapter-card h3{font-size:31px;line-height:1.1;font-weight:400;margin:50px 0 15px}
+.chapter-card p{margin:0}
+.chapter-card b{display:block;margin-top:30px;font:11px var(--mono)}
 /* configurator */
-.cfg{background:var(--s1);border:1px solid var(--bd);border-radius:8px;padding:var(--lg);margin-top:var(--lg)}
-.cfg .h{display:flex;align-items:center;gap:var(--md);flex-wrap:wrap;margin-bottom:var(--lg)}
-.cfg .h .k{font-family:var(--m);font-size:11px;color:var(--yd);letter-spacing:1.5px}
-.cfg .h a{margin-left:auto;font-family:var(--m);font-size:11px;color:var(--dm)}
-h3{font-size:16px;color:var(--tx);margin:var(--lg) 0 var(--sm)}
-.opt{display:grid;grid-template-columns:1fr 1fr;gap:var(--sm)}
-.opt label{display:block;background:var(--s2);border:1px solid var(--bd);border-radius:6px;padding:var(--md);cursor:pointer;position:relative}
-.opt label:has(input:checked){border-color:var(--yd);background:rgba(242,192,0,.05)}
-.opt input{position:absolute;opacity:0;pointer-events:none}
-.opt b{display:block;color:var(--tx);font-size:14px;margin-bottom:3px}
-.opt span{font-size:12.5px;color:var(--mu)}
-.rec{font-family:var(--m);font-size:9px;color:var(--teal);border:1px solid var(--teal2);padding:1px 6px;border-radius:3px;margin-left:6px;vertical-align:middle}
-.src{display:grid;gap:var(--sm)}
-.src label{display:flex;align-items:flex-start;gap:var(--md);background:var(--s2);border:1px solid var(--bd);border-radius:6px;padding:var(--md);cursor:pointer}
-.src label:has(input:checked){border-color:var(--teal2)}
-.src input{margin-top:4px;accent-color:var(--y);width:16px;height:16px;flex-shrink:0}
-.src b{display:block;color:var(--tx);font-size:14px}
-.src span{font-size:12.5px;color:var(--mu)}
-.cnt{font-family:var(--m);font-size:11px;color:var(--dm);margin:var(--sm) 0 0}
-.multi{display:none;margin-top:var(--md);border-left:2px solid var(--bd);padding-left:var(--md)}
+.cfg-label{font:11px var(--mono);color:#989082;letter-spacing:.08em;display:block;margin:60px 0 18px}
+.opt2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.opt2 label,.srcc label{display:block;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:20px;cursor:pointer}
+.opt2 label:has(input:checked),.srcc label:has(input:checked){border-color:var(--yellow)}
+.opt2 input,.srcc input{accent-color:var(--yellow)}
+.opt2 input{position:absolute;opacity:0;pointer-events:none}
+.opt2 b{display:block;font-size:16px;font-weight:400;color:var(--text);margin-bottom:4px}
+.opt2 span,.srcc span{font-size:13px;color:#b7b0a3}
+.srcc{display:grid;gap:10px}
+.srcc label{display:flex;align-items:flex-start;gap:14px}
+.srcc input{margin-top:4px;width:16px;height:16px;flex-shrink:0}
+.srcc b{display:block;font-size:15px;font-weight:400;color:var(--text)}
+.rec{font:9px var(--mono);color:var(--yellow);border:1px solid #4b493e;padding:2px 7px;border-radius:999px;margin-left:8px;vertical-align:middle;letter-spacing:.08em}
+.cnt{font:11px var(--mono);color:#8f8676;margin-top:14px;letter-spacing:.08em}
+.multi{display:none;margin-top:14px;border-left:2px solid var(--line);padding-left:22px}
 .multi.on{display:block}
-.multi h4{font-size:14px;color:var(--tx);margin:var(--md) 0 4px}
-.multi p{font-size:13px;color:var(--mu);margin-bottom:var(--sm)}
-.multi pre{margin-top:var(--sm)}
-
-pre{background:var(--s2);border:1px solid var(--bd);border-radius:6px;padding:var(--md) 16px;overflow:auto;
-font-family:var(--m);font-size:11.5px;line-height:1.55;color:var(--tx);white-space:pre-wrap;word-break:break-word}
-pre.prompt{max-height:340px;margin-top:var(--md)}
-.pbar{display:flex;align-items:center;gap:var(--md);margin-top:var(--lg);flex-wrap:wrap}
-.pbar .note{font-size:13px;color:var(--mu);flex:1;min-width:200px}
-.copy{font-family:var(--m);font-size:12.5px;font-weight:700;background:var(--y);color:#0E0D09;border:0;border-radius:5px;padding:12px 18px;cursor:pointer}
-.copy:hover{background:#FFD21A}.copy:disabled{opacity:.45;cursor:default}
-.msg{font-family:var(--m);font-size:11.5px;min-height:16px;margin-top:var(--sm)}
-.msg.ok{color:var(--teal)}.msg.err{color:var(--coral)}
-.after{font-size:13px;color:var(--mu);margin-top:var(--md)}
-
-.assure2{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--md);margin-top:var(--lg)}
-.assure2 div{background:var(--s2);border:1px solid var(--bd);border-radius:6px;padding:var(--md)}
-.assure2 b{display:block;font-family:var(--m);font-size:10.5px;color:var(--teal);letter-spacing:1px;margin-bottom:5px}
-.assure2 span{font-size:12.5px;color:var(--mu)}
-
-.cols{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--md);margin-top:var(--lg)}
-.col{background:var(--s1);border:1px solid var(--bd);border-radius:6px;padding:var(--lg)}
-.col .k{font-family:var(--m);font-size:10.5px;color:var(--yd);letter-spacing:1.5px;margin-bottom:var(--sm)}
-.col p{font-size:13.5px;color:var(--mu)}
-.links{display:flex;gap:var(--lg);margin-top:var(--lg);flex-wrap:wrap;font-family:var(--m);font-size:12px}
-
-.repo{background:var(--s2);border:1px solid var(--bd);border-radius:6px;padding:var(--md) var(--lg);
-font-family:var(--m);font-size:12.5px;margin-top:var(--lg);display:inline-block}
-
-.submit{border:1px solid var(--teal2);background:rgba(29,158,117,.05);border-radius:8px;padding:var(--lg);margin-top:var(--lg)}
-.submit h2{font-size:22px}
-.submit p{font-size:14px;color:var(--mu);margin-bottom:var(--md)}
-.submit pre{margin:var(--md) 0}
-
-footer{padding:var(--xl) var(--lg) var(--xxl);color:var(--dm);font-family:var(--m);font-size:11px;text-align:center}
-footer a{color:var(--dm);margin:0 6px}
-
-@media(max-width:760px){h1{font-size:28px}.opt,.assure2,.cols{grid-template-columns:1fr}
-.top nav{display:none}.assure{flex-direction:column;gap:var(--md)}}
+.multi h4{font-size:15px;font-weight:400;color:var(--text);margin:22px 0 6px}
+.multi p{font-size:13.5px;color:#b7b0a3;margin:0 0 6px}
+.code{background:#070706;border:1px solid #2b2924;border-radius:10px;margin:14px 0;overflow:auto}
+.code span{display:block;padding:9px 14px;border-bottom:1px solid #2b2924;font:10px var(--mono);color:#8f8676}
+.code pre{padding:20px;margin:0;font:13px/1.7 var(--mono);color:#ece6d9;white-space:pre-wrap;word-break:break-word}
+.code pre.tall{max-height:340px}
+.assure3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:40px}
+.assure3 div{border:1px solid var(--line);border-radius:10px;padding:20px}
+.assure3 b{display:block;font:10px var(--mono);color:var(--yellow);letter-spacing:.08em;margin-bottom:8px;font-weight:400}
+.assure3 span{font-size:13px;color:#b7b0a3}
+.pbar{display:flex;align-items:center;gap:22px;margin-top:36px;flex-wrap:wrap}
+.pbar .note{font-size:14px;color:#b7b0a3;flex:1;min-width:200px;margin:0}
+.copy{font:12px var(--mono);background:var(--cream);color:var(--ink);border:0;border-radius:999px;padding:13px 22px;cursor:pointer}
+.copy:hover{background:#fff}.copy:disabled{opacity:.4;cursor:default}
+.msg{font:11px var(--mono);min-height:16px;margin:12px 0 0;letter-spacing:.04em}
+.msg.ok{color:var(--yellow)}.msg.err{color:#e0765a}
+.after{font-size:14px;color:#b7b0a3;margin-top:18px}
+.linkrow{display:flex;gap:34px;margin-top:44px;flex-wrap:wrap;font:12px var(--mono)}
+.linkrow a{text-decoration:underline}
+.event .code{background:rgba(0,0,0,.08);border-color:rgba(0,0,0,.25)}
+.event .code span{border-color:rgba(0,0,0,.25);color:rgba(22,23,15,.65)}
+.event .code pre{color:var(--ink)}
+.event p{font-size:17px;max-width:760px}
+.event .button{border-color:var(--ink)}
+.site-footer{padding:55px var(--gutter);display:flex;align-items:center;justify-content:space-between;border-top:1px solid var(--line);font-size:12px;gap:18px;flex-wrap:wrap}
+.site-footer nav{display:flex;gap:26px;color:#8f8676}
+@media(max-width:900px){.topbar nav{display:none}.hero-content,.intro{grid-template-columns:1fr}.hero-content{min-height:0;padding-top:60px}.chapter-grid{grid-template-columns:1fr}.chapter-card{border-right:0;border-bottom:1px solid rgba(0,0,0,.2);min-height:0}.chapter-card h3{margin-top:24px}.stats{grid-template-columns:1fr 1fr}.opt2,.assure3{grid-template-columns:1fr}.editorial{padding:70px var(--gutter)}.intro{margin:50px 0}.site-footer{display:block}.site-footer>*{display:block;margin:12px 0}.site-footer nav{display:block}.site-footer nav a{display:inline-block;margin:0 18px 8px 0}}
 </style>
 </head>
 <body>
-
-<div class="top">
-  <span class="ini">OP</span><span style="color:var(--dm)">/</span><span>Organized Proof</span>
+<a class="skip" href="#main">Skip to content</a>
+<header class="topbar">
+  <a class="brand" href="/">ORGANIZED <b>PROOF</b></a>
   <nav>
-    <a href="#generate">Assessment</a>
-    <a href="/example">Sample</a>
+    <a href="#run">Run it</a>
+    <a href="/example">Sample profile</a>
     <a href="https://board.organizedai.vip/">Board</a>
     <a href="https://board.organizedai.vip/talent">Talent</a>
+    <a href="https://github.com/Organized-AI/organized-router">Router</a>
     <a href="https://github.com/Organized-AI/ai-work-assessment">GitHub</a>
   </nav>
-</div>
-
-<div class="w">
+  <a class="menu" href="#run">Run it&nbsp; •</a>
+</header>
+<main id="main">
 
 <section class="hero">
-  <div class="kick">AI WORK ASSESSMENT v8 · FREE · OPEN SOURCE · RUNS IN YOUR OWN CODING AGENT</div>
-  <h1>Show what you've built, <em>not what you claim.</em></h1>
-  <p>Run one prompt in your own coding agent. It reads your local session history, your GitHub
-     activity, and optionally your LinkedIn career history, then writes one HTML file to your
-     machine and tells you where it saved it: what you build, how you verify it, where you fit
-     on a project, and what the record does not establish.</p>
-  <div class="cta">
-    <a class="btn p" href="#generate">Run the assessment →</a>
-    <a class="btn" href="/example">See a sample profile</a>
-    <a class="btn" href="https://github.com/Organized-AI/ai-work-assessment">Star on GitHub</a>
-  </div>
-  <div class="assure">
-    <div><b>CLIENT DETAILS STAY OUT</b>Client names and identifying details are abstracted during
-      extraction, and credential patterns are rejected on upload.</div>
-    <div><b>OPEN SOURCE</b>MIT-licensed. Read <a href="/apply/prompt.md">the prompt</a> or
-      <a href="https://github.com/Organized-AI/ai-work-assessment">the code</a> before you run it.</div>
+  <canvas id="signal"></canvas>
+  <div class="hero-meta"><span>AI Work Assessment / Organized AI / 2026</span><span class="pill">• Free. Open source. Runs in your own coding agent.</span></div>
+  <div class="hero-content">
+    <div>
+      <p>Show what you've built.</p>
+      <h1>Evidence over claims.<br><mark>Your agent does the work.</mark></h1>
+    </div>
+    <div class="hero-aside">
+      <p>Run one prompt in your own coding agent. It reads your local session history, your GitHub activity, and optionally your LinkedIn career history, then writes one HTML file to your machine: what you build, how you verify it, where you fit on a project, and what the record does not establish.</p>
+      <a class="button light" href="#run">Run the assessment</a>
+      <a class="button" href="/example">See a sample profile</a>
+    </div>
   </div>
 </section>
 
-<section class="sec" id="generate">
-  <div class="cm">// RUN THE ASSESSMENT</div>
-  <h2>Pick the evidence it can <em>use.</em></h2>
-
-  <div class="cfg">
-    <div class="h"><span class="k">// AI WORK ASSESSMENT PROMPT</span>
-      <a href="/apply/prompt.md">Read base prompt →</a></div>
-
-    <h3>Where do you use AI coding tools?</h3>
-    <p class="lead" style="font-size:13.5px;margin-bottom:var(--sm)">Choose the footprint this
-      assessment covers. Nothing here connects to or controls another machine.</p>
-    <div class="opt">
-      <label><input type="radio" name="fp" value="one" checked>
-        <b>On this computer <span class="rec">RECOMMENDED</span></b>
-        <span>Create the assessment from the history available here.</span></label>
-      <label><input type="radio" name="fp" value="multi">
-        <b>Across multiple environments</b>
-        <span>Include work from another computer, VM, Codespace, or cloud environment.</span></label>
-    </div>
-
-    <div class="multi" id="multi">
-      <h4>Collect from each environment</h4>
-      <p>Run the base prompt once on every environment whose local history should count.
-         Each run produces one private evidence bundle. Get each machine's id first:</p>
-      <pre>npx github:Organized-AI/ai-work-assessment#v8.0.0-organized.1 environment-id</pre>
-      <h4>Bring the files together</h4>
-      <p>Review the bundles, then move them into one folder on the computer where you will
-         create the assessment. <b style="color:var(--tx)">Nothing is uploaded.</b></p>
-      <pre>npx github:Organized-AI/ai-work-assessment#v8.0.0-organized.1 validate-bundle ./ai-work-evidence-*.json</pre>
-      <h4>Create one assessment</h4>
-      <p>Tested code validates the bundles, counts exact duplicate sessions once, and builds one profile.</p>
-      <pre>npx github:Organized-AI/ai-work-assessment#v8.0.0-organized.1 consolidate ./bundle-folder</pre>
-    </div>
-
-    <h3>Choose what the assessment can use.</h3>
-    <p class="lead" style="font-size:13.5px;margin-bottom:var(--sm)">Leave every source on for the
-      fullest view. Each carries its own dated coverage window, and activity volume is never
-      treated as a skill score.</p>
-    <div class="src" id="src">
-      <label><input type="checkbox" data-key="linkedin" checked>
-        <div><b>LinkedIn career history <span class="rec">RECOMMENDED</span></b>
-        <span>Career chronology only. Generalized on extraction; never stored raw.</span></div></label>
-      <label><input type="checkbox" data-key="github" checked>
-        <div><b>GitHub history <span class="rec">RECOMMENDED</span></b>
-        <span>Read-only through your existing <code>gh</code> session. Nothing changed or cloned.</span></div></label>
-      <label><input type="checkbox" data-key="codex" checked>
-        <div><b>Codex sessions <span class="rec">RECOMMENDED</span></b>
-        <span>Readable Codex CLI and Desktop sessions stored on this computer.</span></div></label>
-      <label><input type="checkbox" data-key="claude" checked>
-        <div><b>Claude sessions <span class="rec">RECOMMENDED</span></b>
-        <span>Readable Claude Code, Cowork, and desktop-launched Code history stored locally.</span></div></label>
-      <label><input type="checkbox" data-key="other_local" checked>
-        <div><b>Other local agents <span class="rec">RECOMMENDED</span></b>
-        <span>Best-effort history from Cursor, Gemini CLI, Pi, opencode, aider, and local-model tools.</span></div></label>
-    </div>
-    <div class="cnt" id="cnt">5 OF 5 SELECTED</div>
-
-    <div class="assure2">
-      <div><b>// LOCAL BY DEFAULT</b><span>Session history is analyzed on your computer.</span></div>
-      <div><b>// SCRUBBED BEFORE DISPLAY</b><span>Secrets, personal material, client names, and private project names are removed or abstracted.</span></div>
-      <div><b>// YOU DECIDE TO SHARE</b><span>The prompt writes one HTML file and stops. Nothing submits itself.</span></div>
-    </div>
-
-    <div class="pbar">
-      <div class="note">The prompt below updates as you change sources.</div>
-      <button class="copy" id="copy" disabled>Copy configured prompt</button>
-    </div>
-    <div class="msg" id="msg"></div>
-    <pre class="prompt" id="prompt">Loading prompt…</pre>
-    <p class="after">Paste it into Claude Code, Codex, or any capable coding agent. It finishes by
-       writing a single HTML file to your machine and tells you the exact path.</p>
+<section class="editorial light">
+  <div class="kicker">01 / THE EVIDENCE <span>LOCAL BY DEFAULT</span></div>
+  <div class="intro">
+    <h2>See the work you've actually done.</h2>
+    <p>Client names and identifying details are abstracted during extraction, and credential patterns are rejected outright. The prompt, validator, and renderer are MIT-licensed. Read them before you run anything.</p>
+  </div>
+  <div class="stats">
+    <div><b>v8</b><span>ASSESSMENT VERSION</span></div>
+    <div><b>v9</b><span>PROFILE SCHEMA</span></div>
+    <div><b>5</b><span>EVIDENCE SOURCES</span></div>
+    <div><b>0</b><span>AUTOMATIC UPLOADS</span></div>
   </div>
 </section>
 
-<section class="sec">
-  <div class="cm">// WHAT YOU GET</div>
-  <h2>Concrete reasons for a project lead to staff you, and <em>limits are mandatory.</em></h2>
-  <div class="cols">
-    <div class="col"><div class="k">AGENT FOOTPRINT</div>
-      <p>Observed session volume, comparable Claude and Codex use, work cadence — and once
-         eight profiles are in a room, placement in that cohort.</p></div>
-    <div class="col"><div class="k">EXPERTISE</div>
-      <p>Industry and subject-matter knowledge inferred from both career history and the work
-         found in agent sessions.</p></div>
-    <div class="col"><div class="k">PROJECT DECISION</div>
-      <p>The strongest fit, where to add a specialist, and what the available evidence does
-         not show.</p></div>
+<section id="run" class="editorial dark">
+  <div class="kicker">02 / RUN THE ASSESSMENT <span>PICK THE EVIDENCE IT CAN USE</span></div>
+  <div class="intro">
+    <h2>One prompt.<br>You hold the evidence.</h2>
+    <p>Choose the footprint and the sources. The configured prompt updates below, ready to paste into Claude Code, Codex, or any capable coding agent. Nothing here connects to or controls another machine.</p>
   </div>
-  <div class="links">
+
+  <span class="cfg-label">WHERE DO YOU USE AI CODING TOOLS?</span>
+  <div class="opt2">
+    <label><input type="radio" name="fp" value="one" checked>
+      <b>On this computer <span class="rec">RECOMMENDED</span></b>
+      <span>Create the assessment from the history available here.</span></label>
+    <label><input type="radio" name="fp" value="multi">
+      <b>Across multiple environments</b>
+      <span>Include work from another computer, VM, Codespace, or cloud development environment.</span></label>
+  </div>
+
+  <div class="multi" id="multi">
+    <h4>1 · Collect from each environment</h4>
+    <p>Run the collection prompt once on every environment whose local history should count. Each run creates one private JSON evidence bundle. Get each machine's id first:</p>
+    <div class="code"><span>TERMINAL</span><pre>npx github:Organized-AI/ai-work-assessment#v8.0.0-organized.1 environment-id</pre></div>
+    <h4>2 · Bring the files together</h4>
+    <p>Review the bundles, then move them into one folder on the computer where you will create the assessment. Nothing is uploaded.</p>
+    <div class="code"><span>TERMINAL</span><pre>npx github:Organized-AI/ai-work-assessment#v8.0.0-organized.1 validate-bundle ./ai-work-evidence-*.json</pre></div>
+    <h4>3 · Create one assessment</h4>
+    <p>Tested code validates the bundles, counts exact duplicate sessions once, and builds one profile.</p>
+    <div class="code"><span>TERMINAL</span><pre>npx github:Organized-AI/ai-work-assessment#v8.0.0-organized.1 consolidate ./bundle-folder</pre></div>
+  </div>
+
+  <span class="cfg-label">CHOOSE WHAT THE ASSESSMENT CAN USE — LEAVE EVERY SOURCE ON FOR THE FULLEST VIEW</span>
+  <div class="srcc" id="src">
+    <label><input type="checkbox" data-key="linkedin" checked>
+      <div><b>LinkedIn career history <span class="rec">RECOMMENDED</span></b>
+      <span>Career chronology only. Generalized on extraction; removed from the profile on submission.</span></div></label>
+    <label><input type="checkbox" data-key="github" checked>
+      <div><b>GitHub history <span class="rec">RECOMMENDED</span></b>
+      <span>Read-only through your existing gh session. No repositories are changed or cloned.</span></div></label>
+    <label><input type="checkbox" data-key="codex" checked>
+      <div><b>Codex sessions <span class="rec">RECOMMENDED</span></b>
+      <span>Readable Codex CLI and Desktop sessions stored on this computer.</span></div></label>
+    <label><input type="checkbox" data-key="claude" checked>
+      <div><b>Claude sessions <span class="rec">RECOMMENDED</span></b>
+      <span>Readable Claude Code, Cowork, and desktop-launched Code history stored locally.</span></div></label>
+    <label><input type="checkbox" data-key="other_local" checked>
+      <div><b>Other local agents <span class="rec">RECOMMENDED</span></b>
+      <span>Best-effort readable history from Cursor, Gemini CLI, Pi, opencode, aider, and local-model tools.</span></div></label>
+  </div>
+  <div class="cnt" id="cnt">5 OF 5 SELECTED</div>
+
+  <div class="assure3">
+    <div><b>LOCAL BY DEFAULT</b><span>Session history is analyzed on your computer.</span></div>
+    <div><b>SCRUBBED BEFORE DISPLAY</b><span>Secrets, personal material, client names, and private project names are removed or abstracted.</span></div>
+    <div><b>YOU DECIDE TO SHARE</b><span>The prompt writes one HTML file and stops. Nothing submits itself.</span></div>
+  </div>
+
+  <div class="pbar">
+    <p class="note">The prompt below updates as you change sources. It finishes by writing a single HTML file to your machine and telling you the exact path.</p>
+    <button class="copy" id="copy" disabled>Copy configured prompt</button>
+  </div>
+  <div class="msg" id="msg"></div>
+  <div class="code"><span>AI WORK ASSESSMENT PROMPT · <a href="/apply/prompt.md" style="color:#8f8676;text-decoration:underline">READ THE BASE PROMPT</a></span><pre class="tall" id="prompt">Loading prompt…</pre></div>
+</section>
+
+<section class="editorial light">
+  <div class="kicker">03 / WHAT YOU GET <span>LIMITS ARE MANDATORY</span></div>
+  <div class="intro">
+    <h2>Concrete reasons to staff you.</h2>
+    <p>The profile is built for matching: the work you repeatedly choose, what reached real use, how you direct and verify agent work, and what the retained evidence does not establish.</p>
+  </div>
+  <div class="chapter-grid">
+    <div class="chapter-card"><span>01 · FOOTPRINT</span>
+      <h3>Agent footprint</h3>
+      <p>Observed session volume, comparable Claude and Codex use, work cadence, and placement in the submitted cohort once eight profiles exist.</p>
+      <b>OBSERVED, NOT CLAIMED →</b></div>
+    <div class="chapter-card"><span>02 · CONTEXT</span>
+      <h3>Expertise</h3>
+      <p>Industry and subject-matter knowledge inferred from both career history and the work found in agent sessions.</p>
+      <b>CAREER + OBSERVED WORK →</b></div>
+    <div class="chapter-card"><span>03 · DECISION</span>
+      <h3>Project decision</h3>
+      <p>The strongest fit, where to add a specialist, and what the available evidence does not show.</p>
+      <b>BUILT FOR A STAFFING CALL →</b></div>
+  </div>
+  <div class="linkrow">
     <a href="/example">See the current sample profile →</a>
     <a href="https://board.organizedai.vip/">How the board works →</a>
   </div>
 </section>
 
-<section class="sec">
-  <div class="cm">// OPEN SOURCE</div>
-  <h2>Don't trust us. <em>Read it.</em></h2>
-  <p class="lead">The current release is Assessment v8. It writes profile schema v9, and its
-     multi-environment workflow uses open-source helper v8.0.0. A fixed renderer turns the
-     validated profile data into the final page. The prompt, validator, and renderer are
-     MIT-licensed. Run it, fork it, or self-host it without ever talking to us. The
-     <a href="https://github.com/Organized-AI/ai-work-assessment/blob/main/CHANGELOG.md">version
-     history</a> explains every current number.</p>
-  <a class="repo" href="https://github.com/Organized-AI/ai-work-assessment">Organized-AI/ai-work-assessment</a>
-</section>
-
-<section class="sec">
-  <div class="cm">// OPTIONAL: SHARE IT TO THE BOARD</div>
-  <div class="submit">
-    <h2>The report is yours either way. <em>Sharing it</em> does two things.</h2>
-    <p>Your profile gains a comparison against the unnamed cohort in your workshop room — computed
-       only after eight people have shared, never from fewer. It sits beside your session counts
-       on the board, where the room can see what the counts alone could not say. And if you type
-       <code>share</code>, it lists you on <a href="https://board.organizedai.vip/talent">the talent
-       directory</a>, where people hiring for agentic work actually look.</p>
-    <p>Sharing is a separate command, gated on a typed word, from the machine that ran the assessment:</p>
-    <pre>python3 tokens.py --submit ~/Desktop/project-fit-*.html</pre>
-    <p style="margin:0">Not on the board yet? <a href="https://board.organizedai.vip/">Join from your laptop first.</a>
-       Remove everything any time with <code>python3 tokens.py --leave</code>.</p>
+<section class="editorial dark">
+  <div class="kicker">04 / OPEN SOURCE <span>DON'T TRUST US. READ IT.</span></div>
+  <div class="intro">
+    <h2>Fork it.<br>Self-host it.</h2>
+    <p>The current release is Assessment v8. It writes profile schema v9, and its multi-environment workflow uses open-source helper v8.0.0. A fixed renderer turns the validated profile data into the final page. Run it, fork it, or self-host it without ever talking to us.</p>
+  </div>
+  <div class="linkrow">
+    <a href="https://github.com/Organized-AI/ai-work-assessment">Organized-AI/ai-work-assessment →</a>
+    <a href="https://github.com/Organized-AI/ai-work-assessment/blob/main/CHANGELOG.md">Version history →</a>
+    <a href="/apply/prompt.md">The prompt itself →</a>
   </div>
 </section>
 
-</div>
+<section class="editorial event">
+  <div class="kicker">05 / OPTIONAL <span>SHARE IT TO THE BOARD</span></div>
+  <div class="intro">
+    <h2>The report is yours either way.</h2>
+    <p>Sharing adds the one thing a local run cannot do: a comparison against the aggregate, unnamed cohort, computed only after eight profiles exist, never from fewer. Type <b>share</b> and it also lists you on the talent directory, where people hiring for agentic work actually look.</p>
+  </div>
+  <p>Sharing is a separate command, gated on a typed word, from the machine that ran the assessment:</p>
+  <div class="code"><span>TERMINAL</span><pre>python3 tokens.py --submit ~/Desktop/project-fit-*.html</pre></div>
+  <p>Remove everything any time with <b>python3 tokens.py --leave</b>.</p>
+  <a class="button" href="https://board.organizedai.vip/talent">See the talent directory</a>
+  <a class="button" href="https://board.organizedai.vip/">Join the board</a>
+</section>
 
-<footer>
-  Your session history stays local ·
-  <a href="/example">Sample</a> · <a href="https://board.organizedai.vip/">Board</a> ·
-  <a href="https://board.organizedai.vip/talent">Talent</a> ·
-  <a href="https://jobs.organizedai.vip/">Jobs</a> ·
-  <a href="https://github.com/Organized-AI/ai-work-assessment">GitHub</a>
+</main>
+<footer class="site-footer">
+  <a class="brand" href="/">ORGANIZED <b>PROOF</b></a>
+  <p style="margin:0;color:#8f8676">Your session history stays local.</p>
+  <nav>
+    <a href="/example">Sample</a>
+    <a href="https://board.organizedai.vip/">Board</a>
+    <a href="https://board.organizedai.vip/talent">Talent</a>
+    <a href="https://github.com/Organized-AI/ai-work-assessment">GitHub</a>
+    <a href="https://github.com/Organized-AI/organized-router">Router</a>
+    <a href="https://hub.organizedai.vip">Organized AI ↗</a>
+  </nav>
 </footer>
-
 <script>
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
 const ORDER=["claude","codex","other_local","github","linkedin"];
@@ -306,7 +295,7 @@ $('#copy').addEventListener('click',async()=>{
   const m=$('#msg');
   try{ await navigator.clipboard.writeText(configured());
     m.className='msg ok'; m.textContent='Copied. Paste it into your coding agent.';
-  }catch{ m.className='msg err'; m.textContent='Clipboard blocked — select the text below and copy manually.'; }
+  }catch{ m.className='msg err'; m.textContent='Clipboard blocked - select the text below and copy manually.'; }
   setTimeout(()=>{m.textContent='';},3200);
 });
 
@@ -316,12 +305,10 @@ fetch('/apply/prompt.md').then(r=>{if(!r.ok)throw 0;return r.text();}).then(t=>{
   $('#prompt').textContent='Could not load the prompt. Read it directly at /apply/prompt.md or on GitHub.';
 });
 
-if(window.gsap){
-  gsap.registerPlugin(ScrollTrigger);
-  gsap.from('.hero .kick, h1, .hero p, .cta, .assure',{opacity:0,y:14,duration:.55,stagger:.07,ease:'power3.out'});
-  $$('.sec').forEach(s=>gsap.from(s.children,{opacity:0,y:12,duration:.45,stagger:.05,
-    scrollTrigger:{trigger:s,start:'top 82%'}}));
-}
+const c=document.querySelector('#signal');
+if(c){const x=c.getContext('2d'),pts=Array.from({length:75},()=>({x:Math.random(),y:Math.random(),r:Math.random()*1.5+.4}));
+function draw(){c.width=c.clientWidth*devicePixelRatio;c.height=c.clientHeight*devicePixelRatio;x.clearRect(0,0,c.width,c.height);x.fillStyle='#f5d623';pts.forEach(p=>{x.beginPath();x.arc(p.x*c.width,p.y*c.height,p.r*devicePixelRatio,0,7);x.fill()})}
+draw();addEventListener('resize',draw)}
 </script>
 </body>
 </html>
