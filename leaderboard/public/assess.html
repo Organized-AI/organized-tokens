@@ -102,6 +102,7 @@
 .review .msg.ok{color:#2d6026}.review .msg.err{color:#a33c22}
 .review .after{color:#55564b}.review a{text-decoration:underline}
 .topbar nav{gap:clamp(12px,2vw,28px)}
+.public-sharing{border-block:1px solid #b4ac9d;padding:24px 0;margin:32px 0}.public-sharing p{font-size:16px;line-height:1.6}#public-url-text{display:block;width:100%;font:14px monospace;padding:12px;margin-top:8px}.candidate-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin:24px 0}.candidate-grid label{display:flex;flex-direction:column;gap:8px}.candidate-grid input{font:inherit;padding:12px;background:#fff;border:1px solid #9b9385;border-radius:4px;min-width:0}.candidate-grid small{font-size:12px;line-height:1.5}.match-card{border-top:1px solid #b4ac9d;margin-top:24px;padding:24px 0}.match-card p{font-size:15px;line-height:1.6}#candidate-matches{margin-top:36px}.review-check a{color:inherit;text-decoration:underline}@media(max-width:600px){.candidate-grid{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -249,10 +250,39 @@
   <input id="report-file" type="file" accept=".html,.htm,text/html">
   <p id="report-result" class="msg" role="status" aria-live="polite"></p>
   <label class="review-check"><input type="checkbox" id="report-reviewed"> I reviewed the report for accuracy and private information.</label>
-  <h2>3. Continue to your resume</h2>
-  <p class="lead">After the check, create your job seeker profile on Organized AI. Keep the assessment alongside your resume for conversations with employers. This step opens the job board; it does not attach or publish your assessment.</p>
-  <button class="copy" id="continue-resume" disabled>Continue to job seeker sign-up →</button>
-  <p class="after">Already have an account? <a href="https://jobs.organizedai.vip/seeker/login">Log in to your job seeker profile.</a></p>
+  <div class="public-sharing">
+    <h3>A public link for any application</h3>
+    <p>Share your assessment as a standalone web page. Anyone with the link can view and save your name, work claims and evidence details. Your account email, password and raw sessions are never part of this page.</p>
+    <label class="review-check"><input id="public-consent" type="checkbox"> Publish my reviewed assessment on the public internet. I understand that removing the link cannot recall copies other people saved.</label>
+    <button class="copy" id="publish-assessment" type="button" disabled>Create public assessment link →</button>
+    <p id="public-status" class="msg" role="status" aria-live="polite"></p>
+    <button id="public-new-link" class="copy" type="button" hidden>Create a new public link</button>
+    <div id="public-result" hidden>
+      <p><a id="public-url" target="_blank" rel="noopener">View public assessment →</a></p>
+      <label>Copy this URL into any job application<input id="public-url-text" readonly></label>
+    </div>
+    <p>Save each private management link below before closing this tab. It lets you remove public access later, even if publication is interrupted. Keep it private.</p>
+    <ul id="public-management"></ul>
+  </div>
+  <h2>3. Create your profile. Find your fit.</h2>
+  <p class="lead">Your assessment becomes your job seeker profile—no resume required and no second sign-up form. Add your account details once. We use the structured report to create an evidence-based summary and suggest current opportunities.</p>
+  <form id="candidate-form">
+    <div class="candidate-grid">
+      <label>First name<input id="candidate-first" autocomplete="given-name" maxlength="100" required></label>
+      <label>Last name<input id="candidate-last" autocomplete="family-name" maxlength="100" required></label>
+      <label>Email<input id="candidate-email" type="email" autocomplete="email" maxlength="254" required></label>
+      <label>Password<input id="candidate-password" type="password" autocomplete="new-password" minlength="12" maxlength="128" required><small>At least 12 characters. Sent securely to Niceboard, never saved by this assessment service.</small></label>
+    </div>
+    <label class="review-check"><input id="candidate-consent" type="checkbox" required> Create my Organized AI job seeker account and make my assessment-derived work summary visible to employers. I consent to sending my account details and structured assessment to Organized AI for profile creation and job matching; Niceboard receives my account details and work summary.</label>
+    <label class="review-check"><input id="candidate-terms" type="checkbox" required> I agree to the <a href="https://jobs.organizedai.vip/tos" target="_blank" rel="noopener">Terms of Service</a> and <a href="https://jobs.organizedai.vip/privacy" target="_blank" rel="noopener">Privacy Policy</a>.</label>
+    <button class="copy" id="create-candidate" type="submit" disabled>Create profile &amp; find opportunities →</button>
+  </form>
+  <p>You can also <a href="https://jobs.organizedai.vip/seeker/signup">sign up directly on the job board</a> and include your public assessment link.</p>
+  <p id="candidate-status" class="msg" role="status" aria-live="polite"></p>
+  <button id="candidate-retry" class="copy" type="button" hidden>Correct details and try again</button>
+  <p id="candidate-login" hidden><a href="https://jobs.organizedai.vip/seeker/login">Sign in to manage your profile →</a></p>
+  <p class="after">Already have an account? <a href="https://jobs.organizedai.vip/seeker/login">Sign in to your profile.</a> This flow never changes an existing account. No applications, alerts or outreach are sent. Keep your full assessment to share when you choose.</p>
+  <div id="candidate-matches" hidden></div>
 </section>
 
 <section class="editorial dark">

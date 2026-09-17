@@ -1,3 +1,5 @@
+import { publicAssessmentRoutes } from "./public-assessments";
+import { candidateRoutes } from "./candidate-registration";
 import { proofRoutes } from "./proof";
 import { removeAttendeeData } from "./attendee-data";
 /**
@@ -22,6 +24,9 @@ interface Env {
   ASSETS: Fetcher;
   ADMIN_SECRET: string;
   LUMA_API_KEY: string;
+  NICEBOARD_API_KEY?: string;
+  NICEBOARD_API_BASE?: string;
+  CANDIDATE_SIGNUP_ENABLED?: string;
 }
 
 const PUSH_MIN_INTERVAL = 20; // seconds between accepted pushes per attendee
@@ -263,6 +268,12 @@ export default {
   async fetch(req: Request, env: Env): Promise<Response> {
     const url = new URL(req.url);
     const path = url.pathname;
+
+    const publicAssessment = await publicAssessmentRoutes(req, env);
+    if (publicAssessment) return publicAssessment;
+
+    const candidate = await candidateRoutes(req, env);
+    if (candidate) return candidate;
 
     // Organized Proof — /example, /j/<code>, /@handle, /api/assessment. Additive.
     const proof = await proofRoutes(req, env, auth);

@@ -1,6 +1,10 @@
 # Assessment integration
 
-Job seekers create an AI Work Assessment locally, review it, and check its schema and known privacy patterns in their browser before continuing to the Niceboard sign-up page. The checker sends no report data and does not attach a report to Niceboard. The report complements the resume; a valid schema does not verify a person's claims or establish a hiring recommendation.
+Job seekers create and review an AI Work Assessment locally, then optionally publish a standalone link and create an employer-visible Niceboard account with separate explicit consent. Local validation sends no report data. Public sharing sends only the structured assessment; it excludes raw sessions and account credentials. A valid schema does not independently verify claims or establish a hiring recommendation.
+
+Public links use `/p/<random-id>`, work without login, and stay immutable. Candidates receive a private management link before publication dispatch; removal erases the report and reserves the old URL so it cannot be reused. Search indexing is disabled, but anyone with the link can view or save the report.
+
+Automatic signup is feature gated and currently disabled pending Niceboard credential setup and live contract verification. Direct Niceboard signup remains available. When enabled, signup requires employer-visibility and terms consent, reserves an idempotent receipt before creation, verifies the resulting account, and appends only an owned link for the exact submitted report. Uncertain outcomes are never retried as new accounts. Opportunity suggestions cite delivered-work evidence and job text; they are preliminary overlaps, not eligibility decisions.
 
 The optional workshop submission remains separate: `share` publishes a structured profile; `keep` stores it privately. Raw transcripts are not submitted to Organized AI; model-provider data settings still apply during assessment generation. A private latest submission unlists the owner, and leaving removes their assessments, activity counts and credential in one D1 transaction.
 
@@ -28,3 +32,7 @@ Multi-environment collection produces reviewed local evidence bundles. The sourc
 Tests use synthetic fixtures and an in-memory SQLite adapter for the production queries. They cover schema intake, privacy patterns including escaped credentials, actual request size, workshop-scoped identity, visibility changes, source filtering, and rollback on deletion failure. Live checks must not publish test profiles or read real candidate session histories.
 
 Deploy the root tokens asset Worker and this leaderboard Worker together after checks pass. The current Python script must expose `--submit`; verify `/tokens.py`, `/prompt-config.js`, `/assessment-flow.js`, `/validate-profile.js`, `/filter-bundles.mjs`, `/example`, and the Niceboard entry link after deployment. Luma outreach is a separate final step and is paused.
+
+## Public-link rollout
+
+Apply migration 005 for public sharing. Migration 004 is required only before enabling candidate signup. Configure `NICEBOARD_API_BASE` and keep `CANDIDATE_SIGNUP_ENABLED=false` until the `NICEBOARD_API_KEY` Worker secret is provisioned and the real create/get contract is verified. Public links work independently of that credential. Never store management tokens in public artifacts.

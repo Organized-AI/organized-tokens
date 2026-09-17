@@ -26,6 +26,11 @@
     { "pattern": "assessment.organizedai.vip", "custom_domain": true }
   ],
 
+  "vars": {
+    "NICEBOARD_API_BASE": "https://jobs.organizedai.vip/api/v1",
+    "CANDIDATE_SIGNUP_ENABLED": "false"
+  },
+
   "observability": { "enabled": true }
 
   // ADMIN_SECRET is a secret, not a var:
