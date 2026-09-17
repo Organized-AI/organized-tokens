@@ -3,10 +3,11 @@ import assert from 'node:assert/strict';
 import {DatabaseSync} from 'node:sqlite';
 import {readFileSync} from 'node:fs';
 import {candidateRoutes,CONSENT_VERSION} from '../src/candidate-registration.ts';
+import {publicAssessmentRoutes,PUBLIC_CONSENT} from '../src/public-assessments.ts';
 import {matchJobs,candidateSummary,liveRoles} from '../src/job-matching.ts';
 const fixture=JSON.parse(readFileSync(new URL('./fixtures/profile-v9.sample.json',import.meta.url)));
 function setup(t){
- const sqlite=new DatabaseSync(':memory:');t.after(()=>sqlite.close());sqlite.exec(readFileSync(new URL('../migrations/004_candidate_registrations.sql',import.meta.url),'utf8'));
+ const sqlite=new DatabaseSync(':memory:');t.after(()=>sqlite.close());for(const file of ['004_candidate_registrations.sql','005_public_assessments.sql'])sqlite.exec(readFileSync(new URL('../migrations/'+file,import.meta.url),'utf8'));
  const DB = {
   prepare(sql) {
    let args=[];
@@ -114,4 +115,27 @@ test('empty IDs, accepted-but-pending responses and mismatched account verificat
 test('created receipt replay never re-fetches the inventory',async t=>{
  const s=setup(t);await candidateRoutes(request(),s.env,s.fetcher);const count=s.calls.length;
  const r=await(await candidateRoutes(request(),s.env,s.fetcher)).json();assert.equal(r.matching_status,'already_created');assert.equal(s.calls.length,count);
+});
+
+test('signup appends only a public URL owned by the candidate for this exact assessment',async t=>{
+ const s=setup(t),id='1'.repeat(32),token='2'.repeat(64);
+ const publication=new Request('https://assessment.organizedai.vip/api/public-assessments',{method:'POST',headers:{origin:'https://assessment.organizedai.vip','content-type':'application/json'},body:JSON.stringify({id,manage_token:token,profile:structuredClone(fixture),reviewed:true,publish_consent:true,consent_version:PUBLIC_CONSENT})});
+ assert.equal((await publicAssessmentRoutes(publication,s.env)).status,201);
+ for(const patch of [{public_share_token:'3'.repeat(64)},{profile:{...structuredClone(fixture),name:'Different candidate'}}]){
+  const result=await candidateRoutes(request(body({public_share_id:id,public_share_token:token,...patch})),s.env,s.fetcher);
+  assert.equal(result.status,422);assert.equal(s.calls.length,0);
+ }
+ const created=await candidateRoutes(request(body({public_share_id:id,public_share_token:token})),s.env,s.fetcher);
+ assert.equal(created.status,201);
+ assert.equal(s.calls[0].options.body.get('summary').endsWith('Public assessment: https://assessment.organizedai.vip/p/'+id),true);
+ assert.doesNotMatch(s.calls[0].options.body.get('summary'),new RegExp(token));
+});
+
+test('Niceboard results envelopes are accepted only after account identity and visibility verification',async t=>{
+ const s=setup(t);const f=async(url,options)=>{
+  if(options.method==='POST')return Response.json({error:false,results:{jobseeker:{id:42}}},{status:200});
+  if(url.endsWith('/jobseekers/42'))return Response.json({error:false,results:{jobseeker:{id:42,first_name:'Riley',last_name:'Okafor',email:'riley@example.test',is_public:true}}});
+  return s.fetcher(url,options);
+ };
+ assert.equal((await candidateRoutes(request(),s.env,f)).status,201);
 });

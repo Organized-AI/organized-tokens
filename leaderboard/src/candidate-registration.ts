@@ -89,14 +89,14 @@ export async function candidateRoutes(req:Request,env:Env,fetcher:typeof fetch=f
  }
  let data:any;try{data=await result.json();}catch{return uncertain();}
  if(![200,201].includes(result.status)||data?.error||data?.success===false)return uncertain();
- const id=data?.jobseeker?.id??data?.jobseeker_id??data?.data?.id??data?.id;
+ const id=data?.results?.jobseeker?.id??data?.results?.jobseeker_id??data?.results?.id??data?.jobseeker?.id??data?.jobseeker_id??data?.data?.id??data?.id;
  if(!/^[1-9][0-9]*$/.test(String(id))||!Number.isSafeInteger(Number(id)))return uncertain();
  // Creation response envelopes are not documented. Confirm the returned ID with
  // the documented single-jobseeker endpoint before claiming success.
  try {
   const verified=await fetcher(env.NICEBOARD_API_BASE!.replace(/\/$/,'')+'/jobseekers/'+id,{headers:{Authorization:'Bearer '+env.NICEBOARD_API_KEY,'User-Agent':'OrganizedAI-Assessment/1.0','Accept':'application/json'},signal:AbortSignal.timeout(10000),redirect:'error'});
   if(!verified.ok)return uncertain();
-  const value:any=await verified.json();const account=value?.jobseeker??value?.data??value;
+  const value:any=await verified.json();const account=value?.results?.jobseeker??value?.results??value?.jobseeker??value?.data??value;
   if(String(account?.id)!==String(id)||String(account?.email).toLowerCase()!==body.email||account?.first_name!==body.first_name||account?.last_name!==body.last_name||!['true','1'].includes(String(account?.is_public)))return uncertain();
  } catch { return uncertain(); }
  try{await env.DB.prepare("UPDATE candidate_registrations SET state='created',niceboard_id=?,updated_at=? WHERE request_id=?").bind(String(id),now,body.request_id).run();}
