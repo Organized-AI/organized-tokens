@@ -29,6 +29,11 @@ import {
 interface Env {
   DB: D1Database;
   ASSETS: Fetcher;
+  // Unused here, but index.ts passes its own Env through proofRoutes; the
+  // shapes must match exactly for the AuthFn parameter to typecheck.
+  ROOM: DurableObjectNamespace;
+  ADMIN_SECRET: string;
+  LUMA_API_KEY: string;
 }
 
 type Who = { token_hash: string; workshop_id: string; handle: string; open: number } | null;
