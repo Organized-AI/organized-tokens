@@ -16,7 +16,7 @@
     "@cloudflare/workers-types": "^5.20260722.1",
     "typescript": "^5.5.0",
     "wrangler": "^4.0.0",
-    "ai-work-assessment": "github:Organized-AI/ai-work-assessment#da53082984e3d792ccf66cf717e8ea8bc1c2d213"
+    "ai-work-assessment": "github:Organized-AI/ai-work-assessment#040b197732b12048b3a8287c053759742b968e64"
   },
   "type": "module"
 }

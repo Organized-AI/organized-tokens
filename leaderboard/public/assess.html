@@ -171,7 +171,7 @@
   <div class="multi" id="multi">
     <h4>1 · Collect from each environment</h4>
     <p>Choose “Collect evidence” below, then run that prompt once on each environment whose history should count. Each run creates one private evidence bundle and obtains the machine’s opaque ID with:</p>
-    <div class="code"><span>TERMINAL</span><pre>npx github:Organized-AI/ai-work-assessment#v8.0.0-organized.1 environment-id</pre></div>
+    <div class="code"><span>TERMINAL</span><pre>npx github:Organized-AI/ai-work-assessment#v8.0.1-organized.1 environment-id</pre></div>
     <h4>2 · Bring the files together</h4>
     <p>Review the bundles, then move them into one folder on the computer where you will create the assessment. Nothing is uploaded.</p>
     <p>The collection prompt validates each bundle using its exact filename. Keep the reviewed files together in a private folder.</p>
@@ -204,11 +204,11 @@
   <div class="assure3">
     <div><b>LOCAL BY DEFAULT</b><span>Your agent reads selected history in your environment. Its model provider’s data settings still apply.</span></div>
     <div><b>SCRUBBED BEFORE DISPLAY</b><span>Secrets, personal material, client names, and private project names are removed or abstracted.</span></div>
-    <div><b>YOU DECIDE TO SHARE</b><span>The prompt writes one HTML file and stops. Nothing submits itself.</span></div>
+    <div><b>YOU DECIDE TO SHARE</b><span>Files stay under your control. Nothing submits itself.</span></div>
   </div>
 
   <div class="pbar">
-    <p class="note">The prompt below updates as you change sources. It finishes by writing a single HTML file to your machine and telling you the exact path.</p>
+    <p class="note" id="prompt-outcome">The prompt below updates as you change sources. It finishes by writing a single HTML file to your machine and telling you the exact path.</p>
     <button class="copy" id="copy" disabled>Copy configured prompt</button>
   </div>
   <div class="msg" id="msg" role="status" aria-live="polite"></div>
@@ -259,7 +259,7 @@
   <div class="kicker">05 / OPEN SOURCE <span>DON'T TRUST US. READ IT.</span></div>
   <div class="intro">
     <h2>Fork it.<br>Self-host it.</h2>
-    <p>The current release is Assessment v8. It writes profile schema v9, and its multi-environment workflow uses open-source helper v8.0.0. A fixed renderer turns the validated profile data into the final page. Run it, fork it, or self-host it without ever talking to us.</p>
+    <p>The current release is Assessment v8. It writes profile schema v9, and its multi-environment workflow uses open-source helper v8.0.1. A fixed renderer turns the validated profile data into the final page. Run it, fork it, or self-host it without ever talking to us.</p>
   </div>
   <div class="linkrow">
     <a href="https://github.com/Organized-AI/ai-work-assessment">Organized-AI/ai-work-assessment →</a>
@@ -308,6 +308,10 @@ function configured(){
 function render(){
   const n=$$('#src input:checked').length;
   $('#cnt').textContent=`${n} OF 5 SELECTED`;
+  const collecting=$('input[name=fp]:checked').value==='multi' && $('#multi-stage').value==='collect';
+  $('#prompt-outcome').textContent=collecting
+    ? 'This stage writes one private evidence bundle on this environment. GitHub and LinkedIn are deferred until the final assessment.'
+    : 'The prompt below updates as you change sources. It finishes by writing a single HTML file to your machine and telling you the exact path.';
   if(base){
     try { $('#prompt').textContent=configured(); $('#copy').disabled=false; }
     catch (error) { $('#prompt').textContent=error.message; $('#copy').disabled=true; }

@@ -1301,7 +1301,9 @@ function validateNormalizedMix(mix, sourceWindows = [], sharedWindowSessions = [
     const observedBySource = PROFILE_MIX_SOURCES.map((source) => (Array.isArray(sourceWindows) ? sourceWindows : [])
       .filter((item) => item?.source === source && isIsoDate(item?.from) && isIsoDate(item?.to)));
     if (observedBySource.some((items) => !items.length)) {
-      throw new ProfileError("An unavailable normalized mix requires recorded Claude and Codex windows.", 422, "PROFILE_V9_MIX_WINDOW_INVALID");
+      // A source can be omitted or unavailable. Do not invent an empty window
+      // or a zero count just to manufacture a two-tool comparison.
+      return;
     }
     const exactFrom = observedBySource.map((items) => items.map((item) => item.from).sort()[0]).sort().at(-1);
     const exactTo = observedBySource.map((items) => items.map((item) => item.to).sort().at(-1)).sort()[0];

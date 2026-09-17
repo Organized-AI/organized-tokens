@@ -2,11 +2,11 @@
 
 Job seekers create an AI Work Assessment locally, review it, and check its schema and known privacy patterns in their browser before continuing to the Niceboard sign-up page. The checker sends no report data and does not attach a report to Niceboard. The report complements the resume; a valid schema does not verify a person's claims or establish a hiring recommendation.
 
-The optional workshop submission remains separate: `share` publishes a structured profile; `keep` stores it privately. Raw transcripts stay local. A private latest submission unlists the owner, and leaving removes their assessments, activity counts and credential in one D1 transaction.
+The optional workshop submission remains separate: `share` publishes a structured profile; `keep` stores it privately. Raw transcripts are not submitted to Organized AI; model-provider data settings still apply during assessment generation. A private latest submission unlists the owner, and leaving removes their assessments, activity counts and credential in one D1 transaction.
 
 ## Reproducible assets
 
-`package.json` and `package-lock.json` pin Organized-AI/ai-work-assessment commit `da53082984e3d792ccf66cf717e8ea8bc1c2d213` (tag `v8.0.0-organized.1`, helper 8.0.0, prompt 8, schema 9). This is the MIT-licensed distribution; its copyright and license are in `THIRD_PARTY/ai-work-assessment-LICENSE`.
+`package.json` and `package-lock.json` pin Organized-AI/ai-work-assessment commit `040b197732b12048b3a8287c053759742b968e64` (tag `v8.0.1-organized.1`, helper 8.0.1, prompt 8, schema 9). This is the MIT-licensed distribution; its copyright and license are in `THIRD_PARTY/ai-work-assessment-LICENSE`.
 
 From this directory with Node 22.18 or later:
 

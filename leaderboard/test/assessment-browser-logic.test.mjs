@@ -4,6 +4,7 @@ import {readFileSync} from 'node:fs';
 import {configuredPrompt} from '../public/prompt-config.js';
 import {validateReport} from '../public/assessment-flow.js';
 import {filterBundle} from '../public/filter-bundles.mjs';
+import {renderProfileDocument} from 'ai-work-assessment/render';
 
 const base=readFileSync(new URL('../node_modules/ai-work-assessment/prompt.md',import.meta.url),'utf8');
 const html=readFileSync(new URL('../public/example.html',import.meta.url),'utf8');
@@ -21,6 +22,8 @@ test('multi-environment prompts have distinct collection and final instructions'
 test('empty source selections and nonlocal collection are blocked',()=>{
  assert.throws(()=>configuredPrompt(base,[]));
  assert.throws(()=>configuredPrompt(base,['github'],'multi','collect'));
+ assert.throws(()=>configuredPrompt(base,['github']));
+ assert.throws(()=>configuredPrompt(base,['github','linkedin'],'multi','final'));
 });
 test('omitted sources never reach the final synthesis bundle or coverage',()=>{
  const bundle={bundle_schema_version:1,source_coverage:[{source:'claude',sessions:20},{source:'codex',sessions:5}],session_evidence:[{source:'claude',observations:{text:'omitted secret work'}},{source:'codex',observations:{text:'included work'}}],collection_limits:['Claude-specific detail']};
@@ -32,6 +35,14 @@ test('omitted sources never reach the final synthesis bundle or coverage',()=>{
 });
 test('browser validation accepts the canonical rendered report',()=>{
  assert.equal(validateReport(html).schema_version,9);
+});
+test('browser accepts a selected-source report without a fabricated comparison',()=>{
+ const profile=JSON.parse(readFileSync(new URL('../node_modules/ai-work-assessment/fixtures/profile-v9.sample.json',import.meta.url),'utf8'));
+ profile.activity_analysis.coverage.source_windows=profile.activity_analysis.coverage.source_windows.filter(row=>row.source==='codex');
+ delete profile.windows.claude;
+ profile.activity_analysis.coverage.shared_window_sessions=[];
+ profile.profile_view.agent_footprint.normalized_mix=null;
+ assert.equal(validateReport(renderProfileDocument(profile)).profile_view.agent_footprint.normalized_mix,null);
 });
 test('browser validation rejects malformed reports, raw data, secrets, and oversized files',()=>{
  assert.throws(()=>validateReport('<html>not a report</html>'));

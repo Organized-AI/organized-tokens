@@ -607,7 +607,7 @@ export async function proofRoutes(req: Request, env: Env, auth: AuthFn): Promise
     // "Source choices for this run" block the prompt itself defines.
     if (path === "/apply/prompt.md" && req.method === "GET") {
       const up = await fetch(
-        "https://raw.githubusercontent.com/Organized-AI/ai-work-assessment/v8.0.0-organized.1/prompt.md",
+        "https://raw.githubusercontent.com/Organized-AI/ai-work-assessment/v8.0.1-organized.1/prompt.md",
         { cf: { cacheTtl: 3600, cacheEverything: true } } as RequestInit
       );
       if (!up.ok) return new Response("upstream prompt unavailable", { status: 502 });
