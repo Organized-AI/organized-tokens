@@ -659,14 +659,16 @@ def cmd_leave():
         print("\n  Not in a workshop — nothing to leave.\n")
         return 0
     status, res = http("DELETE", "/api/me", token=creds["token"])
-    try:
-        os.remove(CRED_PATH)
-    except OSError:
-        pass
     if status == 200:
+        try:
+            os.remove(CRED_PATH)
+        except OSError:
+            pass
         print("\n  Removed %s from the board, assessment included. Local token deleted.\n" % res.get("removed", creds["handle"]))
     else:
-        print("\n  Local token deleted. Server said: %s\n" % res.get("error", "status %s" % status))
+        print("\n  Removal failed. Your local token was kept so you can retry --leave.")
+        print("  Server said: %s\n" % res.get("error", "status %s" % status))
+        return 1
     return 0
 
 
@@ -687,7 +689,8 @@ def extract_profile(path):
     if not m:
         return None
     try:
-        return json.loads(m.group(1))
+        profile = json.loads(m.group(1))
+        return profile if isinstance(profile, dict) else None
     except ValueError:
         return None
 

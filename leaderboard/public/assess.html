@@ -90,6 +90,18 @@
 .site-footer{padding:55px var(--gutter);display:flex;align-items:center;justify-content:space-between;border-top:1px solid var(--line);font-size:12px;gap:18px;flex-wrap:wrap}
 .site-footer nav{display:flex;gap:26px;color:#8f8676}
 @media(max-width:900px){.topbar nav{display:none}.hero-content,.intro{grid-template-columns:1fr}.hero-content{min-height:0;padding-top:60px}.chapter-grid{grid-template-columns:1fr}.chapter-card{border-right:0;border-bottom:1px solid rgba(0,0,0,.2);min-height:0}.chapter-card h3{margin-top:24px}.stats{grid-template-columns:1fr 1fr}.opt2,.assure3{grid-template-columns:1fr}.editorial{padding:70px var(--gutter)}.intro{margin:50px 0}.site-footer{display:block}.site-footer>*{display:block;margin:12px 0}.site-footer nav{display:block}.site-footer nav a{display:inline-block;margin:0 18px 8px 0}}
+#report-file{display:block;margin:12px 0 16px;max-width:100%;font:inherit}
+.review-check{display:flex;align-items:flex-start;gap:10px;margin:20px 0;font-size:16px}
+.review-check input{margin-top:6px;flex-shrink:0}
+#multi-stage{display:block;margin-top:8px;padding:10px;background:var(--surface);color:var(--text);border:1px solid var(--line);max-width:100%;font:inherit}
+.msg{line-height:1.6;font-size:13px}
+.opt2 label:focus-within{outline:2px solid var(--yellow);outline-offset:3px}
+.review h2{font-size:clamp(30px,4vw,52px);line-height:1.1;font-weight:400;letter-spacing:-.03em;margin:42px 0 20px}
+.review p{max-width:850px}
+.review .copy{background:var(--ink);color:var(--cream)}
+.review .msg.ok{color:#2d6026}.review .msg.err{color:#a33c22}
+.review .after{color:#55564b}.review a{text-decoration:underline}
+.topbar nav{gap:clamp(12px,2vw,28px)}
 </style>
 </head>
 <body>
@@ -99,6 +111,7 @@
   <nav>
     <a href="#run">Run it</a>
     <a href="/example">Sample profile</a>
+    <a href="#review">For job seekers</a>
     <a href="https://board.organizedai.vip/">Board</a>
     <a href="https://board.organizedai.vip/talent">Talent</a>
     <a href="https://github.com/Organized-AI/organized-router">Router</a>
@@ -117,7 +130,7 @@
       <h1>Evidence over claims.<br><mark>Your agent does the work.</mark></h1>
     </div>
     <div class="hero-aside">
-      <p>Run one prompt in your own coding agent. It reads your local session history, your GitHub activity, and optionally your LinkedIn career history, then writes one HTML file to your machine: what you build, how you verify it, where you fit on a project, and what the record does not establish.</p>
+      <p>Run one prompt in your own coding agent. It reads your local session history, your GitHub activity, and optionally your LinkedIn career history, then writes one HTML file to your machine: what you and your systems deliver, how you verify results, where you fit on a project, and what the record does not establish.</p>
       <a class="button light" href="#run">Run the assessment</a>
       <a class="button" href="/example">See a sample profile</a>
     </div>
@@ -141,8 +154,8 @@
 <section id="run" class="editorial dark">
   <div class="kicker">02 / RUN THE ASSESSMENT <span>PICK THE EVIDENCE IT CAN USE</span></div>
   <div class="intro">
-    <h2>One prompt.<br>You hold the evidence.</h2>
-    <p>Choose the footprint and the sources. The configured prompt updates below, ready to paste into Claude Code, Codex, or any capable coding agent. Nothing here connects to or controls another machine.</p>
+    <h2>1. Create your<br>work profile.</h2>
+    <p>Start here before submitting your resume. Choose the sources, then paste the configured prompt into your coding agent. Your profile adds evidence about the work you and your systems deliver. You review it before deciding what to share.</p>
   </div>
 
   <span class="cfg-label">WHERE DO YOU USE AI CODING TOOLS?</span>
@@ -157,21 +170,22 @@
 
   <div class="multi" id="multi">
     <h4>1 · Collect from each environment</h4>
-    <p>Run the collection prompt once on every environment whose local history should count. Each run creates one private JSON evidence bundle. Get each machine's id first:</p>
+    <p>Choose “Collect evidence” below, then run that prompt once on each environment whose history should count. Each run creates one private evidence bundle and obtains the machine’s opaque ID with:</p>
     <div class="code"><span>TERMINAL</span><pre>npx github:Organized-AI/ai-work-assessment#v8.0.0-organized.1 environment-id</pre></div>
     <h4>2 · Bring the files together</h4>
     <p>Review the bundles, then move them into one folder on the computer where you will create the assessment. Nothing is uploaded.</p>
-    <div class="code"><span>TERMINAL</span><pre>npx github:Organized-AI/ai-work-assessment#v8.0.0-organized.1 validate-bundle ./ai-work-evidence-*.json</pre></div>
+    <p>The collection prompt validates each bundle using its exact filename. Keep the reviewed files together in a private folder.</p>
     <h4>3 · Create one assessment</h4>
-    <p>Tested code validates the bundles, counts exact duplicate sessions once, and builds one profile.</p>
-    <div class="code"><span>TERMINAL</span><pre>npx github:Organized-AI/ai-work-assessment#v8.0.0-organized.1 consolidate ./bundle-folder</pre></div>
+    <p>Choose “Create final assessment” below. A local filter excludes unselected sources before your agent reads the bundles. Tested code validates the selected evidence and counts exact duplicate sessions once.</p>
+    <label for="multi-stage">Prompt stage</label>
+    <select id="multi-stage"><option value="collect">Collect evidence on this environment</option><option value="final">Create final assessment from reviewed bundles</option></select>
   </div>
 
-  <span class="cfg-label">CHOOSE WHAT THE ASSESSMENT CAN USE — LEAVE EVERY SOURCE ON FOR THE FULLEST VIEW</span>
+  <span class="cfg-label">CHOOSE WHAT THE ASSESSMENT CAN USE</span>
   <div class="srcc" id="src">
-    <label><input type="checkbox" data-key="linkedin" checked>
-      <div><b>LinkedIn career history <span class="rec">RECOMMENDED</span></b>
-      <span>Career chronology only. Generalized on extraction; removed from the profile on submission.</span></div></label>
+    <label><input type="checkbox" data-key="linkedin">
+      <div><b>LinkedIn career history <span class="rec">OPTIONAL</span></b>
+      <span>Optional career context. Identifying details are generalized; the profile does not include your LinkedIn URL.</span></div></label>
     <label><input type="checkbox" data-key="github" checked>
       <div><b>GitHub history <span class="rec">RECOMMENDED</span></b>
       <span>Read-only through your existing gh session. No repositories are changed or cloned.</span></div></label>
@@ -185,10 +199,10 @@
       <div><b>Other local agents <span class="rec">RECOMMENDED</span></b>
       <span>Best-effort readable history from Cursor, Gemini CLI, Pi, opencode, aider, and local-model tools.</span></div></label>
   </div>
-  <div class="cnt" id="cnt">5 OF 5 SELECTED</div>
+  <div class="cnt" id="cnt">4 OF 5 SELECTED</div>
 
   <div class="assure3">
-    <div><b>LOCAL BY DEFAULT</b><span>Session history is analyzed on your computer.</span></div>
+    <div><b>LOCAL BY DEFAULT</b><span>Your agent reads selected history in your environment. Its model provider’s data settings still apply.</span></div>
     <div><b>SCRUBBED BEFORE DISPLAY</b><span>Secrets, personal material, client names, and private project names are removed or abstracted.</span></div>
     <div><b>YOU DECIDE TO SHARE</b><span>The prompt writes one HTML file and stops. Nothing submits itself.</span></div>
   </div>
@@ -197,7 +211,7 @@
     <p class="note">The prompt below updates as you change sources. It finishes by writing a single HTML file to your machine and telling you the exact path.</p>
     <button class="copy" id="copy" disabled>Copy configured prompt</button>
   </div>
-  <div class="msg" id="msg"></div>
+  <div class="msg" id="msg" role="status" aria-live="polite"></div>
   <div class="code"><span>AI WORK ASSESSMENT PROMPT · <a href="/apply/prompt.md" style="color:#8f8676;text-decoration:underline">READ THE BASE PROMPT</a></span><pre class="tall" id="prompt">Loading prompt…</pre></div>
 </section>
 
@@ -210,7 +224,7 @@
   <div class="chapter-grid">
     <div class="chapter-card"><span>01 · FOOTPRINT</span>
       <h3>Agent footprint</h3>
-      <p>Observed session volume, comparable Claude and Codex use, work cadence, and placement in the submitted cohort once eight profiles exist.</p>
+      <p>Observed session volume, comparable Claude and Codex use, work cadence, and clearly stated coverage limits. Activity volume is not a talent score.</p>
       <b>OBSERVED, NOT CLAIMED →</b></div>
     <div class="chapter-card"><span>02 · CONTEXT</span>
       <h3>Expertise</h3>
@@ -227,8 +241,22 @@
   </div>
 </section>
 
+<section class="editorial light review" id="review">
+  <div class="kicker">04 / FOR JOB SEEKERS <span>BEFORE YOUR RESUME</span></div>
+  <h2>2. Review and check your report</h2>
+  <p class="lead">Open the HTML report your coding agent created. Check that it represents your work accurately and that private details are abstracted. Then choose that file below for a local structure and privacy check. The file is read in your browser and is never uploaded by this checker.</p>
+  <label for="report-file">Your completed assessment (.html)</label>
+  <input id="report-file" type="file" accept=".html,.htm,text/html">
+  <p id="report-result" class="msg" role="status" aria-live="polite"></p>
+  <label class="review-check"><input type="checkbox" id="report-reviewed"> I reviewed the report for accuracy and private information.</label>
+  <h2>3. Continue to your resume</h2>
+  <p class="lead">After the check, create your job seeker profile on Organized AI. Keep the assessment alongside your resume for conversations with employers. This step opens the job board; it does not attach or publish your assessment.</p>
+  <button class="copy" id="continue-resume" disabled>Continue to job seeker sign-up →</button>
+  <p class="after">Already have an account? <a href="https://jobs.organizedai.vip/seeker/login">Log in to your job seeker profile.</a></p>
+</section>
+
 <section class="editorial dark">
-  <div class="kicker">04 / OPEN SOURCE <span>DON'T TRUST US. READ IT.</span></div>
+  <div class="kicker">05 / OPEN SOURCE <span>DON'T TRUST US. READ IT.</span></div>
   <div class="intro">
     <h2>Fork it.<br>Self-host it.</h2>
     <p>The current release is Assessment v8. It writes profile schema v9, and its multi-environment workflow uses open-source helper v8.0.0. A fixed renderer turns the validated profile data into the final page. Run it, fork it, or self-host it without ever talking to us.</p>
@@ -241,14 +269,16 @@
 </section>
 
 <section class="editorial event">
-  <div class="kicker">05 / OPTIONAL <span>SHARE IT TO THE BOARD</span></div>
+  <div class="kicker">06 / OPTIONAL <span>PUBLIC TALENT PROFILE</span></div>
   <div class="intro">
     <h2>The report is yours either way.</h2>
-    <p>Sharing adds the one thing a local run cannot do: a comparison against the aggregate, unnamed cohort, computed only after eight profiles exist, never from fewer. Type <b>share</b> and it also lists you on the talent directory, where people hiring for agentic work actually look.</p>
+    <p>If you have joined an Organized AI workshop board, you can submit your reviewed profile separately. Type <b>share</b> to list it publicly in the talent directory, or <b>keep</b> to store it privately. Either choice sends the structured assessment to Organized AI; raw transcripts are not submitted to Organized AI.</p>
   </div>
-  <p>Sharing is a separate command, gated on a typed word, from the machine that ran the assessment:</p>
-  <div class="code"><span>TERMINAL</span><pre>python3 tokens.py --submit ~/Desktop/project-fit-*.html</pre></div>
-  <p>Remove everything any time with <b>python3 tokens.py --leave</b>.</p>
+  <p>Download the current submission script first, then use the exact report filename:</p>
+  <div class="code"><span>TERMINAL</span><pre>curl -fsSL https://tokens.organizedai.vip/tokens.py -o tokens.py
+python3 tokens.py --submit /path/to/your-reviewed-report.html</pre></div>
+  <p>Joining the workshop board shares your handle and aggregate activity counts publicly. It is separate from running the assessment. Remove your profile and workshop counts with <b>python3 tokens.py --leave</b>.</p>
+  <p>Cohort comparisons are not currently shown on this site. Sharing does not certify the underlying claims.</p>
   <a class="button" href="https://board.organizedai.vip/talent">See the talent directory</a>
   <a class="button" href="https://board.organizedai.vip/">Join the board</a>
 </section>
@@ -256,7 +286,7 @@
 </main>
 <footer class="site-footer">
   <a class="brand" href="/">ORGANIZED <b>PROOF</b></a>
-  <p style="margin:0;color:#8f8676">Your session history stays local.</p>
+  <p style="margin:0;color:#8f8676">No raw transcripts are sent to Organized AI.</p>
   <nav>
     <a href="/example">Sample</a>
     <a href="https://board.organizedai.vip/">Board</a>
@@ -266,37 +296,36 @@
     <a href="https://hub.organizedai.vip">Organized AI ↗</a>
   </nav>
 </footer>
-<script>
+<script type="module">
+import { configuredPrompt } from "/prompt-config.js";
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
-const ORDER=["claude","codex","other_local","github","linkedin"];
 let base=null;
 
-// The prompt itself defines this block and treats it as authoritative:
-// "Inspect only sources marked include. Do not inspect, request, or mention
-//  sources marked omit." Nothing else in the prompt is modified.
-function sourceBlock(){
-  const on=new Set($$('#src input:checked').map(i=>i.dataset.key));
-  return "Source choices for this run\n"+ORDER.map(k=>`- ${k}: ${on.has(k)?"include":"omit"}`).join("\n")+"\n\n";
+function configured(){
+  return configuredPrompt(base, $$('#src input:checked').map(i=>i.dataset.key), $('input[name=fp]:checked').value, $('#multi-stage').value);
 }
-function configured(){ return sourceBlock()+base; }
 
 function render(){
   const n=$$('#src input:checked').length;
   $('#cnt').textContent=`${n} OF 5 SELECTED`;
-  if(base){ $('#prompt').textContent=configured(); $('#copy').disabled=n===0; }
+  if(base){
+    try { $('#prompt').textContent=configured(); $('#copy').disabled=false; }
+    catch (error) { $('#prompt').textContent=error.message; $('#copy').disabled=true; }
+  }
 }
 
 $$('#src input').forEach(i=>i.addEventListener('change',render));
 $$('input[name=fp]').forEach(r=>r.addEventListener('change',()=>{
   $('#multi').classList.toggle('on',$('input[name=fp]:checked').value==='multi');
+  render();
 }));
 
+$('#multi-stage').addEventListener('change', render);
 $('#copy').addEventListener('click',async()=>{
   const m=$('#msg');
   try{ await navigator.clipboard.writeText(configured());
     m.className='msg ok'; m.textContent='Copied. Paste it into your coding agent.';
-  }catch{ m.className='msg err'; m.textContent='Clipboard blocked - select the text below and copy manually.'; }
-  setTimeout(()=>{m.textContent='';},3200);
+  }catch{ m.className='msg err'; m.textContent='Clipboard blocked — select the text below and copy manually.'; }
 });
 
 fetch('/apply/prompt.md').then(r=>{if(!r.ok)throw 0;return r.text();}).then(t=>{
@@ -304,11 +333,11 @@ fetch('/apply/prompt.md').then(r=>{if(!r.ok)throw 0;return r.text();}).then(t=>{
 }).catch(()=>{
   $('#prompt').textContent='Could not load the prompt. Read it directly at /apply/prompt.md or on GitHub.';
 });
-
 const c=document.querySelector('#signal');
 if(c){const x=c.getContext('2d'),pts=Array.from({length:75},()=>({x:Math.random(),y:Math.random(),r:Math.random()*1.5+.4}));
 function draw(){c.width=c.clientWidth*devicePixelRatio;c.height=c.clientHeight*devicePixelRatio;x.clearRect(0,0,c.width,c.height);x.fillStyle='#f5d623';pts.forEach(p=>{x.beginPath();x.arc(p.x*c.width,p.y*c.height,p.r*devicePixelRatio,0,7);x.fill()})}
 draw();addEventListener('resize',draw)}
 </script>
+<script type="module" src="/assessment-flow.js"></script>
 </body>
 </html>
