@@ -75,6 +75,13 @@ test('recruiting contacts are not repurposed for sponsorship and stale/unreviewe
   const j=input();Object.assign(j.contacts[0],patch);assert.equal(buildCampaign(j,now).counts.reviewed_routes,0);
  }
 });
+test('reviewed public LinkedIn profiles can route named decision makers without weakening other contact checks',()=>{
+ const profile={company_id:1,kind:'professional-profile',value:'https://www.linkedin.com/in/rahulponnala',purpose:'person',name:'Rahul Ponnala',title_or_function:'Cofounder and CEO',url:'https://www.bing.com/search?q=Rahul+Ponnala+Granica+LinkedIn',checked_at:at,sha256:'a'.repeat(64),evidence_excerpt:'Rahul Ponnala - CEO & Co-Founder at Granica',verification:'public-professional-profile-and-role-reviewed'};
+ const i=input();i.contacts=[profile];let a=buildCampaign(i,now).accounts[0];assert.equal(a.sponsorship.routes.length,1);assert.equal(a.hiring.routes.length,1);
+ for(const patch of [{kind:'email',value:'rahul@example.test'},{value:'https://example.test/rahul'},{sha256:''},{evidence_excerpt:''},{verification:'published-route-needs-review'}]){
+  const j=input();j.contacts=[{...profile,...patch}];a=buildCampaign(j,now).accounts[0];assert.equal(a.sponsorship.routes.length,0);assert.equal(a.hiring.routes.length,0);
+ }
+});
 test('company suppressions remove all drafts and route suppression is case insensitive',()=>{
  const i=input();i.suppressed=[{company_id:1}];let r=buildCampaign(i,now);
  assert.deepEqual(r.accounts[0].drafts,[]);assert.deepEqual(r.accounts[0].hiring.candidate_matches,[]);assert.equal(engramHandoff(r).accounts.length,0);

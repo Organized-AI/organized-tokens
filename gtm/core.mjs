@@ -50,9 +50,13 @@ function roleState(role, now) {
 
 function contactRoute(contact, now) {
   const source = httpsUrl(contact.url);
-  if (!source || !contact.value || contact.verification !== 'employer-published-role-and-route-reviewed') return null;
-  if (!fresh(contact.checked_at, now, 30)) return null;
   const kind = contact.kind;
+  const profile = kind === 'professional-profile' ? httpsUrl(contact.value) : null;
+  const publicProfileReviewed = contact.verification === 'public-professional-profile-and-role-reviewed' && profile &&
+    /(^|\.)linkedin\.com$/i.test(new URL(profile).hostname) && /^\/in\/[^/]+\/?$/i.test(new URL(profile).pathname) &&
+    /^[a-f0-9]{64}$/i.test(contact.sha256 ?? '') && text(contact.evidence_excerpt);
+  if (!source || !contact.value || (contact.verification !== 'employer-published-role-and-route-reviewed' && !publicProfileReviewed)) return null;
+  if (!fresh(contact.checked_at, now, 30)) return null;
   const value = kind === 'email' ? String(contact.value).trim().toLowerCase() : httpsUrl(contact.value);
   if (!value || (kind === 'email' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value))) return null;
   if (!['email', 'professional-profile', 'web-route'].includes(kind)) return null;

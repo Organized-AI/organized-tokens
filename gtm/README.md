@@ -108,6 +108,8 @@ To omit a company entirely from openings, draft output and the Engram handoff, a
 
 Only fresh employer-published, reviewed contact routes enter the review. Partnership, founder and general routing contacts can be used for sponsorship review; recruiting contacts remain in the hiring lane. Neither source review nor a public email address is recipient approval. Missing contacts create research tasks. Exact duplicate company identities are flagged for reconciliation; aliases and parent/subsidiary relationships still require review.
 
+Named decision makers may also use `verification: "public-professional-profile-and-role-reviewed"` when the route is a canonical LinkedIn `/in/` profile and the record includes a current, hashed public source excerpt establishing the person's employer and function. This narrow path does not admit inferred email addresses, generic social profiles, or unreviewed search results.
+
 The two draft stages retain distinct IDs and interests. Follow-up requires a recorded first send, no opt-out or negative response, a reviewed recipient, current role/consent evidence, and approved copy. Suppression inputs accept `{ "company_id": "..." }` or `{ "value": "email-or-profile-url" }`. Company suppression removes all drafts/matches; a suppressed route is removed case-insensitively. There is deliberately no automatic timing or sending in this release.
 
 ## Engram integration point
