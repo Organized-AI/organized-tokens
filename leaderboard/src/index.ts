@@ -1,4 +1,7 @@
+import { publicAssessmentRoutes } from "./public-assessments";
+import { candidateRoutes } from "./candidate-registration";
 import { proofRoutes } from "./proof";
+import { removeAttendeeData } from "./attendee-data";
 /**
  * Organized Tokens — workshop leaderboard
  *
@@ -21,6 +24,9 @@ interface Env {
   ASSETS: Fetcher;
   ADMIN_SECRET: string;
   LUMA_API_KEY: string;
+  NICEBOARD_API_KEY?: string;
+  NICEBOARD_API_BASE?: string;
+  CANDIDATE_SIGNUP_ENABLED?: string;
 }
 
 const PUSH_MIN_INTERVAL = 20; // seconds between accepted pushes per attendee
@@ -104,7 +110,7 @@ function cleanByModel(raw: unknown): Record<string, { turns: number; cost_micros
   return out;
 }
 
-async function auth(req: Request, env: Env) {
+async function auth(req: Request, env: Pick<Env, "DB">) {
   const header = req.headers.get("authorization") || "";
   const token = header.startsWith("Bearer ") ? header.slice(7).trim() : "";
   if (!token) return null;
@@ -263,6 +269,12 @@ export default {
     const url = new URL(req.url);
     const path = url.pathname;
 
+    const publicAssessment = await publicAssessmentRoutes(req, env);
+    if (publicAssessment) return publicAssessment;
+
+    const candidate = await candidateRoutes(req, env);
+    if (candidate) return candidate;
+
     // Organized Proof — /example, /j/<code>, /@handle, /api/assessment. Additive.
     const proof = await proofRoutes(req, env, auth);
     if (proof) return proof;
@@ -390,16 +402,7 @@ export default {
     if (path === "/api/me" && req.method === "DELETE") {
       const who = await auth(req, env);
       if (!who) return json({ error: "unknown token" }, 401);
-      await env.DB.batch([
-        env.DB.prepare(`DELETE FROM stats WHERE token_hash = ?`).bind(who.token_hash),
-        env.DB.prepare(`DELETE FROM attendees WHERE token_hash = ?`).bind(who.token_hash),
-      ]);
-      // Leaving removes everything, assessments included. Separate try: the
-      // table predates migration 002 on databases that never applied it.
-      try {
-        await env.DB.prepare(`DELETE FROM assessments WHERE handle = ? AND workshop_id = ?`)
-          .bind(who.handle, who.workshop_id).run();
-      } catch { /* assessments table not present yet */ }
+      await removeAttendeeData(env.DB, who);
       await broadcast(env, who.workshop_id);
       return json({ ok: true, removed: who.handle });
     }

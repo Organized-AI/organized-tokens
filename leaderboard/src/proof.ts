@@ -121,7 +121,7 @@ const GAPS: [string, string][] = [
 
 /** NULLIF before COALESCE: a stored 0 is not null, and a bare COALESCE makes
  *  every fallback unreachable — "never recorded" renders as "recorded zero". */
-async function loadRow(env: Env, handle: string): Promise<Row | null> {
+async function loadRow(env: Env, handle: string, workshop: string): Promise<Row | null> {
   return env.DB.prepare(
     `SELECT a.handle, a.workshop_id, w.code,
             NULLIF(s.input + s.cache_write + s.cache_read, 0) AS input,
@@ -133,35 +133,26 @@ async function loadRow(env: Env, handle: string): Promise<Row | null> {
        FROM attendees a
        JOIN stats s     ON s.token_hash = a.token_hash
        JOIN workshops w ON w.id = a.workshop_id
-      WHERE a.handle = ?1
+      WHERE a.handle = ?1 AND a.workshop_id = ?2
       ORDER BY s.updated_at DESC
       LIMIT 1`
-  ).bind(handle).first<Row>();
-}
-
-async function hasAssessment(env: Env, handle: string): Promise<{ n: number; last: number } | null> {
-  try {
-    const r = await env.DB.prepare(
-      `SELECT COUNT(*) AS n, MAX(created_at) AS last FROM assessments WHERE handle = ?1`
-    ).bind(handle).first<{ n: number; last: number }>();
-    return r && r.n ? r : null;
-  } catch { return null; }   // table may not exist yet
+  ).bind(handle, workshop).first<Row>();
 }
 
 /** Latest snapshot + totals for one handle. Visibility of the LATEST
  *  snapshot wins, so re-submitting privately unlists a public profile. */
-async function loadLatestAssessment(env: Env, handle: string): Promise<
+async function loadLatestAssessment(env: Env, handle: string, workshop: string): Promise<
   { n: number; last: number; visibility: string; profile: any } | null
 > {
   try {
     const count = await env.DB.prepare(
-      `SELECT COUNT(*) AS n, MAX(created_at) AS last FROM assessments WHERE handle = ?1`
-    ).bind(handle).first<{ n: number; last: number }>();
+      `SELECT COUNT(*) AS n, MAX(created_at) AS last FROM assessments WHERE handle = ?1 AND workshop_id = ?2 AND visibility = 'public'`
+    ).bind(handle, workshop).first<{ n: number; last: number }>();
     if (!count || !count.n) return null;
     const row = await env.DB.prepare(
-      `SELECT payload, visibility FROM assessments WHERE handle = ?1
+      `SELECT payload, visibility FROM assessments WHERE handle = ?1 AND workshop_id = ?2
        ORDER BY snapshot_seq DESC LIMIT 1`
-    ).bind(handle).first<{ payload: string; visibility: string }>();
+    ).bind(handle, workshop).first<{ payload: string; visibility: string }>();
     let profile: any = null;
     try { profile = row ? JSON.parse(row.payload) : null; } catch { profile = null; }
     return { n: count.n, last: count.last, visibility: row?.visibility || "private", profile };
@@ -169,13 +160,14 @@ async function loadLatestAssessment(env: Env, handle: string): Promise<
 }
 
 type TalentEntry = {
+  workshop_id: string;
   handle: string; name: string; headline: string; fit: string; fit_summary: string;
   specialist: string; industries: string[]; subjects: string[]; capabilities: string[];
   shared_at: number; last_session: string;
 };
 
 /** Display fields only - never the raw payload, never evidence ids. */
-function entryFromPayload(handle: string, raw: string, created_at: number): TalentEntry | null {
+function entryFromPayload(handle: string, workshop_id: string, raw: string, created_at: number): TalentEntry | null {
   try {
     const p = JSON.parse(raw);
     const pv = p?.profile_view || {};
@@ -184,6 +176,7 @@ function entryFromPayload(handle: string, raw: string, created_at: number): Tale
       (Array.isArray(list) ? list : []).map((x: any) => String(x?.label || "")).filter(Boolean);
     return {
       handle,
+      workshop_id,
       name: String(p?.name || handle),
       headline: String(p?.headline || p?.focus || ""),
       fit: String(pv?.matching?.strongest_fit?.label || ""),
@@ -202,15 +195,15 @@ function entryFromPayload(handle: string, raw: string, created_at: number): Tale
 async function listPublicTalent(env: Env): Promise<TalentEntry[]> {
   try {
     const r = await env.DB.prepare(
-      `SELECT a.handle, a.payload, a.created_at
+      `SELECT a.handle, a.workshop_id, a.payload, a.created_at
          FROM assessments a
-         JOIN (SELECT handle, MAX(snapshot_seq) AS maxseq FROM assessments GROUP BY handle) latest
-           ON latest.handle = a.handle AND latest.maxseq = a.snapshot_seq
+         JOIN (SELECT handle, workshop_id, MAX(snapshot_seq) AS maxseq FROM assessments GROUP BY handle, workshop_id) latest
+           ON latest.handle = a.handle AND latest.workshop_id = a.workshop_id AND latest.maxseq = a.snapshot_seq
         WHERE a.visibility = 'public'
         ORDER BY a.created_at DESC LIMIT 200`
-    ).all<{ handle: string; payload: string; created_at: number }>();
+    ).all<{ handle: string; workshop_id: string; payload: string; created_at: number }>();
     return (r.results || [])
-      .map((row) => entryFromPayload(row.handle, row.payload, row.created_at))
+      .map((row) => entryFromPayload(row.handle, row.workshop_id, row.payload, row.created_at))
       .filter((e): e is TalentEntry => !!e);
   } catch { return []; }   // table may not exist yet
 }
@@ -316,7 +309,7 @@ function profilePage(r: Row, signals: Signal[], assessed: { n: number; last: num
     <h3>// GO DEEPER</h3>
     <p>Work arcs need a model reading raw session history — a counter cannot do it.
        This runs locally, uploads nothing, and writes a report you keep.</p>
-    <pre>npx github:Organized-AI/ai-work-assessment#v8.0.0-organized.1</pre>
+    <p><a href="https://assessment.organizedai.vip/#generate">Choose your sources and copy the assessment prompt →</a></p>
     <div class="fine">See what it produces:
       <a href="https://assessment.organizedai.vip/example">an example profile</a></div>
   </div>
@@ -398,9 +391,7 @@ button.ghost{background:transparent;border:1px solid var(--bd);color:var(--mu)}
     <p>Counts show how you operate an agent. They cannot say what you built. That
        needs a model reading your session history — it runs locally and uploads
        nothing until you separately choose to share it.</p>
-    <pre>npx github:Organized-AI/ai-work-assessment#v8.0.0-organized.1</pre>
-    <button class="ghost" id="copy2">Copy command</button>
-    <div class="msg" id="cm2"></div>
+    <p><a href="https://assessment.organizedai.vip/#generate">Choose your sources and copy the assessment prompt →</a></p>
     <p style="margin-top:12px;font-size:13px;color:var(--dm)">See what it produces:
       <a style="color:var(--y)" href="https://assessment.organizedai.vip/example">an example profile</a></p>
   </div>
@@ -415,7 +406,6 @@ function cp(text,msgId){const m=document.getElementById(msgId);
   if(navigator.clipboard)navigator.clipboard.writeText(text).then(done).catch(()=>{m.textContent="Select and copy manually.";});
   else m.textContent="Select and copy manually.";}
 document.getElementById("copy").onclick=()=>cp(document.getElementById("cmd").textContent,"cm");
-document.getElementById("copy2").onclick=()=>cp("npx github:Organized-AI/ai-work-assessment#v8.0.0-organized.1","cm2");
 </script></body></html>`;
 }
 
@@ -508,7 +498,7 @@ function talentPage(entries: TalentEntry[]): string {
   const cards = entries.map((e) => {
     const when = new Date(e.shared_at * 1000)
       .toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
-    const profileUrl = `https://assessment.organizedai.vip/@${encodeURIComponent(e.handle)}`;
+    const profileUrl = `https://assessment.organizedai.vip/@${encodeURIComponent(e.handle)}?workshop=${encodeURIComponent(e.workshop_id)}`;
     return `<div class="card">
   <div class="card-top">
     <div><span class="name"><a href="${escAttr(profileUrl)}">${esc(e.name)}</a></span>
@@ -531,7 +521,7 @@ function talentPage(entries: TalentEntry[]): string {
   <h3>No shared profiles yet</h3>
   <p>Profiles appear here when someone runs the AI Work Assessment on their own
      machine and chooses <b>share</b> at submission. Nothing is listed any other way.</p>
-  <pre>npx github:Organized-AI/ai-work-assessment#v8.0.0-organized.1</pre>
+  <p><a href="https://assessment.organizedai.vip/#generate">Start your AI Work Assessment →</a></p>
 </div>`;
 
   return `<!DOCTYPE html><html lang="en"><head><meta charset="utf-8">
@@ -558,9 +548,9 @@ function talentPage(entries: TalentEntry[]): string {
      agent work, the industries their work supports, and what the evidence does not show.</p>
   <div class="note"><span class="k">Consent</span>
     <p>A profile is listed only while its owner's <b>latest</b> submission is public. Re-submitting
-       privately unlists it, and <b>python3 tokens.py --leave</b> removes everything. Cohort
-       placement unlocks only at eight or more shared profiles — below that, publishing a
-       distribution would re-identify people.</p></div>
+       privately unlists it, and <b>python3 tokens.py --leave</b> removes your profile and
+       workshop counts. Sharing does not verify identity or prove every underlying claim;
+       employers should review the evidence and discuss relevant work with the candidate.</p></div>
   <div class="searchrow">
     <input id="q" type="search" placeholder="Search fit, industry, subject, capability…" autocomplete="off">
     <span class="count" id="count"></span>
@@ -617,7 +607,7 @@ export async function proofRoutes(req: Request, env: Env, auth: AuthFn): Promise
     // "Source choices for this run" block the prompt itself defines.
     if (path === "/apply/prompt.md" && req.method === "GET") {
       const up = await fetch(
-        "https://raw.githubusercontent.com/Organized-AI/ai-work-assessment/v8.0.0-organized.1/prompt.md",
+        "https://raw.githubusercontent.com/Organized-AI/ai-work-assessment/v8.0.1-organized.1/prompt.md",
         { cf: { cacheTtl: 3600, cacheEverything: true } } as RequestInit
       );
       if (!up.ok) return new Response("upstream prompt unavailable", { status: 502 });
@@ -652,12 +642,21 @@ export async function proofRoutes(req: Request, env: Env, auth: AuthFn): Promise
     const h = path.match(/^\/@([^/]{1,64})$/);
     if (h && req.method === "GET") {
       const handle = decodeURIComponent(h[1]);
-      const row = await loadRow(env, handle);
+      let workshop = url.searchParams.get("workshop") || "";
+      if (!workshop) {
+        const owners = await env.DB.prepare(`SELECT workshop_id FROM attendees WHERE handle = ?1 LIMIT 2`)
+          .bind(handle).all<{ workshop_id: string }>();
+        if ((owners.results || []).length > 1) {
+          return html('<p>This handle is used in more than one workshop. Open the workshop-specific link from the <a href="https://board.organizedai.vip/talent">talent directory</a>.</p>', 409);
+        }
+        workshop = owners.results?.[0]?.workshop_id || "";
+      }
+      const row = await loadRow(env, handle, workshop);
       if (!row) return html("<p style='font-family:monospace;padding:40px'>not found</p>", 404);
-      const latest = await loadLatestAssessment(env, handle);
+      const latest = await loadLatestAssessment(env, handle, workshop);
       const shared = latest && latest.visibility === "public" ? latest.profile : null;
       return html(profilePage(row, buildSignals(row),
-        latest ? { n: latest.n, last: latest.last } : null, shared));
+        latest?.visibility === "public" ? { n: latest.n, last: latest.last } : null, shared));
     }
 
     // --- talent directory: the hiring surface --------------------------
@@ -687,7 +686,25 @@ export async function proofRoutes(req: Request, env: Env, auth: AuthFn): Promise
       const len = Number(req.headers.get("content-length") || 0);
       if (len > MAX_ASSESSMENT) return json({ error: "too large" }, 413);
 
-      const raw = await req.text();
+      const reader = req.body?.getReader();
+      const chunks: Uint8Array[] = [];
+      let bytes = 0;
+      if (reader) {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          bytes += value.byteLength;
+          if (bytes > MAX_ASSESSMENT) {
+            await reader.cancel();
+            return json({ error: "too large" }, 413);
+          }
+          chunks.push(value);
+        }
+      }
+      const bodyBytes = new Uint8Array(bytes);
+      let offset = 0;
+      for (const chunk of chunks) { bodyBytes.set(chunk, offset); offset += chunk.byteLength; }
+      const raw = new TextDecoder().decode(bodyBytes);
       const visibility = url.searchParams.get("visibility") === "public" ? "public" : "private";
 
       let body: any;
@@ -695,6 +712,9 @@ export async function proofRoutes(req: Request, env: Env, auth: AuthFn): Promise
         assertNoSecrets(raw);
         assertNoLocalEvidenceLeaks(raw);
         body = JSON.parse(raw);
+        // JSON escapes must not conceal a credential or private path from scans.
+        assertNoSecrets(JSON.stringify(body));
+        assertNoLocalEvidenceLeaks(JSON.stringify(body));
         // The same sequence the published CLI runs: raw contract, sanitize,
         // then the full schema-v9 validator.
         validateRawProfileV9(body);
@@ -717,8 +737,8 @@ export async function proofRoutes(req: Request, env: Env, auth: AuthFn): Promise
       delete body._cohort; delete body._handle;
 
       const seq = await env.DB.prepare(
-        `SELECT COALESCE(MAX(snapshot_seq), 0) + 1 AS n FROM assessments WHERE handle = ?1`
-      ).bind(who.handle).first<{ n: number }>();
+        `SELECT COALESCE(MAX(snapshot_seq), 0) + 1 AS n FROM assessments WHERE handle = ?1 AND workshop_id = ?2`
+      ).bind(who.handle, who.workshop_id).first<{ n: number }>();
 
       const created = Math.floor(Date.now() / 1000);
       await env.DB.prepare(
@@ -728,7 +748,7 @@ export async function proofRoutes(req: Request, env: Env, auth: AuthFn): Promise
              JSON.stringify(body), visibility, created).run();
 
       return json({ ok: true, handle: who.handle, snapshot_seq: seq?.n || 1, visibility,
-                    url: `https://assessment.organizedai.vip/@${encodeURIComponent(who.handle)}` }, 201);
+                    url: `https://assessment.organizedai.vip/@${encodeURIComponent(who.handle)}?workshop=${encodeURIComponent(who.workshop_id)}` }, 201);
     }
 
     if (path === "/api/assessment" && req.method === "DELETE") {
