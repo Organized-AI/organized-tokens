@@ -82,6 +82,10 @@ Role records require `id`, `company_id`, `title`, HTTPS `source_url`, `descripti
 
 The collector fails the batch rather than silently replacing a previous complete snapshot with a partial result. Keep its receipts beside the output. Employer feed adapters have fixture-backed contract tests. A GET-only live check against Seekr's Greenhouse board and Airtm/Superstate's Lever boards succeeded on September 18, 2026 UTC (September 17 locally), returning 34 openings. Actual Greenhouse HTML encoding is decoded as text before matching/rendering. The private inputs and results are not committed.
 
+## Reviewed duplicate directory records
+
+Optional config `account_reconciliation` points to a reviewed JSON array. Each entry has `canonical_id`, `company_ids`, `status: "reviewed-same-directory-company"`, `source_url`, and `reason`. All members must have the same company name and directory URL; unknown IDs and overlapping groups fail. This consolidates duplicated directory records without inferring corporate parent/subsidiary relationships. The output retains all original company IDs and source records; roles and contact purposes retain provenance. Suppressions follow aliases. Distinct accounts with a shared sponsorship address receive a `shared-contact-review` blocker to avoid duplicate outreach.
+
 ## Company exclusions and permission-first outreach
 
 Set `campaign.hiring_mode` to `permission-first` to ask about sponsorship and permission to introduce relevant talent without including candidate names or public assessment links in draft messages. Private evidence matching remains available for internal review. Sponsorship and candidate introductions are independent. The default preserves candidate-specific draft preparation for consented, confirmed matches.

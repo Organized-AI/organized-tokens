@@ -3,6 +3,7 @@ import path from 'node:path';
 import {buildCampaign,engramHandoff} from './core.mjs';
 import {render} from './render.mjs';
 import {mergeRoleSources} from './merge-sources.mjs';
+import {reconcileAccounts} from './reconcile-accounts.mjs';
 import {assertNoSecrets,assertNoLocalEvidenceLeaks,validateRawProfileV9,sanitizeProfile,validateProfileV9} from '../leaderboard/src/validate.js';
 
 const argv=process.argv.slice(2);
@@ -12,10 +13,11 @@ for(const required of ['config','out'])if(!args[required])throw new Error('Usage
 const base=path.dirname(path.resolve(args.config));
 const read=file=>JSON.parse(fs.readFileSync(path.resolve(base,file),'utf8'));
 const config=read(path.basename(args.config));
-const input={campaign:config.campaign,companies:read(config.companies),roles:read(config.roles),
+let input={campaign:config.campaign,companies:read(config.companies),roles:read(config.roles),
   contacts:config.contacts?read(config.contacts):[],findings:config.findings?read(config.findings):[],
   suppressed:config.suppressed?read(config.suppressed):[],candidates:[]};
 if(config.employer_roles)input.roles=mergeRoleSources(input.roles,read(config.employer_roles));
+if(config.account_reconciliation)input=reconcileAccounts(input,read(config.account_reconciliation));
 for(const c of config.candidates??[]){
   const profile=read(c.profile);
   assertNoSecrets(JSON.stringify(profile));assertNoLocalEvidenceLeaks(JSON.stringify(profile));

@@ -9,6 +9,7 @@ import {buildCampaign,digest,engramHandoff,DAY} from '../core.mjs';
 import {greenhouse,lever,careerJobPostings,importedRoles} from '../sources.mjs';
 import {render} from '../render.mjs';
 import {plainText} from '../text.mjs';
+import {reconcileAccounts} from '../reconcile-accounts.mjs';
 import {mergeRoleSources,jobIdentity} from '../merge-sources.mjs';
 import {sanitizeProfile} from '../../leaderboard/src/validate.js';
 const profile=JSON.parse(fs.readFileSync(new URL('../../leaderboard/test/fixtures/profile-v9.sample.json',import.meta.url)));
@@ -205,4 +206,41 @@ test('permission-first copy asks before sharing a candidate while retaining priv
  assert.ok(a.hiring.candidate_matches.length);assert.equal(r.counts.specific_followups,0);
  for(const d of a.drafts){assert.match(d.body,/may we.*send you relevant candidates/i);assert.doesNotMatch(d.body,/Riley|aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/);}
  assert.match(a.drafts[0].body,/independently of sponsorship/);
+});
+
+function duplicateInput(){const i=input();i.companies.push({...i.companies[0],id:2});i.roles.push({...i.roles[0],id:2,company_id:2});i.contacts.push({...i.contacts[0],company_id:2});return i;}
+const duplicateDecision={canonical_id:1,company_ids:[1,2],status:'reviewed-same-directory-company',source_url:'https://example.test/company',reason:'Same directory identity reviewed.'};
+test('reviewed directory duplicates become one account with retained role/contact provenance',()=>{
+ const i=reconcileAccounts(duplicateInput(),[duplicateDecision]);assert.equal(i.companies.length,1);
+ assert.deepEqual(i.companies[0].source_company_ids,['1','2']);assert.equal(i.roles[1].original_company_id,'2');assert.equal(i.roles[1].company_id,'1');
+ const r=buildCampaign(i,now);assert.equal(r.accounts.length,1);assert.equal(r.counts.roles,2);assert.equal(r.counts.reviewed_routes,1);assert.equal(r.duplicate_company_groups.length,0);
+ assert.match(render(r),/Consolidated 2 directory records/);
+});
+test('unknown, overlapping and mismatched directory reconciliation is rejected',()=>{
+ for(const decision of [{...duplicateDecision,canonical_id:3},{...duplicateDecision,company_ids:[1,3]},{...duplicateDecision,source_url:'https://other.test/company'}])assert.throws(()=>reconcileAccounts(duplicateInput(),[decision]));
+ assert.throws(()=>reconcileAccounts(duplicateInput(),[duplicateDecision,duplicateDecision]));
+ const i=duplicateInput();i.companies[1].name='Separate subsidiary';assert.throws(()=>reconcileAccounts(i,[duplicateDecision]),/identical names/);
+});
+test('suppression of a merged alias continues to exclude the entire account',()=>{
+ for(const suppression of [{company_id:2,exclude_from_campaign:true},{company_domain:'alias.test',exclude_from_campaign:true}]){
+  const i=duplicateInput();i.companies[1].website='https://alias.test';i.suppressed=[suppression];
+  const r=buildCampaign(reconcileAccounts(i,[duplicateDecision]),now);assert.equal(r.counts.roles,0);assert.deepEqual(r.accounts,[]);
+ }
+ const i=duplicateInput();i.suppressed=[{company_id:2}];assert.equal(buildCampaign(reconcileAccounts(i,[duplicateDecision]),now).accounts[0].next_action,'suppressed');
+});
+test('distinct accounts sharing a contact route are flagged without exposing addresses in handoff',()=>{
+ const i=duplicateInput();i.companies[1].name='Separate entity';i.companies[1].website='https://separate.test';const r=buildCampaign(i,now);
+ assert.equal(r.shared_contact_routes.length,1);assert.ok(r.accounts.every(a=>a.blockers.includes('shared-contact-review')));
+ assert.doesNotMatch(JSON.stringify(engramHandoff(r)),/hello@example/);
+});
+
+test('merged contact purposes retain sponsorship and hiring evidence in either order',()=>{
+ for(const reversed of [false,true]){
+  const i=duplicateInput();i.contacts[0].purpose='sponsorship';i.contacts[1].purpose='recruiting';i.contacts[1].url='https://example.test/careers';
+  if(reversed)i.contacts.reverse();
+  const a=buildCampaign(reconcileAccounts(i,[duplicateDecision]),now).accounts[0];
+  assert.equal(a.sponsorship.routes.length,1);assert.equal(a.hiring.routes.length,1);
+  assert.equal(a.sponsorship.routes[0].reviewed_purposes[0].purpose,'sponsorship');
+  assert.equal(a.hiring.routes[0].reviewed_purposes[0].source_url,'https://example.test/careers');
+ }
 });

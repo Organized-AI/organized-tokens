@@ -29,6 +29,7 @@ export function normalizeRole(role) {
   if (!['board-listed', 'employer-confirmed', 'closed', 'unknown'].includes(state)) throw new Error('Invalid role availability');
   return {
     id: String(role.id), company_id: String(role.company_id), company_name: text(role.company_name),
+    original_company_id: String(role.original_company_id??role.company_id),
     title: text(role.title), description_html: text(role.description ?? role.description_html),
     location_name: text(role.location ?? role.location_name), expires_on: role.expires_on ?? '',
     apply_url: httpsUrl(role.apply_url), source_url: url, source_kind: role.source_kind ?? 'import',
@@ -130,9 +131,9 @@ export function buildCampaign({campaign, companies, roles, contacts = [], candid
   validateCampaign(campaign);
   if (![companies, roles, contacts, candidates, findings, suppressed].every(Array.isArray)) throw new Error('Inputs must be arrays');
   const excludedCompanies=new Set(companies.filter(c=>suppressed.some(s=>s.exclude_from_campaign===true&&(
-    (s.company_id!=null&&String(s.company_id)===String(c.id))||
+    (s.company_id!=null&&[String(c.id),...(c.source_company_ids??[]).map(String)].includes(String(s.company_id)))||
     (s.company_name&&text(s.company_name).toLowerCase()===text(c.name).toLowerCase())||
-    (s.company_domain&&httpsUrl(c.website)&&new URL(c.website).hostname.replace(/^www\./,'').toLowerCase()===text(s.company_domain).toLowerCase())
+    (s.company_domain&&[c,...(c.company_sources??[])].some(source=>httpsUrl(source.website)&&new URL(source.website).hostname.replace(/^www\./,'').toLowerCase()===text(s.company_domain).toLowerCase()))
   ))).map(c=>String(c.id)));
   companies=companies.filter(c=>!excludedCompanies.has(String(c.id)));
   roles=roles.filter(r=>!excludedCompanies.has(String(r.company_id)));
@@ -168,9 +169,20 @@ export function buildCampaign({campaign, companies, roles, contacts = [], candid
     const isSuppressed = suppressedCompanies.has(id);
     const routes = contacts.filter(c => String(c.company_id) === id).map(c => contactRoute(c, now))
       .filter(c => c && !suppressedRoutes.has(c.value.toLowerCase()));
-    const uniqueRoutes = [...new Map(routes.map(c => [c.value.toLowerCase(), c])).values()];
-    const sponsorRoutes = uniqueRoutes.filter(c => c.sponsorship_suitable);
-    const hiringRoutes = uniqueRoutes.filter(c => c.hiring_suitable);
+    // Filter by reviewed purpose before combining shared addresses. Keep every
+    // source observation so merged directory records do not erase route evidence.
+    const routeGroup=eligible=>{
+      const byValue=new Map();
+      for(const route of eligible){
+        const key=route.value.toLowerCase(),existing=byValue.get(key);
+        const evidence={purpose:route.purpose,function:route.function,source_url:route.source_url,checked_at:route.checked_at,evidence_excerpt:route.evidence_excerpt};
+        if(existing)existing.reviewed_purposes.push(evidence);
+        else byValue.set(key,{...route,reviewed_purposes:[evidence]});
+      }
+      return [...byValue.values()];
+    };
+    const sponsorRoutes = routeGroup(routes.filter(c => c.sponsorship_suitable));
+    const hiringRoutes = routeGroup(routes.filter(c => c.hiring_suitable));
     const companyRoles = normalized.filter(r => r.company_id === id);
     const active = companyRoles.filter(r => roleState(r, now) === 'employer-confirmed');
     const matches = isSuppressed ? [] : candidates.flatMap(c => matchCandidate(c, companyRoles, now));
@@ -188,7 +200,7 @@ export function buildCampaign({campaign, companies, roles, contacts = [], candid
     const action = isSuppressed ? 'suppressed' : !sponsorRoutes.length ? 'research-sponsorship-contact'
       : matches.some(m => m.availability !== 'employer-confirmed') && !best ? 'verify-employer-opening'
       : best ? 'review-candidate-fit-and-copy' : 'review-sponsorship-copy';
-    return {company_id: id, company: name, website: httpsUrl(company.website), directory_url: httpsUrl(company.source_url),
+    return {company_id: id, source_company_ids:company.source_company_ids??[id], company_sources:company.company_sources??[], company: name, website: httpsUrl(company.website), directory_url: httpsUrl(company.source_url),
       sponsorship: {status: isSuppressed ? 'suppressed' : 'uncontacted', routes: sponsorRoutes, intent: 'unknown'},
       hiring: {status: 'uncontacted', routes: hiringRoutes, confirmed_openings: active.length,
         listed_openings: companyRoles.filter(r => !['closed','stale'].includes(roleState(r, now))).length,
@@ -201,11 +213,17 @@ export function buildCampaign({campaign, companies, roles, contacts = [], candid
           kind:draftMatch ? 'candidate-specific' : 'general-job-board-invitation'},
       ], blockers, next_action:action};
   });
+  const routeAccounts=new Map();
+  for(const a of accounts.filter(a=>a.next_action!=='suppressed'))for(const r of a.sponsorship.routes){
+    const key=r.value.toLowerCase();routeAccounts.set(key,[...(routeAccounts.get(key)??[]),a.company_id]);
+  }
+  const sharedRoutes=[...routeAccounts].filter(([,ids])=>new Set(ids).size>1).map(([value,ids])=>({value,company_ids:[...new Set(ids)]}));
+  for(const a of accounts)if(sharedRoutes.some(r=>r.company_ids.includes(a.company_id)))a.blockers.push('shared-contact-review');
   return {schema:VERSION, campaign:{...campaign}, generated_at:new Date(now).toISOString(), outreach_status:'paused',
     counts:{companies:accounts.length, roles:normalized.length, reviewed_routes:accounts.reduce((n,a)=>n+a.sponsorship.routes.length,0),
       companies_with_matches:accounts.filter(a=>a.hiring.candidate_matches.length).length,
       specific_followups:accounts.filter(a=>a.drafts.some(d=>d.kind==='candidate-specific')).length},
-    duplicate_company_groups:duplicates, accounts};
+    duplicate_company_groups:duplicates, shared_contact_routes:sharedRoutes, accounts};
 }
 
 export function engramHandoff(report) {
