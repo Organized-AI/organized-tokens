@@ -15,7 +15,7 @@ const read=file=>JSON.parse(fs.readFileSync(path.resolve(base,file),'utf8'));
 const config=read(path.basename(args.config));
 let input={campaign:config.campaign,companies:read(config.companies),roles:read(config.roles),
   contacts:config.contacts?read(config.contacts):[],findings:config.findings?read(config.findings):[],
-  suppressed:config.suppressed?read(config.suppressed):[],candidates:[]};
+  suppressed:config.suppressed?read(config.suppressed):[],employer_permissions:config.employer_permissions?read(config.employer_permissions):[],candidates:[]};
 if(config.employer_roles)input.roles=mergeRoleSources(input.roles,read(config.employer_roles));
 if(config.role_reconciliation)input.roles=reconcileRoleAliases(input.roles,read(config.role_reconciliation));
 if(config.account_reconciliation)input=reconcileAccounts(input,read(config.account_reconciliation));

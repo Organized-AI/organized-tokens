@@ -76,6 +76,28 @@ function candidateConsent(candidate, now) {
     text(consent.source) && Number.isFinite(Date.parse(consent.recorded_at)) && Date.parse(consent.recorded_at) <= now);
 }
 
+function validateEmployerPermission(record,companyIds,now) {
+  if(!record||typeof record!=='object'||!companyIds.has(String(record.company_id)))throw new Error('Employer permission has unknown company_id');
+  if(record.scope!=='candidate-introductions')throw new Error('Invalid employer permission scope');
+  const recorded=Date.parse(record.recorded_at),expires=record.expires_at?Date.parse(record.expires_at):null;
+  if(!['approved','declined','revoked'].includes(record.status)||!text(record.source)||!text(record.route_value)||
+    !Number.isFinite(recorded)||recorded>now||(record.expires_at&&(!Number.isFinite(expires)||expires<=recorded)))throw new Error('Invalid employer permission record');
+}
+
+function candidateIntroductionPermission(records,companyIds,routes,now) {
+  const values=new Set(routes.map(route=>route.value.toLowerCase()));
+  const scoped=records.filter(record=>companyIds.has(String(record.company_id)))
+    .sort((a,b)=>Date.parse(b.recorded_at)-Date.parse(a.recorded_at));
+  if(!scoped.length)return {status:'not-recorded'};
+  if(scoped.length>1&&Date.parse(scoped[0].recorded_at)===Date.parse(scoped[1].recorded_at))throw new Error('Employer permission records need distinct recorded_at values');
+  const latest=scoped[0],recorded=Date.parse(latest.recorded_at),expires=latest.expires_at?Date.parse(latest.expires_at):recorded+90*DAY;
+  const route=text(latest.route_value).toLowerCase();
+  const approved=latest.status==='approved'&&recorded<=now&&expires>now&&now-recorded<=90*DAY&&values.has(route);
+  return {status:approved?'approved':latest.status==='approved'?'expired-or-route-unverified':latest.status,
+    scope:latest.scope,route_value:latest.route_value,source:text(latest.source),recorded_at:latest.recorded_at,
+    expires_at:latest.expires_at??new Date(recorded+90*DAY).toISOString()};
+}
+
 function limits(profile) {
   return [...new Set([
     'Work-topic overlap is not proof of every job requirement, eligibility, or a hiring decision.',
@@ -127,9 +149,11 @@ function validateCampaign(campaign) {
 }
 
 /** Pure draft preparation. No connector calls, sends, imports, signups or scheduling. */
-export function buildCampaign({campaign, companies, roles, contacts = [], candidates = [], findings = [], suppressed = []}, now = Date.now()) {
+export function buildCampaign({campaign, companies, roles, contacts = [], candidates = [], findings = [], suppressed = [], employer_permissions = []}, now = Date.now()) {
   validateCampaign(campaign);
-  if (![companies, roles, contacts, candidates, findings, suppressed].every(Array.isArray)) throw new Error('Inputs must be arrays');
+  if (![companies, roles, contacts, candidates, findings, suppressed, employer_permissions].every(Array.isArray)) throw new Error('Inputs must be arrays');
+  const allCompanyIds=new Set(companies.flatMap(c=>[String(c.id),...(c.source_company_ids??[]).map(String)]));
+  for(const record of employer_permissions)validateEmployerPermission(record,allCompanyIds,now);
   const excludedCompanies=new Set(companies.filter(c=>suppressed.some(s=>s.exclude_from_campaign===true&&(
     (s.company_id!=null&&[String(c.id),...(c.source_company_ids??[]).map(String)].includes(String(s.company_id)))||
     (s.company_name&&text(s.company_name).toLowerCase()===text(c.name).toLowerCase())||
@@ -183,34 +207,41 @@ export function buildCampaign({campaign, companies, roles, contacts = [], candid
     };
     const sponsorRoutes = routeGroup(routes.filter(c => c.sponsorship_suitable));
     const hiringRoutes = routeGroup(routes.filter(c => c.hiring_suitable));
+    const introductionPermission=candidateIntroductionPermission(employer_permissions,new Set([id,...(company.source_company_ids??[]).map(String)]),[...sponsorRoutes,...hiringRoutes],now);
     const companyRoles = normalized.filter(r => r.company_id === id);
     const active = companyRoles.filter(r => roleState(r, now) === 'employer-confirmed');
     const matches = isSuppressed ? [] : candidates.flatMap(c => matchCandidate(c, companyRoles, now));
     const best = matches.find(m => m.availability === 'employer-confirmed');
-    const draftMatch=campaign.hiring_mode==='permission-first'?null:best;
+    const draftMatch=campaign.hiring_mode==='permission-first'?(introductionPermission.status==='approved'?best:null):best;
+    const permissionRefused=['declined','revoked'].includes(introductionPermission.status);
     const opener = `Hi ${name} team,`;
-    const permissionAsk=campaign.hiring_mode==='permission-first'?`\n\nIf you're hiring, may we also send you relevant candidates from our pool of proven talent? Their assessments show coding-session work and the systems they've put to work. Candidate introductions are available independently of sponsorship. Explore the job board: ${campaign.job_board_url}`:'';
+    const permissionAsk=campaign.hiring_mode==='permission-first'&&introductionPermission.status!=='approved'&&!permissionRefused?`\n\nIf you're hiring, may we also send you relevant candidates from our pool of proven talent? Their assessments show coding-session work and the systems they've put to work. Candidate introductions are available independently of sponsorship. Explore the job board: ${campaign.job_board_url}`:'';
     const sponsorBody = `${opener}\n\nWould ${name} be interested in sponsoring ${text(campaign.event_series)}? We bring builders together for hands-on AI workshops and hackathons.\n\nSponsorship options, including product or credit contributions, are here: ${campaign.sponsor_url}${permissionAsk}\n\nWould you be the right person to discuss sponsorship, or could you point me to your partnerships team?\n\n${text(campaign.sender_name)}\nOrganized AI`;
-    const hiringBody = draftMatch ? `${opener}\n\nFollowing up on my sponsorship note: your ${best.role_title} listing describes work in ${best.reasons.map(r => r.topic).join(', ')}.\n\n${best.candidate} has assessment evidence of related work: ${best.reasons[0].work.map(w => `${w.label} (${w.delivery_state})`).join('; ')}. Their report includes coding-session evidence and the systems they put to work: ${best.public_url}\n\nThis is a potential fit to review, not a claim that every requirement is met. Would reviewing this profile or discussing an introduction be useful?\n\nYou can also find candidates through our job board: ${campaign.job_board_url}\n\n${text(campaign.sender_name)}\nOrganized AI`
+    const hiringBody = draftMatch ? `${opener}\n\nYour ${best.role_title} listing describes work in ${best.reasons.map(r => r.topic).join(', ')}.\n\n${best.candidate} has assessment evidence of related work: ${best.reasons[0].work.map(w => `${w.label} (${w.delivery_state})`).join('; ')}. Their report includes coding-session evidence and the systems they put to work: ${best.public_url}\n\nThis is a potential fit to review, not a claim that every requirement is met. Would reviewing this profile or discussing an introduction be useful?\n\nYou can also find candidates through our job board: ${campaign.job_board_url}\n\n${text(campaign.sender_name)}\nOrganized AI`
+      : introductionPermission.status==='approved' ? `${opener}\n\nThank you for confirming that Organized AI may send relevant candidates from our pool of proven talent. We do not yet have a current evidence-supported match to share.\n\nIf you send a current role and the work you need someone to demonstrate, we can check for a match. You can also find candidates through our job board: ${campaign.job_board_url}\n\n${text(campaign.sender_name)}\nOrganized AI`
       : `${opener}\n\nFollowing up on my sponsorship note: if you're also hiring AI practitioners, Organized AI connects companies with candidates whose assessments describe coding-session work and the systems they've put to work.\n\nExplore the job board: ${campaign.job_board_url}\nSee how the assessment works: ${campaign.assessment_url}\n\nMay we send you relevant candidates from our pool of proven talent? Share a current role and the work you need someone to demonstrate so we can check for a match.\n\n${text(campaign.sender_name)}\nOrganized AI`;
     const blockers = ['outreach-paused', 'recipient-and-copy-approval-required', 'delivery-channel-not-connected'];
     if (!sponsorRoutes.length) blockers.push('sponsorship-contact-needed');
     if (duplicates.some(ids => ids.includes(id))) blockers.push('duplicate-company-review');
     if (isSuppressed) blockers.push('company-suppressed');
-    const action = isSuppressed ? 'suppressed' : !sponsorRoutes.length ? 'research-sponsorship-contact'
+    if(permissionRefused)blockers.push(`candidate-introductions-${introductionPermission.status}`);
+    const action = isSuppressed ? 'suppressed' : draftMatch&&introductionPermission.status==='approved' ? 'review-permitted-candidate-introduction' : !sponsorRoutes.length ? 'research-sponsorship-contact'
+      : permissionRefused ? 'review-sponsorship-copy'
       : matches.some(m => m.availability !== 'employer-confirmed') && !best ? 'verify-employer-opening'
       : best ? 'review-candidate-fit-and-copy' : 'review-sponsorship-copy';
     return {company_id: id, source_company_ids:company.source_company_ids??[id], company_sources:company.company_sources??[], company: name, website: httpsUrl(company.website), directory_url: httpsUrl(company.source_url),
       sponsorship: {status: isSuppressed ? 'suppressed' : 'uncontacted', routes: sponsorRoutes, intent: 'unknown'},
-      hiring: {status: 'uncontacted', routes: hiringRoutes, confirmed_openings: active.length,
+      hiring: {status: 'uncontacted', candidate_introduction_permission:introductionPermission, routes: hiringRoutes, confirmed_openings: active.length,
         listed_openings: companyRoles.filter(r => !['closed','stale'].includes(roleState(r, now))).length,
         unavailable_or_stale: companyRoles.filter(r => ['closed','stale'].includes(roleState(r, now))).map(r => ({id:r.id, status:roleState(r,now)})),
         candidate_matches: matches},
       drafts: isSuppressed ? [] : [
         {id:`${campaign.id}:${id}:sponsor`, stage:'sponsor-introduction', status:'draft', subject:`Sponsoring ${text(campaign.event_series)}`, body:sponsorBody},
-        {id:`${campaign.id}:${id}:hiring`, stage:'hiring-follow-up', status:'draft', subject:draftMatch ? `Work evidence relevant to ${best.role_title}` : 'Hiring AI practitioners through Organized AI', body:hiringBody,
-          prerequisites:['sponsor-introduction-recorded-as-sent','no-opt-out-or-negative-response','review-recipient-and-current-role','approve-final-copy'],
-          kind:draftMatch ? 'candidate-specific' : 'general-job-board-invitation'},
+        ...(!permissionRefused?[{id:`${campaign.id}:${id}:hiring`, stage:'hiring-follow-up', status:'draft', subject:draftMatch ? `Work evidence relevant to ${best.role_title}` : 'Hiring AI practitioners through Organized AI', body:hiringBody,
+          prerequisites:draftMatch&&introductionPermission.status==='approved'?['employer-permission-current','candidate-consent-current','employer-opening-current','review-recipient-and-final-copy']
+            :introductionPermission.status==='approved'?['employer-permission-current','review-current-opening','review-recipient-and-final-copy']
+            :['sponsor-introduction-recorded-as-sent','no-opt-out-or-negative-response','review-recipient-and-current-role','approve-final-copy'],
+          kind:draftMatch ? 'candidate-specific' : 'general-job-board-invitation'}]:[]),
       ], blockers, next_action:action};
   });
   const routeAccounts=new Map();

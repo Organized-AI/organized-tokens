@@ -233,6 +233,52 @@ test('permission-first copy asks before sharing a candidate while retaining priv
  for(const d of a.drafts){assert.match(d.body,/may we.*send you relevant candidates/i);assert.doesNotMatch(d.body,/Riley|aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/);}
  assert.match(a.drafts[0].body,/independently of sponsorship/);
 });
+test('current employer permission unlocks only a consented confirmed candidate introduction',()=>{
+ const i=input();i.campaign.hiring_mode='permission-first';i.employer_permissions=[{company_id:1,scope:'candidate-introductions',status:'approved',route_value:'hello@example.test',source:'crm-response-1',recorded_at:at}];
+ let report=buildCampaign(i,now),a=report.accounts[0];assert.equal(a.hiring.candidate_introduction_permission.status,'approved');assert.equal(a.drafts[1].kind,'candidate-specific');
+ assert.match(a.drafts[1].body,/Riley Okafor/);assert.match(a.drafts[1].body,/assessment\.organizedai\.vip/);assert.doesNotMatch(a.drafts[0].body,/may we.*send you relevant candidates/i);
+ assert.doesNotMatch(a.drafts[1].body,/sponsor/i);
+ assert.deepEqual(a.drafts[1].prerequisites,['employer-permission-current','candidate-consent-current','employer-opening-current','review-recipient-and-final-copy']);assert.equal(a.next_action,'review-permitted-candidate-introduction');
+ assert.doesNotMatch(render(report),/crm-response-1/);assert.doesNotMatch(JSON.stringify(engramHandoff(report)),/crm-response-1|hello@example/);
+ i.candidates[0].consent.revoked=true;a=buildCampaign(i,now).accounts[0];assert.equal(a.drafts[1].kind,'general-job-board-invitation');assert.deepEqual(a.drafts[1].prerequisites,['employer-permission-current','review-current-opening','review-recipient-and-final-copy']);
+ i.candidates[0].consent.revoked=false;i.roles[0].availability='board-listed';a=buildCampaign(i,now).accounts[0];assert.equal(a.drafts[1].kind,'general-job-board-invitation');
+});
+test('latest decline, revocation, expiry or unverified response route cannot unlock an introduction',()=>{
+ const base={company_id:1,scope:'candidate-introductions',status:'approved',route_value:'hello@example.test',source:'crm-response',recorded_at:at};
+ for(const record of [{...base,status:'declined'},{...base,status:'revoked'},{...base,recorded_at:'2026-01-01T00:00:00Z'},{...base,expires_at:'2026-09-17T22:30:00Z'},{...base,route_value:'other@example.test'}]){
+  const i=input();i.campaign.hiring_mode='permission-first';i.employer_permissions=[record];const a=buildCampaign(i,now).accounts[0],hiring=a.drafts.find(d=>d.stage==='hiring-follow-up');
+  assert.notEqual(a.hiring.candidate_introduction_permission.status,'approved');
+  if(['declined','revoked'].includes(record.status))assert.equal(hiring,undefined);else assert.equal(hiring.kind,'general-job-board-invitation');
+ }
+ const i=input();i.campaign.hiring_mode='permission-first';i.employer_permissions=[base,{...base,status:'declined',recorded_at:'2026-09-17T22:30:00Z'}];assert.equal(buildCampaign(i,now).accounts[0].hiring.candidate_introduction_permission.status,'declined');
+});
+test('declined or revoked introduction permission suppresses hiring drafts without suppressing sponsorship',()=>{
+ const base={company_id:1,scope:'candidate-introductions',route_value:'hello@example.test',source:'crm-response',recorded_at:at};
+ for(const status of ['declined','revoked']){
+  const i=input();i.campaign.hiring_mode='permission-first';i.employer_permissions=[{...base,status}];const a=buildCampaign(i,now).accounts[0];
+  assert.deepEqual(a.drafts.map(d=>d.stage),['sponsor-introduction']);assert.doesNotMatch(a.drafts[0].body,/may we.*send you relevant candidates/i);
+  assert.equal(a.next_action,'review-sponsorship-copy');assert.ok(a.blockers.includes(`candidate-introductions-${status}`));
+ }
+});
+test('malformed or unknown employer permission records fail closed',()=>{
+ const base={company_id:1,scope:'candidate-introductions',status:'approved',route_value:'hello@example.test',source:'crm-response',recorded_at:at};
+ for(const record of [{...base,company_id:99},{...base,scope:'sponsorship'},{...base,status:'maybe'},{...base,source:''},{...base,recorded_at:'future',expires_at:'invalid'},{...base,recorded_at:'2027-01-01T00:00:00Z'},{...base,expires_at:'2026-09-17T21:59:59Z'}]){
+  const i=input();i.employer_permissions=[record];assert.throws(()=>buildCampaign(i,now));
+ }
+ for(const status of ['approved','declined']){
+  const i=input();i.employer_permissions=[base,{...base,status,source:'another-response'}];assert.throws(()=>buildCampaign(i,now),/distinct recorded_at/);
+ }
+});
+test('permission expiry is exclusive at the boundary and duplicate reviewed routes remain valid',()=>{
+ const base={company_id:1,scope:'candidate-introductions',status:'approved',route_value:'hello@example.test',source:'crm-response',recorded_at:at};
+ const i=input();i.campaign.hiring_mode='permission-first';i.contacts.push({...i.contacts[0],purpose:'recruiting',url:'https://example.test/careers'});
+ i.employer_permissions=[{...base,route_value:' HELLO@EXAMPLE.TEST ',expires_at:'2026-09-17T23:00:00.001Z'}];assert.equal(buildCampaign(i,now).counts.specific_followups,1);
+ i.employer_permissions=[{...base,expires_at:'2026-09-17T23:00:00.000Z'}];assert.equal(buildCampaign(i,now).counts.specific_followups,0);
+});
+test('permission recorded against a reconciled source company applies to the canonical account',()=>{
+ const i=duplicateInput();i.campaign.hiring_mode='permission-first';i.employer_permissions=[{company_id:2,scope:'candidate-introductions',status:'approved',route_value:'hello@example.test',source:'crm-response',recorded_at:at}];
+ assert.equal(buildCampaign(reconcileAccounts(i,[duplicateDecision]),now).counts.specific_followups,1);
+});
 
 function duplicateInput(){const i=input();i.companies.push({...i.companies[0],id:2});i.roles.push({...i.roles[0],id:2,company_id:2});i.contacts.push({...i.contacts[0],company_id:2});return i;}
 const duplicateDecision={canonical_id:1,company_ids:[1,2],status:'reviewed-same-directory-company',source_url:'https://example.test/company',reason:'Same directory identity reviewed.'};
