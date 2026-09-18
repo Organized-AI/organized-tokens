@@ -27,6 +27,7 @@ The config uses paths relative to itself:
   },
   "companies": "employers.json",
   "roles": "roles.json",
+  "employer_roles": "current-employer-roles.json",
   "contacts": "reviewed-contacts.json",
   "findings": "hiring-source-discrepancies.json",
   "suppressed": "suppressed.json",
@@ -34,7 +35,9 @@ The config uses paths relative to itself:
 }
 ```
 
-`contacts`, `findings`, `suppressed`, and `candidates` are optional. Existing inventory and reviewed-contact JSON from the GTM workspace are accepted directly. Output includes `campaign-review.html`, `campaign-review.json`, and `engram-handoff.json`, written owner-only. Re-running replaces the snapshots; it does not schedule or dispatch anything.
+`employer_roles`, `contacts`, `findings`, `suppressed`, and `candidates` are optional. Existing inventory and reviewed-contact JSON from the GTM workspace are accepted directly. `employer_roles` merges a separately collected employer feed into the board snapshot, removes tracking-only duplicates, and retains the original listing's provenance. Identity parameters such as `gh_jid` stay distinct. Include every referenced company in the company file. Output includes `campaign-review.html`, `campaign-review.json`, and `engram-handoff.json`, written owner-only. Re-running replaces the snapshots; it does not schedule or dispatch anything.
+
+An optional `target_role_ids` array on each candidate config entry prioritizes roles the candidate explicitly selected. It only changes ordering among evidence-supported matches; it does not bypass consent, source freshness or specialist checks. Without explicit interests, the shared matcher's role-title relevance governs ranking.
 
 ## Evidence and consent
 
@@ -77,7 +80,7 @@ The operator must establish that the configured ATS board belongs to the specifi
 
 Role records require `id`, `company_id`, `title`, HTTPS `source_url`, `description` (or `description_html`), and `collected_at`. Include `apply_url`, location and expiry when available. Imported board listings remain unconfirmed. A role can support a candidate-specific draft only with `availability: "employer-confirmed"`, `availability_checked_at`, and `availability_source_url`, with both capture and availability check within seven days. Past expiry, future timestamps and recorded closure findings prevent an active claim. Refresh this evidence again before future delivery.
 
-The collector fails the batch rather than silently replacing a previous complete snapshot with a partial result. Keep its receipts beside the output. Employer feed adapters have fixture-backed contract tests; live provider verification is a separate step.
+The collector fails the batch rather than silently replacing a previous complete snapshot with a partial result. Keep its receipts beside the output. Employer feed adapters have fixture-backed contract tests. A GET-only live check against Seekr's Greenhouse board and Airtm/Superstate's Lever boards succeeded on September 18, 2026 UTC (September 17 locally), returning 34 openings. Actual Greenhouse HTML encoding is decoded as text before matching/rendering. The private inputs and results are not committed.
 
 ## Contact routing and sequence
 

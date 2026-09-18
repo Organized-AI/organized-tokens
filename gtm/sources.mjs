@@ -22,6 +22,7 @@ export async function greenhouse({board, company_id, company_name}, fetcher=fetc
   const {data,source_sha256}=await jsonSource(url,fetcher);
   if (!Array.isArray(data.jobs) || !Number.isInteger(data.meta?.total) || data.meta.total!==data.jobs.length) throw new Error('Incomplete Greenhouse inventory');
   const at=new Date(now).toISOString();
+  if(data.jobs.some(j=>!j.id||!text(j.title)||!httpsUrl(j.absolute_url)))throw new Error('Malformed Greenhouse job');
   return data.jobs.map(j=>normalizeRole({id:`greenhouse:${board}:${j.id}`,company_id,company_name,title:j.title,
     description:j.content,location:j.location?.name,source_url:j.absolute_url,apply_url:j.absolute_url,
     source_kind:'greenhouse',source_sha256,collected_at:at,availability:'employer-confirmed',
@@ -33,6 +34,7 @@ export async function lever({board, company_id, company_name}, fetcher=fetch, no
   const {data,source_sha256}=await jsonSource(url,fetcher);
   if (!Array.isArray(data)) throw new Error('Invalid Lever inventory');
   const at=new Date(now).toISOString();
+  if(data.some(j=>!j.id||!text(j.text)||!httpsUrl(j.hostedUrl)))throw new Error('Malformed Lever job');
   return data.map(j=>normalizeRole({id:`lever:${board}:${j.id}`,company_id,company_name,title:j.text,
     description:[j.descriptionPlain,...(j.lists??[]).map(l=>`${l.text} ${l.content}`),j.additionalPlain].filter(Boolean).join('\n'),
     location:j.categories?.location,source_url:j.hostedUrl,apply_url:j.applyUrl,source_kind:'lever',source_sha256,

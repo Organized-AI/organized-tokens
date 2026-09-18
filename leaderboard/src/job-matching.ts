@@ -46,7 +46,7 @@ const specialties:[RegExp,RegExp][]=[
  [/\b(?:compiler|kernel)\b/i,/\b(?:compiler|kernel)\b/i],
  [/\b(?:hardware|silicon|asic|rtl|chip|semiconductor)\b/i,/\b(?:hardware design|silicon|asic|rtl|chip design|semiconductor)\b/i],
  [/\b(?:gpu|soc)\b.*\b(?:modeling|architecture|architect)\b/i,/\b(?:gpu architecture|soc modeling|hardware design)\b/i],
- [/\b(?:research scientist|research engineer)\b/i,/\b(?:machine learning research|model research|research experiments|model training|fine.tuning)\b/i],
+ [/\b(?:scientist|research engineer)\b/i,/\b(?:machine learning research|model research|research experiments|model training|fine.tuning)\b/i],
  [/\b(?:sales|account executive|business development|customer success)\b/i,/\b(?:sales|business development|customer success|commercial partnerships)\b/i],
  [/\b(?:community manager|developer relations|developer advocate|recruiter)\b/i,/\b(?:community|developer relations|developer advocacy|recruiting)\b/i],
 ];

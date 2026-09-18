@@ -1,6 +1,7 @@
 import {createHash} from 'node:crypto';
 import {matchJobs} from '../leaderboard/src/job-matching.ts';
 import {sanitizeProfile} from '../leaderboard/src/validate.js';
+import {plainText} from './text.mjs';
 
 export const VERSION = 'organized-ai-sponsor-hiring/v1';
 export const DAY = 86400000;
@@ -10,7 +11,7 @@ export function digest(value) {
   const stable=v=>Array.isArray(v)?v.map(stable):v&&typeof v==='object'?Object.fromEntries(Object.keys(v).sort().map(k=>[k,stable(v[k])])):v;
   return createHash('sha256').update(JSON.stringify(stable(normalized))).digest('hex');
 }
-export const text = value => String(value ?? '').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+export const text = plainText;
 export function httpsUrl(value) {
   try { const u = new URL(value); return u.protocol === 'https:' && !u.username && !u.password ? u.href : null; }
   catch { return null; }
@@ -35,6 +36,7 @@ export function normalizeRole(role) {
     availability_checked_at: role.availability_checked_at ?? null,
     availability_source_url: httpsUrl(role.availability_source_url),
     source_sha256: role.source_sha256 ?? null,
+    alternate_sources: Array.isArray(role.alternate_sources) ? role.alternate_sources : [],
   };
 }
 
@@ -86,24 +88,31 @@ function matchCandidate(candidate, roles, now) {
   if (!candidateConsent(candidate, now)) return [];
   const {profile, consent} = candidate;
   const arcs = new Map((profile.work_arcs ?? []).map(a => [a.id, a]));
-  const matches = roles.flatMap(role => {
-    const state = roleState(role, now);
-    if (['closed', 'stale'].includes(state)) return [];
-    const match = matchJobs(profile, [role], now)[0];
-    if (!match) return [];
-    return [{candidate: text(profile.name), public_url: consent.public_url, profile_sha256: consent.profile_sha256,
+  const eligible=roles.filter(role=>!['closed','stale'].includes(roleState(role,now)));
+  const preferred=new Set(candidate.target_role_ids??[]);
+  const byId=new Map(eligible.map(r=>[r.id,r]));
+  const ranked=[];
+  // Preserve shared matcher's role-title ranking. Explicit candidate interests
+  // reorder supported matches; they never bypass evidence or source checks.
+  for(const confirmed of [true,false])for(const targeted of [true,false]){
+    const group=eligible.filter(r=>(roleState(r,now)==='employer-confirmed')===confirmed&&preferred.has(r.id)===targeted);
+    ranked.push(...matchJobs(profile,group,now));
+  }
+  const matches = ranked.map(match => {
+    const role=byId.get(match.id),state=roleState(role,now);
+    return {candidate: text(profile.name), public_url: consent.public_url, profile_sha256: consent.profile_sha256,
       role_id: role.id, role_title: role.title, role_url: role.source_url, apply_url: role.apply_url,
       source_kind: role.source_kind, collected_at: role.collected_at, availability: state,
+      alternate_sources: role.alternate_sources,
       availability_checked_at: role.availability_checked_at, availability_source_url: role.availability_source_url,
       reasons: match.reasons.map(r => ({...r, work: r.arc_ids.map(id => arcs.get(id)).filter(Boolean).map(a => ({
         id: a.id, label: text(a.label), delivery_state: a.delivery_state,
         authorship: a.authorship, verification_mode: a.verification_mode,
         summary: text(a.evidence?.[0]),
-      }))})), limits: limits(profile), review_status: 'needs-human-fit-review'}];
+      }))})), limits: limits(profile), review_status: 'needs-human-fit-review'};
   });
   const seen = new Set();
-  return matches.sort((a,b) => Number(b.availability === 'employer-confirmed') - Number(a.availability === 'employer-confirmed') || b.reasons.length-a.reasons.length)
-    .filter(m => {const k = `${m.role_title.toLowerCase()}|${m.apply_url ?? m.role_url}`; if (seen.has(k)) return false; seen.add(k); return true;}).slice(0,3);
+  return matches.filter(m => {const k = `${m.role_title.toLowerCase()}|${m.apply_url ?? m.role_url}`; if (seen.has(k)) return false; seen.add(k); return true;}).slice(0,3);
 }
 
 function validateCampaign(campaign) {
@@ -119,8 +128,21 @@ function validateCampaign(campaign) {
 export function buildCampaign({campaign, companies, roles, contacts = [], candidates = [], findings = [], suppressed = []}, now = Date.now()) {
   validateCampaign(campaign);
   if (![companies, roles, contacts, candidates, findings, suppressed].every(Array.isArray)) throw new Error('Inputs must be arrays');
-  const blockedRoles = new Set(findings.filter(f => f.finding?.status === 'no-current-openings-at-source').flatMap(f => (f.roles ?? []).map(r => String(r.id))));
-  const normalized = roles.map(normalizeRole).map(r => blockedRoles.has(r.id) ? {...r, availability: 'closed'} : r);
+  const closures=new Map();
+  for(const f of findings.filter(f=>f.finding?.status==='no-current-openings-at-source')){
+    const checked=Date.parse(f.finding.checked_at);
+    for(const role of f.roles??[]){
+      const id=String(role.id),previous=closures.get(id);
+      // An undated closure cannot establish a subsequent reopening. Otherwise
+      // retain the latest closure, regardless of the input's ordering.
+      if(!closures.has(id)||!Number.isFinite(checked)||(Number.isFinite(previous)&&checked>previous))closures.set(id,Number.isFinite(checked)?checked:null);
+    }
+  }
+  const normalized = roles.map(normalizeRole).map(r => {
+    const closed=[r.id,...r.alternate_sources.map(s=>String(s.id))].filter(id=>closures.has(id));
+    const newerReopening=closed.length&&r.availability==='employer-confirmed'&&closed.every(id=>Number.isFinite(closures.get(id))&&Date.parse(r.availability_checked_at)>closures.get(id));
+    return closed.length&&!newerReopening?{...r,availability:'closed'}:r;
+  });
   const suppressedCompanies = new Set(suppressed.filter(s => s.company_id).map(s => String(s.company_id)));
   const suppressedRoutes = new Set(suppressed.filter(s => s.value).map(s => String(s.value).trim().toLowerCase()));
   const knownCompanies = new Set(companies.map(c => String(c.id)));

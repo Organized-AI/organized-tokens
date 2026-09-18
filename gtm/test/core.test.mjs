@@ -8,6 +8,8 @@ import {fileURLToPath} from 'node:url';
 import {buildCampaign,digest,engramHandoff,DAY} from '../core.mjs';
 import {greenhouse,lever,careerJobPostings,importedRoles} from '../sources.mjs';
 import {render} from '../render.mjs';
+import {plainText} from '../text.mjs';
+import {mergeRoleSources,jobIdentity} from '../merge-sources.mjs';
 import {sanitizeProfile} from '../../leaderboard/src/validate.js';
 const profile=JSON.parse(fs.readFileSync(new URL('../../leaderboard/test/fixtures/profile-v9.sample.json',import.meta.url)));
 const now=Date.parse('2026-09-17T23:00:00Z'),at='2026-09-17T22:00:00Z';
@@ -120,16 +122,70 @@ test('actual CLI normalizes consent, writes private review files, and works with
  const dir=fs.mkdtempSync(path.join(os.tmpdir(),'organizedai-gtm-test-'));t.after(()=>fs.rmSync(dir,{recursive:true,force:true}));
  const i=input(),today=new Date().toISOString();
  i.roles[0].collected_at=today;i.roles[0].availability_checked_at=today;i.candidates[0].consent.recorded_at=today;i.contacts[0].checked_at=today;
- const files={'companies.json':i.companies,'roles.json':i.roles,'contacts.json':i.contacts,'profile.json':i.candidates[0].profile,'consent.json':i.candidates[0].consent,
- 'config.json':{campaign:i.campaign,companies:'companies.json',roles:'roles.json',contacts:'contacts.json',candidates:[{profile:'profile.json',consent:'consent.json'}]}};
+ const files={'companies.json':i.companies,'roles.json':i.roles.map(r=>({...r,availability:'board-listed'})),'employer.json':i.roles,'contacts.json':i.contacts,'profile.json':i.candidates[0].profile,'consent.json':i.candidates[0].consent,
+ 'config.json':{campaign:i.campaign,companies:'companies.json',roles:'roles.json',employer_roles:'employer.json',contacts:'contacts.json',candidates:[{profile:'profile.json',consent:'consent.json'}]}};
  for(const [name,data] of Object.entries(files))fs.writeFileSync(path.join(dir,name),JSON.stringify(data));
  fs.writeFileSync(path.join(dir,'deny-network.mjs'),"globalThis.fetch=()=>{throw new Error('Network forbidden in draft preparation test')};");
  const cli=fileURLToPath(new URL('../prepare.mjs',import.meta.url));
  const run=()=>execFileSync(process.execPath,['--experimental-strip-types','--import',path.join(dir,'deny-network.mjs'),cli,'--config',path.join(dir,'config.json'),'--out',path.join(dir,'out')],{encoding:'utf8'});
  run();const report=JSON.parse(fs.readFileSync(path.join(dir,'out/campaign-review.json')));
- assert.equal(report.counts.specific_followups,1);assert.equal(report.outreach_status,'paused');
+ assert.equal(report.counts.specific_followups,1);assert.equal(report.outreach_status,'paused');assert.equal(report.counts.roles,1);
+ assert.equal(report.accounts[0].hiring.candidate_matches[0].alternate_sources[0].source_kind,'import');
  assert.equal(fs.statSync(path.join(dir,'out/campaign-review.html')).mode&0o777,0o600);
  const handoff=fs.readFileSync(path.join(dir,'out/engram-handoff.json'),'utf8');assert.doesNotMatch(handoff,/Riley|ev-002|public_url/);
  i.candidates[0].consent.matching=false;fs.writeFileSync(path.join(dir,'consent.json'),JSON.stringify(i.candidates[0].consent));run();
  assert.doesNotMatch(fs.readFileSync(path.join(dir,'out/campaign-review.json'),'utf8'),/Riley|ev-002|public_url/);
+});
+test('real-world Greenhouse encoding is decoded as text, never executable markup',()=>{
+ const s='&lt;p&gt;Seekr&#39;s role: &lt;strong&gt;AI&lt;/strong&gt; &amp;amp; APIs&amp;nbsp;&lt;/p&gt;';
+ assert.equal(plainText(s),"Seekr's role: AI & APIs");
+ assert.equal(plainText('&lt;script&gt;alert(1)&lt;/script&gt;Engineer'),'Engineer');
+ assert.doesNotThrow(()=>plainText('&#99999999;'));
+});
+test('source merge deduplicates tracking variants without conflating separate jobs or companies',()=>{
+ const uuid='381b3714-9e17-4190-973c-20f01bfadbb9';
+ const old={...input().roles[0],source_url:'https://jobs.organizedai.vip/job/1',apply_url:`https://jobs.lever.co/acme/${uuid}?ref=board`,availability:'board-listed'};
+ const current={...input().roles[0],id:'lever:acme:'+uuid,source_url:`https://jobs.lever.co/acme/${uuid}`,apply_url:`https://jobs.lever.co/acme/${uuid}/apply`};
+ const r=mergeRoleSources([old],[current]);assert.equal(r.length,1);assert.equal(r[0].id,current.id);assert.equal(r[0].alternate_sources[0].id,'1');
+ assert.equal(mergeRoleSources([old],[{...current,company_id:2}]).length,2);
+ assert.notEqual(jobIdentity('https://www.seekr.com/careers/?gh_jid=1'),jobIdentity('https://www.seekr.com/careers/?gh_jid=2'));
+});
+test('shared careers indexes do not conflate distinct openings',()=>{
+ const a={...input().roles[0],id:'board-1',title:'Automation Engineer',source_url:'https://example.test/careers',apply_url:'https://example.test/apply/automation'};
+ const b={...a,id:'employer-2',title:'Research Scientist',apply_url:'https://example.test/apply/scientist'};
+ assert.equal(mergeRoleSources([a],[b]).length,2);
+ assert.equal(mergeRoleSources([a],[{...b,title:a.title}]).length,2);
+});
+test('older employer snapshots cannot revive newer closed observations',()=>{
+ const latest={...input().roles[0],availability:'closed',availability_checked_at:at,collected_at:at};
+ const older={...latest,availability:'employer-confirmed',availability_checked_at:'2026-09-16T22:00:00Z',collected_at:'2026-09-16T22:00:00Z'};
+ for(const rows of [[latest,older],[older,latest]])assert.equal(mergeRoleSources([rows[0]],[rows[1]])[0].availability,'closed');
+});
+test('closure findings follow merged aliases until a later confirmed reopening',()=>{
+ const i=input();i.roles[0].alternate_sources=[{id:'board-previous'}];
+ i.findings=[{roles:[{id:'board-previous'}],finding:{status:'no-current-openings-at-source',checked_at:'2026-09-17T22:30:00Z'}}];
+ assert.equal(buildCampaign(i,now).counts.specific_followups,0);
+ i.roles[0].availability_checked_at='2026-09-17T22:45:00Z';assert.equal(buildCampaign(i,now).counts.specific_followups,1);
+});
+test('duplicate closure findings keep the latest or undated closure in either order',()=>{
+ const finding=checked_at=>({roles:[{id:1}],finding:{status:'no-current-openings-at-source',checked_at}});
+ for(const dates of [['2026-09-17T22:30:00Z','2026-09-17T21:00:00Z'],[undefined,'2026-09-17T21:00:00Z'],['invalid','2026-09-17T21:00:00Z']]){
+  for(const ordered of [dates,[...dates].reverse()]){
+   const i=input();i.findings=ordered.map(finding);
+   assert.equal(buildCampaign(i,now).counts.specific_followups,0);
+   i.roles[0].availability_checked_at='2026-09-17T22:45:00Z';
+   assert.equal(buildCampaign(i,now).counts.specific_followups,dates.every(d=>Number.isFinite(Date.parse(d)))?1:0);
+  }
+ }
+});
+test('malformed provider records cannot become confirmed openings',async()=>{
+ await assert.rejects(greenhouse({board:'test',company_id:1},async()=>Response.json({meta:{total:1},jobs:[{title:'Engineer',absolute_url:'https://example.test/1'}]})),/Malformed/);
+ await assert.rejects(lever({board:'test',company_id:1},async()=>Response.json([{id:'a',text:'',hostedUrl:'https://example.test/1'}])),/Malformed/);
+});
+test('campaign preserves role-title ranking and candidate targets cannot bypass evidence checks',()=>{
+ const i=input(),base=i.roles[0];i.roles=[{...base,id:'generic',title:'Engineer',description:'Build agent workflows and automation for product operations.'},{...base,id:'specific',title:'Automation Engineer',description:'Build automation.'}];
+ assert.equal(buildCampaign(i,now).accounts[0].hiring.candidate_matches[0].role_id,'specific');
+ i.candidates[0].target_role_ids=['generic'];assert.equal(buildCampaign(i,now).accounts[0].hiring.candidate_matches[0].role_id,'generic');
+ i.roles[0].title='AI Engineer / Scientist';assert.equal(buildCampaign(i,now).accounts[0].hiring.candidate_matches[0].role_id,'specific');
+ i.roles[0].title='Engineer';i.roles[0].availability='closed';assert.equal(buildCampaign(i,now).accounts[0].hiring.candidate_matches[0].role_id,'specific');
 });

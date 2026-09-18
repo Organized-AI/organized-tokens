@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import {buildCampaign,engramHandoff} from './core.mjs';
 import {render} from './render.mjs';
+import {mergeRoleSources} from './merge-sources.mjs';
 import {assertNoSecrets,assertNoLocalEvidenceLeaks,validateRawProfileV9,sanitizeProfile,validateProfileV9} from '../leaderboard/src/validate.js';
 
 const argv=process.argv.slice(2);
@@ -14,11 +15,13 @@ const config=read(path.basename(args.config));
 const input={campaign:config.campaign,companies:read(config.companies),roles:read(config.roles),
   contacts:config.contacts?read(config.contacts):[],findings:config.findings?read(config.findings):[],
   suppressed:config.suppressed?read(config.suppressed):[],candidates:[]};
+if(config.employer_roles)input.roles=mergeRoleSources(input.roles,read(config.employer_roles));
 for(const c of config.candidates??[]){
   const profile=read(c.profile);
   assertNoSecrets(JSON.stringify(profile));assertNoLocalEvidenceLeaks(JSON.stringify(profile));
   validateRawProfileV9(profile);sanitizeProfile(profile);validateProfileV9(profile);
-  input.candidates.push({profile,consent:read(c.consent)});
+  if(c.target_role_ids && (!Array.isArray(c.target_role_ids)||c.target_role_ids.some(id=>typeof id!=='string')))throw new Error('target_role_ids must be strings');
+  input.candidates.push({profile,consent:read(c.consent),target_role_ids:c.target_role_ids??[]});
 }
 const report=buildCampaign(input);
 const out=path.resolve(args.out);
