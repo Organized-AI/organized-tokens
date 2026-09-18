@@ -1,7 +1,7 @@
 /** Explainable opportunity suggestions, not a hiring decision or talent score. */
 type Role = {id:number|string;title:string;company_name:string;company_slug?:string;slug?:string;location_name?:string;description_html?:string;expires_on?:string;apply_url?:string;anonymity_enabled?:boolean};
 const vocabulary: [string,RegExp][] = [
- ['agent workflows',/\b(?:agent(?:ic|s)?|orchestrat\w*|multi.agent|llm|large language models?)\b/i],
+ ['agent workflows',/\b(?:agentic|agent (?:workflows?|orchestrat\w*|automation|systems?|environments?|tools?|infrastructure|engineering)|(?:ai|llm|coding|software|autonomous|multi)[ -]agents?|orchestrat\w*|llm|large language models?)\b/i],
  ['automation',/\bautomat\w*\b/i],
  ['data systems',/\b(?:data (?:pipeline|model|integration|engineer|platform)\w*|etl|ingestion)\b/i],
  ['APIs and integrations',/\b(?:apis?|integrations?|webhooks?)\b/i],
@@ -45,7 +45,8 @@ const specialties:[RegExp,RegExp][]=[
  [/\bcuda\b/i,/\bcuda\b/i],
  [/\b(?:compiler|kernel)\b/i,/\b(?:compiler|kernel)\b/i],
  [/\b(?:hardware|silicon|asic|rtl|chip|semiconductor)\b/i,/\b(?:hardware design|silicon|asic|rtl|chip design|semiconductor)\b/i],
- [/\b(?:research scientist|research engineer)\b/i,/\b(?:machine learning research|model research|research experiments|model training|fine.tuning)\b/i],
+ [/\b(?:gpu|soc)\b.*\b(?:modeling|architecture|architect)\b/i,/\b(?:gpu architecture|soc modeling|hardware design)\b/i],
+ [/\b(?:scientist|research engineer)\b/i,/\b(?:machine learning research|model research|research experiments|model training|fine.tuning)\b/i],
  [/\b(?:sales|account executive|business development|customer success)\b/i,/\b(?:sales|business development|customer success|commercial partnerships)\b/i],
  [/\b(?:community manager|developer relations|developer advocate|recruiter)\b/i,/\b(?:community|developer relations|developer advocacy|recruiting)\b/i],
 ];
