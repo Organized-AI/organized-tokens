@@ -1,0 +1,135 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import {execFileSync} from 'node:child_process';
+import {fileURLToPath} from 'node:url';
+import {buildCampaign,digest,engramHandoff,DAY} from '../core.mjs';
+import {greenhouse,lever,careerJobPostings,importedRoles} from '../sources.mjs';
+import {render} from '../render.mjs';
+import {sanitizeProfile} from '../../leaderboard/src/validate.js';
+const profile=JSON.parse(fs.readFileSync(new URL('../../leaderboard/test/fixtures/profile-v9.sample.json',import.meta.url)));
+const now=Date.parse('2026-09-17T23:00:00Z'),at='2026-09-17T22:00:00Z';
+function input(){return {
+ campaign:{id:'sponsor-test',event_series:'Austin AI workshops',sender_name:'Organizer',sponsor_url:'https://sponsor.organizedai.vip/',job_board_url:'https://jobs.organizedai.vip/',assessment_url:'https://assessment.organizedai.vip/'},
+ companies:[{id:1,name:'Fictional',website:'https://example.test',source_url:'https://example.test/company'}],
+ roles:[{id:1,company_id:1,company_name:'Fictional',title:'Agent orchestration engineer',description:'Build agent workflows and automation.',source_url:'https://example.test/job/1',collected_at:at,availability:'employer-confirmed',availability_checked_at:at,availability_source_url:'https://example.test/careers'}],
+ contacts:[{company_id:1,kind:'email',value:'hello@example.test',purpose:'general',title_or_function:'Company contact',url:'https://example.test/contact',checked_at:at,verification:'employer-published-role-and-route-reviewed'}],
+ candidates:[{profile:structuredClone(profile),consent:{matching:true,public_link_in_drafts:true,profile_sha256:digest(profile),public_url:'https://assessment.organizedai.vip/p/'+'a'.repeat(32),source:'synthetic-test-consent',recorded_at:at}}],
+};}
+test('prepares sponsor-first sequence and cites consented completed work for confirmed roles',()=>{
+ const r=buildCampaign(input(),now),a=r.accounts[0];
+ assert.equal(r.outreach_status,'paused');assert.equal(a.drafts[0].stage,'sponsor-introduction');assert.equal(a.drafts[1].kind,'candidate-specific');
+ assert.match(a.drafts[1].body,/Riley Okafor/);assert.match(a.drafts[1].body,/potential fit/);
+ assert.equal(a.hiring.candidate_matches[0].reasons[0].work[0].authorship,'directed-reviewed');
+ assert.equal(a.next_action,'review-candidate-fit-and-copy');assert.equal(a.sponsorship.intent,'unknown');
+});
+test('every consent failure omits candidate identity, public link and evidence',()=>{
+ for(const patch of [{matching:false},{public_link_in_drafts:false},{revoked:true},{profile_sha256:'wrong'},{public_url:'https://evil.test/p/x'},{source:''},{recorded_at:'2027-01-01'}]){
+  const i=input();Object.assign(i.candidates[0].consent,patch);const r=buildCampaign(i,now);
+  assert.equal(r.accounts[0].hiring.candidate_matches.length,0);assert.equal(r.accounts[0].drafts[1].kind,'general-job-board-invitation');
+  assert.doesNotMatch(JSON.stringify(r),/Riley|ev-002|aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/);
+ }
+});
+test('missing evidence, exploratory work and specialist mismatch do not become candidate pitches',()=>{
+ for(const type of ['no-evidence','exploration','hardware']){
+  const i=input(),c=i.candidates[0];
+  if(type==='no-evidence')c.profile.evidence_index=[];
+  if(type==='exploration')c.profile.work_arcs.forEach(a=>a.delivery_state='exploration');
+  if(type==='hardware')i.roles[0].title='Silicon Hardware Architect';
+  c.consent.profile_sha256=digest(c.profile);
+  assert.equal(buildCampaign(i,now).counts.specific_followups,0);
+ }
+});
+test('financial and insurance agents are not AI-agent evidence',()=>{
+ for(const title of ['Transfer Agent','Insurance Agent']){
+  const i=input();i.roles[0].title=title;i.roles[0].description='Serve customers and manage financial accounts.';
+  assert.equal(buildCampaign(i,now).counts.specific_followups,0);
+ }
+ const i=input();i.roles[0].title='Automation Engineer';i.roles[0].description='Build automation for an internal Transfer Agent.';
+ const r=buildCampaign(i,now);assert.ok(r.accounts[0].hiring.candidate_matches.length);
+ assert.ok(r.accounts[0].hiring.candidate_matches[0].reasons.every(r=>r.topic!=='agent workflows'));
+});
+test('board status, stale timestamps and unknown employer availability never establish active hiring',()=>{
+ for(const patch of [{availability:'board-listed'},{availability_checked_at:'2026-08-01'},{availability_source_url:null},{availability_checked_at:'2027-01-01'},{collected_at:'2026-08-01'}]){
+  const i=input();Object.assign(i.roles[0],patch);const r=buildCampaign(i,now);
+  assert.equal(r.counts.specific_followups,0);assert.equal(r.accounts[0].hiring.confirmed_openings,0);
+ }
+});
+test('expired roles and source discrepancies remove otherwise matching openings',()=>{
+ for(const type of ['expiry','closed','discrepancy']){
+  const i=input();if(type==='expiry')i.roles[0].expires_on=at;
+  if(type==='closed')i.roles[0].availability='closed';
+  if(type==='discrepancy')i.findings=[{roles:[{id:1}],finding:{status:'no-current-openings-at-source'}}];
+  const r=buildCampaign(i,now);assert.equal(r.accounts[0].hiring.candidate_matches.length,0);assert.equal(r.accounts[0].hiring.unavailable_or_stale.length,1);
+ }
+});
+test('recruiting contacts are not repurposed for sponsorship and stale/unreviewed routes are excluded',()=>{
+ const i=input();i.contacts[0].purpose='recruiting';let a=buildCampaign(i,now).accounts[0];
+ assert.equal(a.sponsorship.routes.length,0);assert.equal(a.hiring.routes.length,1);
+ for(const patch of [{checked_at:'2026-01-01'},{verification:'unreviewed'},{url:'javascript:alert(1)'}]){
+  const j=input();Object.assign(j.contacts[0],patch);assert.equal(buildCampaign(j,now).counts.reviewed_routes,0);
+ }
+});
+test('company suppressions remove all drafts and route suppression is case insensitive',()=>{
+ const i=input();i.suppressed=[{company_id:1}];let r=buildCampaign(i,now);
+ assert.deepEqual(r.accounts[0].drafts,[]);assert.deepEqual(r.accounts[0].hiring.candidate_matches,[]);assert.equal(engramHandoff(r).accounts.length,0);
+ i.suppressed=[{value:'HELLO@EXAMPLE.TEST'}];assert.equal(buildCampaign(i,now).counts.reviewed_routes,0);
+});
+test('duplicate accounts require reconciliation and handoff excludes candidates and drafts',()=>{
+ const i=input();i.companies.push({...i.companies[0],id:2});const r=buildCampaign(i,now);
+ assert.deepEqual(r.duplicate_company_groups,[['1','2']]);assert.ok(r.accounts[0].blockers.includes('duplicate-company-review'));
+ const h=JSON.stringify(engramHandoff(r));assert.doesNotMatch(h,/Riley|ev-002|public_url|Following up|hello@example/);assert.match(h,/review-only/);
+});
+test('review page escapes source content and has no send controls',()=>{
+ const i=input();i.companies[0].name='<img src=x onerror=alert(1)> Evil';i.contacts[0].evidence_excerpt='</script><script>evil()</script>';
+ const html=render(buildCampaign(i,now));assert.doesNotMatch(html,/<img src=x|evil\(\)|onclick=|fetch\(/);assert.match(html,/Copy draft/);
+});
+test('consent digest survives CLI normalization but changes when evidence changes',()=>{
+ const i=input(),before=digest(i.candidates[0].profile);sanitizeProfile(i.candidates[0].profile);
+ assert.equal(digest(i.candidates[0].profile),before);assert.equal(buildCampaign(i,now).counts.specific_followups,1);
+ i.candidates[0].profile.work_arcs[0].label='Different delivered work';assert.notEqual(digest(i.candidates[0].profile),before);
+ assert.equal(buildCampaign(i,now).counts.specific_followups,0);
+});
+test('hiring-only route details are independently reviewable',()=>{
+ const i=input();i.contacts=[{...i.contacts[0],purpose:'recruiting',value:'careers@example.test',name:'Talent team',url:'https://example.test/careers'}];
+ const report=buildCampaign(i,now),html=render(report);
+ assert.equal(report.accounts[0].sponsorship.routes.length,0);assert.match(html,/Talent team — careers@example.test/);assert.match(html,/href="https:\/\/example.test\/careers"/);
+});
+test('Greenhouse collection checks completeness and preserves provenance',async()=>{
+ const fetcher=async url=>{assert.equal(new URL(url).hostname,'boards-api.greenhouse.io');return Response.json({meta:{total:1},jobs:[{id:42,title:'Agent engineer',content:'Build agents.',absolute_url:'https://boards.greenhouse.io/test/jobs/42',location:{name:'Austin'}}]});};
+ const r=await greenhouse({board:'test',company_id:1,company_name:'Fictional'},fetcher,now);
+ assert.equal(r[0].availability,'employer-confirmed');assert.equal(r[0].source_sha256.length,64);assert.equal(r[0].availability_checked_at,new Date(now).toISOString());
+ await assert.rejects(greenhouse({board:'test',company_id:1},async()=>Response.json({meta:{total:2},jobs:[]})),/Incomplete/);
+ await assert.rejects(greenhouse({board:'../other',company_id:1},fetcher),/Invalid/);
+});
+test('Lever keeps description and source; failed feeds cannot masquerade as empty inventory',async()=>{
+ const r=await lever({board:'test',company_id:1,company_name:'Fictional'},async()=>Response.json([{id:'a',text:'Engineer',descriptionPlain:'Agents',lists:[{text:'Requirements',content:'APIs'}],hostedUrl:'https://jobs.lever.co/test/a',applyUrl:'https://jobs.lever.co/test/a/apply'}]),now);
+ assert.match(r[0].description_html,/APIs/);assert.equal(r[0].source_kind,'lever');
+ await assert.rejects(lever({board:'test',company_id:1},async()=>new Response('',{status:429})),/429/);
+});
+test('career JSON-LD and third-party imports preserve uncertain status',()=>{
+ const html='<script type="application/ld+json">'+JSON.stringify({'@graph':[{'@type':'JobPosting',title:'Engineer',description:'Build agents',url:'https://example.test/job/1'}]})+'</script>';
+ const r=careerJobPostings({html,source_url:'https://example.test/careers',company_id:1,company_name:'Fictional',collected_at:at});
+ assert.equal(r.length,1);assert.equal(r[0].availability,'unknown');
+ const imported=importedRoles(input().roles,'linkedin');assert.equal(imported[0].availability,'board-listed');assert.equal(imported[0].availability_source_url,null);
+ assert.throws(()=>importedRoles([{...input().roles[0],collected_at:null}],'indeed'),/collected_at/);
+});
+test('actual CLI normalizes consent, writes private review files, and works with all network calls disabled',t=>{
+ const dir=fs.mkdtempSync(path.join(os.tmpdir(),'organizedai-gtm-test-'));t.after(()=>fs.rmSync(dir,{recursive:true,force:true}));
+ const i=input(),today=new Date().toISOString();
+ i.roles[0].collected_at=today;i.roles[0].availability_checked_at=today;i.candidates[0].consent.recorded_at=today;i.contacts[0].checked_at=today;
+ const files={'companies.json':i.companies,'roles.json':i.roles,'contacts.json':i.contacts,'profile.json':i.candidates[0].profile,'consent.json':i.candidates[0].consent,
+ 'config.json':{campaign:i.campaign,companies:'companies.json',roles:'roles.json',contacts:'contacts.json',candidates:[{profile:'profile.json',consent:'consent.json'}]}};
+ for(const [name,data] of Object.entries(files))fs.writeFileSync(path.join(dir,name),JSON.stringify(data));
+ fs.writeFileSync(path.join(dir,'deny-network.mjs'),"globalThis.fetch=()=>{throw new Error('Network forbidden in draft preparation test')};");
+ const cli=fileURLToPath(new URL('../prepare.mjs',import.meta.url));
+ const run=()=>execFileSync(process.execPath,['--experimental-strip-types','--import',path.join(dir,'deny-network.mjs'),cli,'--config',path.join(dir,'config.json'),'--out',path.join(dir,'out')],{encoding:'utf8'});
+ run();const report=JSON.parse(fs.readFileSync(path.join(dir,'out/campaign-review.json')));
+ assert.equal(report.counts.specific_followups,1);assert.equal(report.outreach_status,'paused');
+ assert.equal(fs.statSync(path.join(dir,'out/campaign-review.html')).mode&0o777,0o600);
+ const handoff=fs.readFileSync(path.join(dir,'out/engram-handoff.json'),'utf8');assert.doesNotMatch(handoff,/Riley|ev-002|public_url/);
+ i.candidates[0].consent.matching=false;fs.writeFileSync(path.join(dir,'consent.json'),JSON.stringify(i.candidates[0].consent));run();
+ assert.doesNotMatch(fs.readFileSync(path.join(dir,'out/campaign-review.json'),'utf8'),/Riley|ev-002|public_url/);
+});
