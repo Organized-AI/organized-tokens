@@ -189,3 +189,20 @@ test('campaign preserves role-title ranking and candidate targets cannot bypass 
  i.roles[0].title='AI Engineer / Scientist';assert.equal(buildCampaign(i,now).accounts[0].hiring.candidate_matches[0].role_id,'specific');
  i.roles[0].title='Engineer';i.roles[0].availability='closed';assert.equal(buildCampaign(i,now).accounts[0].hiring.candidate_matches[0].role_id,'specific');
 });
+
+test('excluded company identities disappear from openings, drafts and handoff',()=>{
+ for(const selector of [{company_id:1},{company_name:'FICTIONAL'},{company_domain:'example.test'}]){
+  const i=input();i.suppressed=[{...selector,exclude_from_campaign:true}];
+  const r=buildCampaign(i,now);assert.equal(r.counts.roles,0);assert.equal(r.counts.companies,0);
+  assert.deepEqual(r.accounts,[]);assert.deepEqual(engramHandoff(r).accounts,[]);
+ }
+ const i=input();i.companies.push({id:2,name:'Another',website:'https://another.test'});
+ i.roles.push({...i.roles[0],id:2,company_id:2});i.suppressed=[{company_id:1,exclude_from_campaign:true}];
+ const r=buildCampaign(i,now);assert.equal(r.counts.roles,1);assert.equal(r.accounts[0].company,'Another');
+});
+test('permission-first copy asks before sharing a candidate while retaining private fit review',()=>{
+ const i=input();i.campaign.hiring_mode='permission-first';const r=buildCampaign(i,now),a=r.accounts[0];
+ assert.ok(a.hiring.candidate_matches.length);assert.equal(r.counts.specific_followups,0);
+ for(const d of a.drafts){assert.match(d.body,/may we.*send you relevant candidates/i);assert.doesNotMatch(d.body,/Riley|aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/);}
+ assert.match(a.drafts[0].body,/independently of sponsorship/);
+});

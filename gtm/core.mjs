@@ -122,12 +122,20 @@ function validateCampaign(campaign) {
   }
   if (!text(campaign.event_series) || !text(campaign.sender_name)) throw new Error('Campaign needs event_series and sender_name');
   if (campaign.event_url && !httpsUrl(campaign.event_url)) throw new Error('Invalid event URL');
+  if(campaign.hiring_mode && !['candidate-specific','permission-first'].includes(campaign.hiring_mode))throw new Error('Invalid hiring mode');
 }
 
 /** Pure draft preparation. No connector calls, sends, imports, signups or scheduling. */
 export function buildCampaign({campaign, companies, roles, contacts = [], candidates = [], findings = [], suppressed = []}, now = Date.now()) {
   validateCampaign(campaign);
   if (![companies, roles, contacts, candidates, findings, suppressed].every(Array.isArray)) throw new Error('Inputs must be arrays');
+  const excludedCompanies=new Set(companies.filter(c=>suppressed.some(s=>s.exclude_from_campaign===true&&(
+    (s.company_id!=null&&String(s.company_id)===String(c.id))||
+    (s.company_name&&text(s.company_name).toLowerCase()===text(c.name).toLowerCase())||
+    (s.company_domain&&httpsUrl(c.website)&&new URL(c.website).hostname.replace(/^www\./,'').toLowerCase()===text(s.company_domain).toLowerCase())
+  ))).map(c=>String(c.id)));
+  companies=companies.filter(c=>!excludedCompanies.has(String(c.id)));
+  roles=roles.filter(r=>!excludedCompanies.has(String(r.company_id)));
   const closures=new Map();
   for(const f of findings.filter(f=>f.finding?.status==='no-current-openings-at-source')){
     const checked=Date.parse(f.finding.checked_at);
@@ -167,10 +175,12 @@ export function buildCampaign({campaign, companies, roles, contacts = [], candid
     const active = companyRoles.filter(r => roleState(r, now) === 'employer-confirmed');
     const matches = isSuppressed ? [] : candidates.flatMap(c => matchCandidate(c, companyRoles, now));
     const best = matches.find(m => m.availability === 'employer-confirmed');
+    const draftMatch=campaign.hiring_mode==='permission-first'?null:best;
     const opener = `Hi ${name} team,`;
-    const sponsorBody = `${opener}\n\nWould ${name} be interested in sponsoring ${text(campaign.event_series)}? We bring builders together for hands-on AI workshops and hackathons.\n\nSponsorship options, including product or credit contributions, are here: ${campaign.sponsor_url}\n\nWould you be the right person to discuss sponsorship, or could you point me to your partnerships team?\n\n${text(campaign.sender_name)}\nOrganized AI`;
-    const hiringBody = best ? `${opener}\n\nFollowing up on my sponsorship note: your ${best.role_title} listing describes work in ${best.reasons.map(r => r.topic).join(', ')}.\n\n${best.candidate} has assessment evidence of related work: ${best.reasons[0].work.map(w => `${w.label} (${w.delivery_state})`).join('; ')}. Their report includes coding-session evidence and the systems they put to work: ${best.public_url}\n\nThis is a potential fit to review, not a claim that every requirement is met. Would reviewing this profile or discussing an introduction be useful?\n\nYou can also find candidates through our job board: ${campaign.job_board_url}\n\n${text(campaign.sender_name)}\nOrganized AI`
-      : `${opener}\n\nFollowing up on my sponsorship note: if you're also hiring AI practitioners, Organized AI connects companies with candidates whose assessments describe coding-session work and the systems they've put to work.\n\nExplore the job board: ${campaign.job_board_url}\nSee how the assessment works: ${campaign.assessment_url}\n\nWould it be useful to discuss a current role and the work you need someone to demonstrate?\n\n${text(campaign.sender_name)}\nOrganized AI`;
+    const permissionAsk=campaign.hiring_mode==='permission-first'?`\n\nIf you're hiring, may we also send you relevant candidates from our pool of proven talent? Their assessments show coding-session work and the systems they've put to work. Candidate introductions are available independently of sponsorship. Explore the job board: ${campaign.job_board_url}`:'';
+    const sponsorBody = `${opener}\n\nWould ${name} be interested in sponsoring ${text(campaign.event_series)}? We bring builders together for hands-on AI workshops and hackathons.\n\nSponsorship options, including product or credit contributions, are here: ${campaign.sponsor_url}${permissionAsk}\n\nWould you be the right person to discuss sponsorship, or could you point me to your partnerships team?\n\n${text(campaign.sender_name)}\nOrganized AI`;
+    const hiringBody = draftMatch ? `${opener}\n\nFollowing up on my sponsorship note: your ${best.role_title} listing describes work in ${best.reasons.map(r => r.topic).join(', ')}.\n\n${best.candidate} has assessment evidence of related work: ${best.reasons[0].work.map(w => `${w.label} (${w.delivery_state})`).join('; ')}. Their report includes coding-session evidence and the systems they put to work: ${best.public_url}\n\nThis is a potential fit to review, not a claim that every requirement is met. Would reviewing this profile or discussing an introduction be useful?\n\nYou can also find candidates through our job board: ${campaign.job_board_url}\n\n${text(campaign.sender_name)}\nOrganized AI`
+      : `${opener}\n\nFollowing up on my sponsorship note: if you're also hiring AI practitioners, Organized AI connects companies with candidates whose assessments describe coding-session work and the systems they've put to work.\n\nExplore the job board: ${campaign.job_board_url}\nSee how the assessment works: ${campaign.assessment_url}\n\nMay we send you relevant candidates from our pool of proven talent? Share a current role and the work you need someone to demonstrate so we can check for a match.\n\n${text(campaign.sender_name)}\nOrganized AI`;
     const blockers = ['outreach-paused', 'recipient-and-copy-approval-required', 'delivery-channel-not-connected'];
     if (!sponsorRoutes.length) blockers.push('sponsorship-contact-needed');
     if (duplicates.some(ids => ids.includes(id))) blockers.push('duplicate-company-review');
@@ -186,9 +196,9 @@ export function buildCampaign({campaign, companies, roles, contacts = [], candid
         candidate_matches: matches},
       drafts: isSuppressed ? [] : [
         {id:`${campaign.id}:${id}:sponsor`, stage:'sponsor-introduction', status:'draft', subject:`Sponsoring ${text(campaign.event_series)}`, body:sponsorBody},
-        {id:`${campaign.id}:${id}:hiring`, stage:'hiring-follow-up', status:'draft', subject:best ? `Work evidence relevant to ${best.role_title}` : 'Hiring AI practitioners through Organized AI', body:hiringBody,
+        {id:`${campaign.id}:${id}:hiring`, stage:'hiring-follow-up', status:'draft', subject:draftMatch ? `Work evidence relevant to ${best.role_title}` : 'Hiring AI practitioners through Organized AI', body:hiringBody,
           prerequisites:['sponsor-introduction-recorded-as-sent','no-opt-out-or-negative-response','review-recipient-and-current-role','approve-final-copy'],
-          kind:best ? 'candidate-specific' : 'general-job-board-invitation'},
+          kind:draftMatch ? 'candidate-specific' : 'general-job-board-invitation'},
       ], blockers, next_action:action};
   });
   return {schema:VERSION, campaign:{...campaign}, generated_at:new Date(now).toISOString(), outreach_status:'paused',

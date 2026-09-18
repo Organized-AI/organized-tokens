@@ -82,6 +82,12 @@ Role records require `id`, `company_id`, `title`, HTTPS `source_url`, `descripti
 
 The collector fails the batch rather than silently replacing a previous complete snapshot with a partial result. Keep its receipts beside the output. Employer feed adapters have fixture-backed contract tests. A GET-only live check against Seekr's Greenhouse board and Airtm/Superstate's Lever boards succeeded on September 18, 2026 UTC (September 17 locally), returning 34 openings. Actual Greenhouse HTML encoding is decoded as text before matching/rendering. The private inputs and results are not committed.
 
+## Company exclusions and permission-first outreach
+
+Set `campaign.hiring_mode` to `permission-first` to ask about sponsorship and permission to introduce relevant talent without including candidate names or public assessment links in draft messages. Private evidence matching remains available for internal review. Sponsorship and candidate introductions are independent. The default preserves candidate-specific draft preparation for consented, confirmed matches.
+
+To omit a company entirely from openings, draft output and the Engram handoff, add a suppression entry such as `{ "company_id": "excluded-id", "company_name": "Excluded Company", "company_domain": "example.com", "exclude_from_campaign": true }`. Any matching ID, case-insensitive exact name, or website domain excludes the company and all of its role records. Remove its source from the collection config as well to stop future fetches. Normal suppression entries without this flag remain visible as suppressed accounts.
+
 ## Contact routing and sequence
 
 Only fresh employer-published, reviewed contact routes enter the review. Partnership, founder and general routing contacts can be used for sponsorship review; recruiting contacts remain in the hiring lane. Neither source review nor a public email address is recipient approval. Missing contacts create research tasks. Exact duplicate company identities are flagged for reconciliation; aliases and parent/subsidiary relationships still require review.
