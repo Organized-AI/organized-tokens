@@ -6,6 +6,10 @@ function boardToken(value) {
   if (!/^[a-zA-Z0-9_-]{1,100}$/.test(value ?? '')) throw new Error('Invalid public ATS board token');
   return value;
 }
+function ashbyBoard(value) {
+  if (!/^[a-zA-Z0-9 _-]{1,100}$/.test(value ?? '')) throw new Error('Invalid public Ashby board token');
+  return encodeURIComponent(value);
+}
 async function jsonSource(url, fetcher) {
   const response = await fetcher(url, {headers:{Accept:'application/json','User-Agent':'OrganizedAI-GTM/1.0'}, signal:AbortSignal.timeout(20000), redirect:'error'});
   if (!response.ok) throw new Error(`Public ATS returned HTTP ${response.status}`);
@@ -39,6 +43,18 @@ export async function lever({board, company_id, company_name}, fetcher=fetch, no
     description:[j.descriptionPlain,...(j.lists??[]).map(l=>`${l.text} ${l.content}`),j.additionalPlain].filter(Boolean).join('\n'),
     location:j.categories?.location,source_url:j.hostedUrl,apply_url:j.applyUrl,source_kind:'lever',source_sha256,
     collected_at:at,availability:'employer-confirmed',availability_checked_at:at,availability_source_url:url}));
+}
+
+export async function ashby({board, company_id, company_name}, fetcher=fetch, now=Date.now()) {
+  const url=`https://api.ashbyhq.com/posting-api/job-board/${ashbyBoard(board)}`;
+  const {data,source_sha256}=await jsonSource(url,fetcher);
+  if (!Array.isArray(data.jobs) || !text(data.apiVersion)) throw new Error('Invalid Ashby inventory');
+  const jobs=data.jobs.filter(j=>j.isListed!==false),at=new Date(now).toISOString();
+  if(jobs.some(j=>!j.id||!text(j.title)||!httpsUrl(j.jobUrl)||!httpsUrl(j.applyUrl)))throw new Error('Malformed Ashby job');
+  return jobs.map(j=>normalizeRole({id:`ashby:${board}:${j.id}`,company_id,company_name,title:j.title,
+    description:j.descriptionHtml,location:j.location,source_url:j.jobUrl,apply_url:j.applyUrl,
+    source_kind:'ashby',source_sha256,collected_at:at,availability:'employer-confirmed',
+    availability_checked_at:at,availability_source_url:url}));
 }
 
 /** Normalize already-collected JobPosting JSON-LD from an employer career page.

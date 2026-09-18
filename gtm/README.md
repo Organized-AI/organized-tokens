@@ -38,6 +38,8 @@ The config uses paths relative to itself:
 
 `employer_roles`, `contacts`, `findings`, `suppressed`, and `candidates` are optional. Existing inventory and reviewed-contact JSON from the GTM workspace are accepted directly. `employer_roles` merges a separately collected employer feed into the board snapshot, removes tracking-only duplicates, and retains the original listing's provenance. Identity parameters such as `gh_jid` stay distinct. Include every referenced company in the company file. Output includes `campaign-review.html`, `campaign-review.json`, and `engram-handoff.json`, written owner-only. Re-running replaces the snapshots; it does not schedule or dispatch anything.
 
+Optional `role_reconciliation` points to reviewed cross-provider same-opening decisions. Each decision supplies `status: "reviewed-same-opening"`, a canonical provider role ID, every equivalent role ID, the public source URLs used for review, and a reason. Unknown identities, overlapping decisions, unsafe source URLs, or company/title mismatches fail preparation. This is for cases such as a directory listing routed through BuiltIn while the employer publishes the same opening on Ashby; title similarity alone never merges records.
+
 An optional `target_role_ids` array on each candidate config entry prioritizes roles the candidate explicitly selected. It only changes ordering among evidence-supported matches; it does not bypass consent, source freshness or specialist checks. Without explicit interests, the shared matcher's role-title relevance governs ranking.
 
 ## Evidence and consent
@@ -77,13 +79,14 @@ npm run gtm:collect-jobs -- --config public-sources.json --out current-employer-
   "sources": [
     {"kind": "greenhouse", "board": "EMPLOYER_BOARD_TOKEN", "company_id": "COMPANY_ID", "company_name": "Company"},
     {"kind": "lever", "board": "EMPLOYER_BOARD_TOKEN", "company_id": "COMPANY_ID", "company_name": "Company"},
+    {"kind": "ashby", "board": "EMPLOYER_BOARD_NAME", "company_id": "COMPANY_ID", "company_name": "Company"},
     {"kind": "career-jsonld", "file": "captured-careers.html", "source_url": "https://example.com/careers", "company_id": "COMPANY_ID", "company_name": "Company", "collected_at": "2026-09-17T12:00:00Z"},
     {"kind": "import", "provider": "linkedin", "file": "authorized-job-export.json"}
   ]
 }
 ```
 
-The operator must establish that the configured ATS board belongs to the specified company. Greenhouse and Lever adapters issue read-only requests to fixed public hosts, record capture time/source URL/body hash, and fail on unexpected or incomplete responses. No authenticated records are fetched. Career-page JSON-LD parsing works on a saved HTML capture and does not assume a successful page load proves availability. Indeed and LinkedIn are supported as normalized imports from permitted exports/collection; this feature does not implement login scraping or bypass access restrictions.
+The operator must establish that the configured ATS board belongs to the specified company. Greenhouse, Lever, and Ashby adapters issue read-only requests to fixed public hosts, record capture time/source URL/body hash, and fail on unexpected or incomplete responses. No authenticated records are fetched. Career-page JSON-LD parsing works on a saved HTML capture and does not assume a successful page load proves availability. Indeed and LinkedIn are supported as normalized imports from permitted exports/collection; this feature does not implement login scraping or bypass access restrictions.
 
 Role records require `id`, `company_id`, `title`, HTTPS `source_url`, `description` (or `description_html`), and `collected_at`. Include `apply_url`, location and expiry when available. Imported board listings remain unconfirmed. A role can support a candidate-specific draft only with `availability: "employer-confirmed"`, `availability_checked_at`, and `availability_source_url`, with both capture and availability check within seven days. Past expiry, future timestamps and recorded closure findings prevent an active claim. Refresh this evidence again before future delivery.
 

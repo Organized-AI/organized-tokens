@@ -6,11 +6,11 @@ import path from 'node:path';
 import {execFileSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 import {buildCampaign,digest,engramHandoff,DAY} from '../core.mjs';
-import {greenhouse,lever,careerJobPostings,importedRoles} from '../sources.mjs';
+import {greenhouse,lever,ashby,careerJobPostings,importedRoles} from '../sources.mjs';
 import {render} from '../render.mjs';
 import {plainText} from '../text.mjs';
 import {reconcileAccounts} from '../reconcile-accounts.mjs';
-import {mergeRoleSources,jobIdentity} from '../merge-sources.mjs';
+import {mergeRoleSources,reconcileRoleAliases,jobIdentity} from '../merge-sources.mjs';
 import {sanitizeProfile} from '../../leaderboard/src/validate.js';
 const profile=JSON.parse(fs.readFileSync(new URL('../../leaderboard/test/fixtures/profile-v9.sample.json',import.meta.url)));
 const now=Date.parse('2026-09-17T23:00:00Z'),at='2026-09-17T22:00:00Z';
@@ -112,6 +112,17 @@ test('Lever keeps description and source; failed feeds cannot masquerade as empt
  assert.match(r[0].description_html,/APIs/);assert.equal(r[0].source_kind,'lever');
  await assert.rejects(lever({board:'test',company_id:1},async()=>new Response('',{status:429})),/429/);
 });
+test('Ashby confirms only public listed jobs and preserves its board receipt',async()=>{
+ const jobs=[{id:'a',title:'AI Engineer',location:'Austin',isListed:true,jobUrl:'https://jobs.ashbyhq.com/test/a',applyUrl:'https://jobs.ashbyhq.com/test/a/application',descriptionHtml:'<p>Build agents</p>'},
+  {id:'hidden',title:'Hidden',isListed:false,jobUrl:'https://jobs.ashbyhq.com/test/hidden',applyUrl:'https://jobs.ashbyhq.com/test/hidden/application'}];
+ const fetcher=async url=>{assert.equal(url,'https://api.ashbyhq.com/posting-api/job-board/Solana%20Foundation');return Response.json({apiVersion:'1',jobs});};
+ const r=await ashby({board:'Solana Foundation',company_id:1,company_name:'Fictional'},fetcher,now);
+ assert.equal(r.length,1);assert.equal(r[0].source_kind,'ashby');assert.equal(r[0].availability,'employer-confirmed');
+ assert.equal(r[0].availability_source_url,'https://api.ashbyhq.com/posting-api/job-board/Solana%20Foundation');assert.equal(r[0].source_sha256.length,64);
+ await assert.rejects(ashby({board:'../other',company_id:1},fetcher),/Invalid public Ashby/);
+ await assert.rejects(ashby({board:'test',company_id:1},async()=>Response.json({jobs})),/Invalid Ashby/);
+ await assert.rejects(ashby({board:'test',company_id:1},async()=>Response.json({apiVersion:'1',jobs:[{id:'a',title:'',jobUrl:'https://example.test'}]})),/Malformed Ashby/);
+});
 test('career JSON-LD and third-party imports preserve uncertain status',()=>{
  const html='<script type="application/ld+json">'+JSON.stringify({'@graph':[{'@type':'JobPosting',title:'Engineer',description:'Build agents',url:'https://example.test/job/1'}]})+'</script>';
  const r=careerJobPostings({html,source_url:'https://example.test/careers',company_id:1,company_name:'Fictional',collected_at:at});
@@ -148,14 +159,29 @@ test('source merge deduplicates tracking variants without conflating separate jo
  const old={...input().roles[0],source_url:'https://jobs.organizedai.vip/job/1',apply_url:`https://jobs.lever.co/acme/${uuid}?ref=board`,availability:'board-listed'};
  const current={...input().roles[0],id:'lever:acme:'+uuid,source_url:`https://jobs.lever.co/acme/${uuid}`,apply_url:`https://jobs.lever.co/acme/${uuid}/apply`};
  const r=mergeRoleSources([old],[current]);assert.equal(r.length,1);assert.equal(r[0].id,current.id);assert.equal(r[0].alternate_sources[0].id,'1');
- assert.equal(mergeRoleSources([old],[{...current,company_id:2}]).length,2);
- assert.notEqual(jobIdentity('https://www.seekr.com/careers/?gh_jid=1'),jobIdentity('https://www.seekr.com/careers/?gh_jid=2'));
+  assert.equal(mergeRoleSources([old],[{...current,company_id:2}]).length,2);
+  assert.notEqual(jobIdentity('https://www.seekr.com/careers/?gh_jid=1'),jobIdentity('https://www.seekr.com/careers/?gh_jid=2'));
+  const ashby='344dfa55-e642-41d0-b85c-124c36f40940';
+  const board={...old,id:'niceboard-ashby',source_url:'https://jobs.organizedai.vip/job/1',apply_url:`https://jobs.ashbyhq.com/polymarket/${ashby}/application?departmentId=abc`};
+  const employer={...current,id:'ashby:polymarket:'+ashby,source_url:`https://jobs.ashbyhq.com/polymarket/${ashby}`,apply_url:`https://jobs.ashbyhq.com/polymarket/${ashby}/application`};
+  assert.equal(mergeRoleSources([board],[employer]).length,1);
+  assert.equal(jobIdentity(board.apply_url),`https://jobs.ashbyhq.com/polymarket/${ashby}?departmentId=abc`);
 });
 test('shared careers indexes do not conflate distinct openings',()=>{
  const a={...input().roles[0],id:'board-1',title:'Automation Engineer',source_url:'https://example.test/careers',apply_url:'https://example.test/apply/automation'};
  const b={...a,id:'employer-2',title:'Research Scientist',apply_url:'https://example.test/apply/scientist'};
  assert.equal(mergeRoleSources([a],[b]).length,2);
  assert.equal(mergeRoleSources([a],[{...b,title:a.title}]).length,2);
+});
+test('reviewed cross-provider role aliases merge with provenance and reject unsafe decisions',()=>{
+ const board={...input().roles[0],id:'board-1',source_url:'https://jobs.organizedai.vip/job/1',apply_url:'https://builtin.com/job/agent-engineer/1',availability:'board-listed'};
+ const employer={...input().roles[0],id:'ashby:acme:a',source_url:'https://jobs.ashbyhq.com/acme/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',apply_url:'https://jobs.ashbyhq.com/acme/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa/application',source_kind:'ashby'};
+ const decision={status:'reviewed-same-opening',canonical_id:employer.id,role_ids:[board.id,employer.id],source_urls:[board.apply_url,employer.source_url],reason:'Exact title and employer pages were reviewed.'};
+ const r=reconcileRoleAliases([board,employer],[decision]);assert.equal(r.length,1);assert.equal(r[0].id,employer.id);assert.equal(r[0].alternate_sources[0].id,board.id);assert.equal(r[0].role_reconciliation.reason,decision.reason);
+ for(const bad of [{...decision,role_ids:['missing',employer.id]},{...decision,canonical_id:'missing'},{...decision,source_urls:['javascript:bad']},{...decision,role_ids:[board.id,employer.id],reason:''}])assert.throws(()=>reconcileRoleAliases([board,employer],[bad]));
+ assert.throws(()=>reconcileRoleAliases([board,{...employer,company_id:2}],[decision]),/mismatch/);
+ assert.throws(()=>reconcileRoleAliases([board,{...employer,title:'Different'}],[decision]),/mismatch/);
+ assert.throws(()=>reconcileRoleAliases([board,employer],[decision,decision]),/Overlapping/);
 });
 test('older employer snapshots cannot revive newer closed observations',()=>{
  const latest={...input().roles[0],availability:'closed',availability_checked_at:at,collected_at:at};

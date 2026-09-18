@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import {buildCampaign,engramHandoff} from './core.mjs';
 import {render} from './render.mjs';
-import {mergeRoleSources} from './merge-sources.mjs';
+import {mergeRoleSources,reconcileRoleAliases} from './merge-sources.mjs';
 import {reconcileAccounts} from './reconcile-accounts.mjs';
 import {assertNoSecrets,assertNoLocalEvidenceLeaks,validateRawProfileV9,sanitizeProfile,validateProfileV9} from '../leaderboard/src/validate.js';
 
@@ -17,6 +17,7 @@ let input={campaign:config.campaign,companies:read(config.companies),roles:read(
   contacts:config.contacts?read(config.contacts):[],findings:config.findings?read(config.findings):[],
   suppressed:config.suppressed?read(config.suppressed):[],candidates:[]};
 if(config.employer_roles)input.roles=mergeRoleSources(input.roles,read(config.employer_roles));
+if(config.role_reconciliation)input.roles=reconcileRoleAliases(input.roles,read(config.role_reconciliation));
 if(config.account_reconciliation)input=reconcileAccounts(input,read(config.account_reconciliation));
 for(const c of config.candidates??[]){
   const profile=read(c.profile);

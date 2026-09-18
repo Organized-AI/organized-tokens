@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import {greenhouse,lever,careerJobPostings,importedRoles} from './sources.mjs';
+import {greenhouse,lever,ashby,careerJobPostings,importedRoles} from './sources.mjs';
 const args=Object.fromEntries(process.argv.slice(2).reduce((pairs,v,i,a)=>i%2?pairs:[...pairs,[v.replace(/^--/,''),a[i+1]]],[]));
 if(!args.config||!args.out)throw new Error('Usage: node --experimental-strip-types gtm/collect-jobs.mjs --config sources.json --out jobs.json');
 const config=JSON.parse(fs.readFileSync(args.config,'utf8'));
@@ -10,6 +10,7 @@ for(const source of config.sources){
   let roles;
   if(source.kind==='greenhouse')roles=await greenhouse(source);
   else if(source.kind==='lever')roles=await lever(source);
+  else if(source.kind==='ashby')roles=await ashby(source);
   else if(source.kind==='career-jsonld')roles=careerJobPostings({...source,html:fs.readFileSync(path.resolve(path.dirname(args.config),source.file),'utf8')});
   else if(source.kind==='import')roles=importedRoles(JSON.parse(fs.readFileSync(path.resolve(path.dirname(args.config),source.file),'utf8')),source.provider);
   else throw new Error('Unsupported source kind');
