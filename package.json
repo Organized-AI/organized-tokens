@@ -9,6 +9,7 @@
     "check": "python3 -m py_compile public/tokens.py && echo 'tokens.py compiles'",
     "gtm:test": "node --experimental-strip-types --test gtm/test/*.test.mjs",
     "gtm:prepare": "node --experimental-strip-types gtm/prepare.mjs",
+    "gtm:collect-niceboard": "node --experimental-strip-types gtm/collect-niceboard.mjs",
     "gtm:collect-jobs": "node --experimental-strip-types gtm/collect-jobs.mjs"
   },
   "devDependencies": {

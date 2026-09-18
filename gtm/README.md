@@ -10,6 +10,7 @@ Requires Node 24 (or a Node version supporting TypeScript stripping), no new dep
 
 ```sh
 npm run gtm:test
+npm run gtm:collect-niceboard -- --out /absolute/path/private-inventory
 npm run gtm:prepare -- --config /absolute/path/campaign.json --out /absolute/path/private-review
 ```
 
@@ -60,6 +61,12 @@ Compute the digest using `digest(profile)` exported from `gtm/core.mjs`; it uses
 Only established capabilities tied to cited completed work can produce matches. Directed/delegated execution is retained as context, not penalized. Reasons show role excerpts, evidence IDs, linked work, delivery state, authorship and verification mode. These are work-topic suggestions requiring human review, not an eligibility verdict or proof of every required skill. Unmatched specialist requirements, location restrictions, experience and compensation still need review.
 
 ## Job sources
+
+The Niceboard collector reads every public company and live-job page from the fixed Organized AI origin. It verifies stable pagination totals, unique identities, company references, and exact counts, then saves owner-only raw receipts and SHA-256 provenance. It performs no authenticated reads or writes.
+
+```sh
+npm run gtm:collect-niceboard -- --out /absolute/path/private-inventory
+```
 
 ```sh
 npm run gtm:collect-jobs -- --config public-sources.json --out current-employer-roles.json
