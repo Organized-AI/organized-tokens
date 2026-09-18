@@ -4,7 +4,7 @@ Job seekers create and review an AI Work Assessment locally, then optionally pub
 
 Public links use `/p/<random-id>`, work without login, and stay immutable. Candidates receive a private management link before publication dispatch; removal erases the report and reserves the old URL so it cannot be reused. Search indexing is disabled, but anyone with the link can view or save the report.
 
-Automatic signup is feature gated and currently disabled pending Niceboard credential setup and live contract verification. Direct Niceboard signup remains available. When enabled, signup requires employer-visibility and terms consent, reserves an idempotent receipt before creation, verifies the resulting account, and appends only an owned link for the exact submitted report. Uncertain outcomes are never retried as new accounts. Opportunity suggestions cite delivered-work evidence and job text; they are preliminary overlaps, not eligibility decisions.
+Automatic signup is feature gated and currently disabled pending migration 004 and a consented synthetic Niceboard create/get contract verification. Direct Niceboard signup remains available. When enabled, signup requires employer-visibility and terms consent, reserves an idempotent receipt before creation, verifies the resulting account, and appends only an owned link for the exact submitted report. Uncertain outcomes are never retried as new accounts. Opportunity suggestions cite delivered-work evidence and job text; they are preliminary overlaps, not eligibility decisions.
 
 The optional workshop submission remains separate: `share` publishes a structured profile; `keep` stores it privately. Raw transcripts are not submitted to Organized AI; model-provider data settings still apply during assessment generation. A private latest submission unlists the owner, and leaving removes their assessments, activity counts and credential in one D1 transaction.
 
@@ -35,4 +35,4 @@ Deploy the root tokens asset Worker and this leaderboard Worker together after c
 
 ## Public-link rollout
 
-Apply migration 005 for public sharing. Migration 004 is required only before enabling candidate signup. Configure `NICEBOARD_API_BASE` and keep `CANDIDATE_SIGNUP_ENABLED=false` until the `NICEBOARD_API_KEY` Worker secret is provisioned and the real create/get contract is verified. Public links work independently of that credential. Never store management tokens in public artifacts.
+Migration 005 is live for public sharing. Migration 004 is required before enabling candidate signup. The Worker has a Niceboard API secret and its API base is configured; keep `CANDIDATE_SIGNUP_ENABLED=false` until migration 004 and a private, consented synthetic create/get contract test both succeed. Public links work independently of the signup gate. Never store management tokens in public artifacts.
