@@ -262,6 +262,24 @@ export function buildCampaign({campaign, companies, roles, contacts = [], candid
 }
 
 export function engramHandoff(report) {
+  const priority = account => {
+    const confirmed = Number(account.hiring.confirmed_openings) || 0;
+    const listed = Number(account.hiring.listed_openings) || 0;
+    const missingRoute = account.sponsorship.routes.length === 0;
+    const reasons = [];
+    if (confirmed) reasons.push('employer-confirmed-openings');
+    else if (listed) reasons.push('directory-listings-need-source-verification');
+    if (missingRoute) reasons.push('sponsorship-route-missing');
+    return {
+      tier: confirmed && missingRoute ? 'high' : confirmed || missingRoute ? 'standard' : 'low',
+      reasons,
+      confirmed,
+      listed,
+      missingRoute,
+    };
+  };
+  const accounts = report.accounts.filter(account => account.next_action !== 'suppressed').map(account => ({account, priority:priority(account)}))
+    .sort((left,right) => right.priority.confirmed - left.priority.confirmed || Number(right.priority.missingRoute) - Number(left.priority.missingRoute) || right.priority.listed - left.priority.listed || left.account.company.localeCompare(right.account.company));
   return {schema:'organized-ai-engram-handoff/v1', generated_at:report.generated_at, mode:'review-only',
     campaign_id:report.campaign.id, required_capabilities:['account-research','contact-enrichment','crm-context'],
     connector:{status:'not-connected', transport:'streamable-http', discovery:'Use workspace Connectors → MCP Access and discover tools; do not assume tool names.'},
@@ -271,7 +289,8 @@ export function engramHandoff(report) {
       'Verify current employer openings before candidate-specific follow-up.',
       'A reviewed contact source is not approval to contact that person.'],
     // Deliberately omit candidate identities/evidence and message bodies from third-party handoff.
-    accounts:report.accounts.filter(a=>a.next_action!=='suppressed').map(a=>({company_id:a.company_id, company:a.company,
-      website:a.website, next_action:a.next_action, known_route_count:a.sponsorship.routes.length,
+    accounts:accounts.map(({account:a,priority})=>({company_id:a.company_id, company:a.company,
+      website:a.website, next_action:a.next_action, research_priority:priority.tier, priority_reasons:priority.reasons,
+      confirmed_opening_count:priority.confirmed, known_route_count:a.sponsorship.routes.length,
       listing_count:a.hiring.listed_openings, blockers:a.blockers}))};
 }

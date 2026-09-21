@@ -92,7 +92,20 @@ test('company suppressions remove all drafts and route suppression is case insen
 test('duplicate accounts require reconciliation and handoff excludes candidates and drafts',()=>{
  const i=input();i.companies.push({...i.companies[0],id:2});const r=buildCampaign(i,now);
  assert.deepEqual(r.duplicate_company_groups,[['1','2']]);assert.ok(r.accounts[0].blockers.includes('duplicate-company-review'));
- const h=JSON.stringify(engramHandoff(r));assert.doesNotMatch(h,/Riley|ev-002|public_url|Following up|hello@example/);assert.match(h,/review-only/);
+  const h=JSON.stringify(engramHandoff(r));assert.doesNotMatch(h,/Riley|ev-002|public_url|Following up|hello@example/);assert.match(h,/review-only/);
+});
+test('Engram handoff ranks source-backed openings before unverified directory research without exposing candidate data',()=>{
+  const i=input();
+  i.contacts=[];
+  i.companies.push({id:2,name:'Directory only',website:'https://directory.example.test',source_url:'https://directory.example.test/company'});
+  i.roles.push({id:2,company_id:2,company_name:'Directory only',title:'Automation engineer',description:'Build automation.',source_url:'https://directory.example.test/job/2',collected_at:at,availability:'board-listed'});
+  const handoff=engramHandoff(buildCampaign(i,now));
+  assert.equal(handoff.accounts[0].company,'Fictional');
+  assert.equal(handoff.accounts[0].research_priority,'high');
+  assert.deepEqual(handoff.accounts[0].priority_reasons,['employer-confirmed-openings','sponsorship-route-missing']);
+  assert.equal(handoff.accounts[1].company,'Directory only');
+  assert.deepEqual(handoff.accounts[1].priority_reasons,['directory-listings-need-source-verification','sponsorship-route-missing']);
+  assert.doesNotMatch(JSON.stringify(handoff),/Riley|ev-002|public_url|Following up/);
 });
 test('review page escapes source content and has no send controls',()=>{
  const i=input();i.companies[0].name='<img src=x onerror=alert(1)> Evil';i.contacts[0].evidence_excerpt='</script><script>evil()</script>';

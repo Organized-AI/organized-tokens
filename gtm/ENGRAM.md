@@ -18,7 +18,7 @@ Discover the actual connector tool schemas after authentication. The public docs
 
 ## Handoff contract
 
-`engram-handoff.json` uses schema `organized-ai-engram-handoff/v1` and mode `review-only`. Each account has a stable ID, company name, website, next action, known sponsorship-route count, listing count and blockers. Candidates, assessment links, evidence, recipient addresses and message bodies stay local.
+`engram-handoff.json` uses schema `organized-ai-engram-handoff/v1` and mode `review-only`. Each account has a stable ID, company name, website, next action, known sponsorship-route count, listing count and blockers. It sorts the research queue by employer-confirmed opening count, missing sponsorship route, then listing count; `high` means a current employer-confirmed opening still needs a sponsorship route. `priority_reasons` makes that ordering inspectable. Candidates, assessment links, evidence, recipient addresses and message bodies stay local.
 
 An Engram research run can return ordinary reviewed-contact records compatible with `gtm/core.mjs`: company ID, public route, role/function, purpose, source URL, source excerpt, check time and verification status. New results should begin `published-route-needs-review`; only after review should they use `employer-published-role-and-route-reviewed`. Merge these into the local input, then regenerate the review. Do not auto-promote tool output into send authorization.
 
