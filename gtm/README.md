@@ -30,13 +30,14 @@ The config uses paths relative to itself:
   "roles": "roles.json",
   "employer_roles": "current-employer-roles.json",
   "contacts": "reviewed-contacts.json",
+  "contact_sources": ["reviewed-partnership-supplement.json"],
   "findings": "hiring-source-discrepancies.json",
   "suppressed": "suppressed.json",
   "candidates": [{"profile": "candidate-profile.json", "consent": "candidate-consent.json"}]
 }
 ```
 
-`employer_roles`, `contacts`, `findings`, `suppressed`, and `candidates` are optional. Existing inventory and reviewed-contact JSON from the GTM workspace are accepted directly. `employer_roles` merges a separately collected employer feed into the board snapshot, removes tracking-only duplicates, and retains the original listing's provenance. Identity parameters such as `gh_jid` stay distinct. Include every referenced company in the company file. Output includes `campaign-review.html`, `campaign-review.json`, and `engram-handoff.json`, written owner-only. Re-running replaces the snapshots; it does not schedule or dispatch anything.
+`employer_roles`, `contacts`, `contact_sources`, `findings`, `suppressed`, and `candidates` are optional. `contact_sources` appends one or more reviewed contact-array JSON files to `contacts`; duplicate file paths are read once, while route-level review and deduplication still happen in campaign preparation. Existing inventory and reviewed-contact JSON from the GTM workspace are accepted directly. `employer_roles` merges a separately collected employer feed into the board snapshot, removes tracking-only duplicates, and retains the original listing's provenance. Identity parameters such as `gh_jid` stay distinct. Include every referenced company in the company file. Output includes `campaign-review.html`, `campaign-review.json`, and `engram-handoff.json`, written owner-only. Re-running replaces the snapshots; it does not schedule or dispatch anything.
 
 Optional `employer_permissions` records an employer's reply to the permission-first candidate question. A record needs a known company ID, `scope: "candidate-introductions"`, status `approved`, `declined`, or `revoked`, the reviewed response route, a stable source reference, and an observation time. An approval expires after 90 days unless an earlier `expires_at` is supplied. The latest status wins, including records attached to a reconciled source company ID; ambiguous equal timestamps fail preparation. A current approval unlocks a candidate-specific draft only when the route remains reviewed, candidate consent still matches the assessment, and the employer opening is current. That introduction does not depend on a sponsorship send. Declined or revoked status suppresses hiring drafts while leaving sponsorship review available. This state never sends a draft.
 

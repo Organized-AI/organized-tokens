@@ -141,14 +141,16 @@ test('actual CLI normalizes consent, writes private review files, and works with
  const dir=fs.mkdtempSync(path.join(os.tmpdir(),'organizedai-gtm-test-'));t.after(()=>fs.rmSync(dir,{recursive:true,force:true}));
  const i=input(),today=new Date().toISOString();
  i.roles[0].collected_at=today;i.roles[0].availability_checked_at=today;i.candidates[0].consent.recorded_at=today;i.contacts[0].checked_at=today;
- const files={'companies.json':i.companies,'roles.json':i.roles.map(r=>({...r,availability:'board-listed'})),'employer.json':i.roles,'contacts.json':i.contacts,'profile.json':i.candidates[0].profile,'consent.json':i.candidates[0].consent,
- 'config.json':{campaign:i.campaign,companies:'companies.json',roles:'roles.json',employer_roles:'employer.json',contacts:'contacts.json',candidates:[{profile:'profile.json',consent:'consent.json'}]}};
+ const supplement={...i.contacts[0],value:'partnerships@example.test',purpose:'sponsorship',url:'https://example.test/partners'};
+ const files={'companies.json':i.companies,'roles.json':i.roles.map(r=>({...r,availability:'board-listed'})),'employer.json':i.roles,'contacts.json':i.contacts,'contacts-supplement.json':[supplement],'profile.json':i.candidates[0].profile,'consent.json':i.candidates[0].consent,
+ 'config.json':{campaign:i.campaign,companies:'companies.json',roles:'roles.json',employer_roles:'employer.json',contacts:'contacts.json',contact_sources:['contacts-supplement.json','contacts.json'],candidates:[{profile:'profile.json',consent:'consent.json'}]}};
  for(const [name,data] of Object.entries(files))fs.writeFileSync(path.join(dir,name),JSON.stringify(data));
  fs.writeFileSync(path.join(dir,'deny-network.mjs'),"globalThis.fetch=()=>{throw new Error('Network forbidden in draft preparation test')};");
  const cli=fileURLToPath(new URL('../prepare.mjs',import.meta.url));
  const run=()=>execFileSync(process.execPath,['--experimental-strip-types','--import',path.join(dir,'deny-network.mjs'),cli,'--config',path.join(dir,'config.json'),'--out',path.join(dir,'out')],{encoding:'utf8'});
  run();const report=JSON.parse(fs.readFileSync(path.join(dir,'out/campaign-review.json')));
- assert.equal(report.counts.specific_followups,1);assert.equal(report.outreach_status,'paused');assert.equal(report.counts.roles,1);
+ assert.equal(report.counts.specific_followups,1);assert.equal(report.outreach_status,'paused');assert.equal(report.counts.roles,1);assert.equal(report.counts.reviewed_routes,2);
+ assert.equal(report.accounts[0].sponsorship.routes.length,2);
  assert.equal(report.accounts[0].hiring.candidate_matches[0].alternate_sources[0].source_kind,'import');
  assert.equal(fs.statSync(path.join(dir,'out/campaign-review.html')).mode&0o777,0o600);
  const handoff=fs.readFileSync(path.join(dir,'out/engram-handoff.json'),'utf8');assert.doesNotMatch(handoff,/Riley|ev-002|public_url/);

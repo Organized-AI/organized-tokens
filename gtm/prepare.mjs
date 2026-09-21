@@ -13,8 +13,23 @@ for(const required of ['config','out'])if(!args[required])throw new Error('Usage
 const base=path.dirname(path.resolve(args.config));
 const read=file=>JSON.parse(fs.readFileSync(path.resolve(base,file),'utf8'));
 const config=read(path.basename(args.config));
+const contactFiles=[];
+if(config.contacts!==undefined)contactFiles.push(config.contacts);
+if(config.contact_sources!==undefined){
+  if(!Array.isArray(config.contact_sources)||config.contact_sources.some(file=>typeof file!=='string'||!file.trim()))throw new Error('contact_sources must be an array of non-empty JSON paths');
+  contactFiles.push(...config.contact_sources);
+}
+const contactPaths=[...new Set(contactFiles.map(file=>{
+  if(typeof file!=='string'||!file.trim())throw new Error('contacts must be a non-empty JSON path');
+  return path.resolve(base,file);
+}))];
+const contacts=contactPaths.flatMap(file=>{
+  const rows=JSON.parse(fs.readFileSync(file,'utf8'));
+  if(!Array.isArray(rows))throw new Error('Each contact source must contain an array');
+  return rows;
+});
 let input={campaign:config.campaign,companies:read(config.companies),roles:read(config.roles),
-  contacts:config.contacts?read(config.contacts):[],findings:config.findings?read(config.findings):[],
+  contacts,findings:config.findings?read(config.findings):[],
   suppressed:config.suppressed?read(config.suppressed):[],employer_permissions:config.employer_permissions?read(config.employer_permissions):[],candidates:[]};
 if(config.employer_roles)input.roles=mergeRoleSources(input.roles,read(config.employer_roles));
 if(config.role_reconciliation)input.roles=reconcileRoleAliases(input.roles,read(config.role_reconciliation));
