@@ -11,9 +11,9 @@ const argv=process.argv.slice(2);
 if(argv.length%2)throw new Error('Expected --option value pairs');
 const args=Object.fromEntries(argv.reduce((pairs,v,i,a)=>i%2?pairs:[...pairs,[v.replace(/^--/,''),a[i+1]]],[]));
 for(const required of ['config','out'])if(!args[required])throw new Error('Usage: node --experimental-strip-types gtm/prepare.mjs --config campaign.json --out private-output');
-const base=path.dirname(path.resolve(args.config));
+const base=fs.realpathSync(path.dirname(path.resolve(args.config)));
 const read=file=>JSON.parse(fs.readFileSync(path.resolve(base,file),'utf8'));
-const receiptRoot=path.resolve(base,'..');
+const receiptRoot=fs.realpathSync(path.resolve(base,'..'));
 const RECEIPT_SECRET_PATTERNS=[
   /sk-[A-Za-z0-9_-]{20,}/,
   /AKIA[0-9A-Z]{16}/,
@@ -29,9 +29,9 @@ function validateContactReceipts(contacts){
     if(!hasReceipt&&!hasHash)continue;
     if(!hasReceipt||!hasHash||typeof contact.source_receipt!=='string'||!contact.source_receipt.trim()||
       path.isAbsolute(contact.source_receipt)||!/^[a-f0-9]{64}$/i.test(contact.source_sha256??''))throw new Error('Invalid contact source receipt');
-    const receipt=path.resolve(base,contact.source_receipt),relative=path.relative(receiptRoot,receipt);
-    if(relative.startsWith('..'+path.sep)||path.isAbsolute(relative))throw new Error('Contact source receipt escapes campaign root');
-    let body;try{body=fs.readFileSync(receipt);}catch{throw new Error('Contact source receipt is unavailable');}
+    const candidate=path.resolve(base,contact.source_receipt),candidateRelative=path.relative(receiptRoot,candidate);
+    if(candidateRelative.startsWith('..'+path.sep)||path.isAbsolute(candidateRelative))throw new Error('Contact source receipt escapes campaign root');
+    let receipt,body;try{receipt=fs.realpathSync(candidate);const relative=path.relative(receiptRoot,receipt);if(relative.startsWith('..'+path.sep)||path.isAbsolute(relative))throw new Error('Contact source receipt escapes campaign root');body=fs.readFileSync(receipt);}catch(error){if(error instanceof Error&&error.message==='Contact source receipt escapes campaign root')throw error;throw new Error('Contact source receipt is unavailable');}
     if(RECEIPT_SECRET_PATTERNS.some(re=>re.test(body.toString('utf8'))))throw new Error('Contact source receipt contains a credential-like value');
     const digest=createHash('sha256').update(body).digest('hex');
     if(digest!==contact.source_sha256.toLowerCase())throw new Error('Contact source receipt hash mismatch');
