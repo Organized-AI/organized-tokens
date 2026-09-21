@@ -128,6 +128,19 @@ npm run gtm:collect-partner-routes -- \
 
 Each source needs a company ID and name, exact HTTPS `source_url`, optional HTTPS `route_url`, and an exact excerpt that must appear in the current source text. The collector permits public DNS results only, rejects redirects, oversized responses, and credential-like content, then records `verification: "published-route-needs-review"`. A human must verify the company, purpose, and route before changing that value to `employer-published-role-and-route-reviewed` and adding the file through `contact_sources`.
 
+### Official business-contact routes
+
+Use the same receipt-backed gate for an explicit email address or public routing page already found on an employer's official site:
+
+```sh
+npm run gtm:collect-contact-routes -- \
+  --config contact-sources.json \
+  --campaign-config campaign.json \
+  --out contact-route-receipts
+```
+
+Each source provides `company_id`, `company_name`, exact HTTPS `source_url`, `kind` (`email` or `web-route`), `value` (the email address or HTTPS route), `purpose`, and a visible `evidence_excerpt`. Email collection additionally proves that the exact address appears in the saved source receipt. The output is always `published-route-needs-review`, `recipient_approved: false`, and `outreach_authorized: false`; preparation excludes it from recipients until a human reviews and explicitly promotes it. It never searches for addresses, probes deliverability, sends email, or submits a contact form.
+
 ## Engram integration point
 
 See [ENGRAM.md](ENGRAM.md). The handoff is a provider-independent research queue with account IDs, company URLs, next actions and blockers. It excludes candidate identities, profile evidence, contact addresses and draft bodies. Generating it does not upload it anywhere. Connectors can enrich accounts and return source-backed results; local review/consent rules remain authoritative.

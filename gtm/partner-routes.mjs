@@ -9,6 +9,11 @@ function evidenceText(value) {
   return plainText(value).normalize('NFKC').replace(/[‘’]/g, "'").replace(/[“”]/g, '"').replace(/\s+/g, ' ').trim();
 }
 
+function email(value) {
+  const normalized = text(value).toLowerCase();
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalized) ? normalized : null;
+}
+
 function publicIp(address) {
   const v4 = address.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/);
   if (v4) {
@@ -50,15 +55,19 @@ async function boundedBody(response) {
 }
 
 /**
- * Collect a single explicit, employer-published partnership route. This never
- * sends a form or promotes a route to outreach eligibility; callers must
- * review the provisional record before using it in a campaign.
+ * Collect one explicit, employer-published business route. The supplied
+ * route is evidence only: this function neither discovers contacts nor makes
+ * any route eligible for outreach.
  */
-export async function collectPartnerRoute(source, {fetcher=fetch,resolver=dnsLookup,now=Date.now()} = {}) {
+export async function collectOfficialContactRoute(source, {fetcher=fetch,resolver=dnsLookup,now=Date.now()} = {}) {
   if (!source || typeof source !== 'object' || source.company_id == null || !text(source.company_name)) throw new Error('Partner source needs company_id and company_name');
   const sourceUrl = await publicSourceUrl(source.source_url, resolver);
-  const routeUrl = httpsUrl(source.route_url ?? source.source_url);
-  if (!routeUrl) throw new Error('Partner route needs an HTTPS URL');
+  const kind = text(source.kind) || 'web-route';
+  if (!['email','web-route'].includes(kind)) throw new Error('Contact route kind must be email or web-route');
+  const route = kind === 'email'
+    ? email(source.value ?? source.route_url)
+    : httpsUrl(source.route_url ?? source.value ?? source.source_url);
+  if (!route) throw new Error(kind === 'email' ? 'Contact route needs an email address' : 'Partner route needs an HTTPS URL');
   const excerpt = evidenceText(source.evidence_excerpt);
   if (!excerpt) throw new Error('Partner source needs an evidence excerpt');
   const response = await fetcher(sourceUrl, {headers:{Accept:'text/html, text/plain;q=0.9','User-Agent':'OrganizedAI-GTM/1.0'},signal:AbortSignal.timeout(20000),redirect:'error'});
@@ -67,9 +76,15 @@ export async function collectPartnerRoute(source, {fetcher=fetch,resolver=dnsLoo
   assertSafeReceipt(receipt);
   const page = evidenceText(receipt.toString('utf8'));
   if (!page.toLocaleLowerCase().includes(excerpt.toLocaleLowerCase())) throw new Error('Partner evidence excerpt was not found in source');
+  if (kind === 'email' && !receipt.toString('utf8').toLocaleLowerCase().includes(route)) throw new Error('Published contact email was not found in source');
   return {
-    contact:{company_id:source.company_id,kind:'web-route',value:routeUrl,purpose:'partnerships',name:text(source.name) || `${text(source.company_name)} partnership route`,title_or_function:text(source.title_or_function) || 'Partner Program',url:sourceUrl,checked_at:new Date(now).toISOString(),verification:'published-route-needs-review',evidence_excerpt:excerpt,recipient_approved:false,outreach_authorized:false},
+    contact:{company_id:source.company_id,kind,value:route,purpose:text(source.purpose) || 'partnerships',name:text(source.name) || `${text(source.company_name)} contact route`,title_or_function:text(source.title_or_function) || 'Business contact',url:sourceUrl,checked_at:new Date(now).toISOString(),verification:'published-route-needs-review',evidence_excerpt:excerpt,recipient_approved:false,outreach_authorized:false},
     receipt,
     source_sha256:receiptSha256(receipt),
   };
+}
+
+// Backward-compatible name for the original partner-only collector.
+export async function collectPartnerRoute(source, options = {}) {
+  return collectOfficialContactRoute({...source,kind:'web-route',purpose:text(source?.purpose) || 'partnerships'}, options);
 }
