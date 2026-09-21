@@ -25,6 +25,13 @@ function setup(t){
 }
 function body(changes={}){return {request_id:'a'.repeat(64),first_name:'Riley',last_name:'Okafor',email:'riley@example.test',password:'synthetic-password-only',profile:structuredClone(fixture),reviewed:true,employer_consent:true,terms_consent:true,consent_version:CONSENT_VERSION,...changes};}
 function request(data=body(),origin='https://assessment.organizedai.vip'){return new Request('https://assessment.organizedai.vip/api/candidates/complete',{method:'POST',headers:{'content-type':'application/json',origin,'cf-connecting-ip':'192.0.2.1'},body:JSON.stringify(data)});}
+test('signup setup reports enabled only with the feature flag and both Niceboard settings',async t=>{
+ const s=setup(t),setupRequest=()=>new Request('https://assessment.organizedai.vip/api/candidate-setup');
+ for(const patch of [{CANDIDATE_SIGNUP_ENABLED:'false'},{NICEBOARD_API_KEY:undefined},{NICEBOARD_API_BASE:undefined}]){
+  const result=await(await candidateRoutes(setupRequest(),{...s.env,...patch},s.fetcher)).json();assert.equal(result.enabled,false);assert.equal(result.consent_version,CONSENT_VERSION);
+ }
+ assert.equal((await(await candidateRoutes(setupRequest(),s.env,s.fetcher)).json()).enabled,true);assert.equal(s.calls.length,0);
+});
 test('consented assessment creates an employer-visible account once without persisting credentials or profile',async t=>{
  const s=setup(t);const data=body();const response=await candidateRoutes(request(data),s.env,s.fetcher);assert.equal(response.status,201);
  const result=await response.json();assert.equal(result.status,'created');assert.equal(result.matches.length,1);
