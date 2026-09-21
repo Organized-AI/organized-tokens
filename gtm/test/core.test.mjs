@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import {execFileSync} from 'node:child_process';
+import {createHash} from 'node:crypto';
 import {fileURLToPath} from 'node:url';
 import {buildCampaign,digest,engramHandoff,DAY} from '../core.mjs';
 import {greenhouse,lever,ashby,careerJobPostings,importedRoles} from '../sources.mjs';
@@ -142,9 +143,12 @@ test('actual CLI normalizes consent, writes private review files, and works with
  const i=input(),today=new Date().toISOString();
  i.roles[0].collected_at=today;i.roles[0].availability_checked_at=today;i.candidates[0].consent.recorded_at=today;i.contacts[0].checked_at=today;
  const supplement={...i.contacts[0],value:'partnerships@example.test',purpose:'sponsorship',url:'https://example.test/partners'};
+ const receipt='Official partner route receipt';
+ supplement.source_receipt='receipt.html';supplement.source_sha256=createHash('sha256').update(receipt).digest('hex');
  const files={'companies.json':i.companies,'roles.json':i.roles.map(r=>({...r,availability:'board-listed'})),'employer.json':i.roles,'contacts.json':i.contacts,'contacts-supplement.json':[supplement],'profile.json':i.candidates[0].profile,'consent.json':i.candidates[0].consent,
  'config.json':{campaign:i.campaign,companies:'companies.json',roles:'roles.json',employer_roles:'employer.json',contacts:'contacts.json',contact_sources:['contacts-supplement.json','contacts.json'],candidates:[{profile:'profile.json',consent:'consent.json'}]}};
  for(const [name,data] of Object.entries(files))fs.writeFileSync(path.join(dir,name),JSON.stringify(data));
+ fs.writeFileSync(path.join(dir,'receipt.html'),receipt);
  fs.writeFileSync(path.join(dir,'deny-network.mjs'),"globalThis.fetch=()=>{throw new Error('Network forbidden in draft preparation test')};");
  const cli=fileURLToPath(new URL('../prepare.mjs',import.meta.url));
  const run=()=>execFileSync(process.execPath,['--experimental-strip-types','--import',path.join(dir,'deny-network.mjs'),cli,'--config',path.join(dir,'config.json'),'--out',path.join(dir,'out')],{encoding:'utf8'});
@@ -155,7 +159,9 @@ test('actual CLI normalizes consent, writes private review files, and works with
  assert.equal(fs.statSync(path.join(dir,'out/campaign-review.html')).mode&0o777,0o600);
  const handoff=fs.readFileSync(path.join(dir,'out/engram-handoff.json'),'utf8');assert.doesNotMatch(handoff,/Riley|ev-002|public_url/);
  i.candidates[0].consent.matching=false;fs.writeFileSync(path.join(dir,'consent.json'),JSON.stringify(i.candidates[0].consent));run();
- assert.doesNotMatch(fs.readFileSync(path.join(dir,'out/campaign-review.json'),'utf8'),/Riley|ev-002|public_url/);
+  assert.doesNotMatch(fs.readFileSync(path.join(dir,'out/campaign-review.json'),'utf8'),/Riley|ev-002|public_url/);
+ supplement.source_sha256='0'.repeat(64);fs.writeFileSync(path.join(dir,'contacts-supplement.json'),JSON.stringify([supplement]));
+ assert.throws(run,/Contact source receipt hash mismatch/);
 });
 test('real-world Greenhouse encoding is decoded as text, never executable markup',()=>{
  const s='&lt;p&gt;Seekr&#39;s role: &lt;strong&gt;AI&lt;/strong&gt; &amp;amp; APIs&amp;nbsp;&lt;/p&gt;';

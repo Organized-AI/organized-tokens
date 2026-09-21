@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import {createHash} from 'node:crypto';
 import {buildCampaign,engramHandoff} from './core.mjs';
 import {render} from './render.mjs';
 import {mergeRoleSources,reconcileRoleAliases} from './merge-sources.mjs';
@@ -12,6 +13,20 @@ const args=Object.fromEntries(argv.reduce((pairs,v,i,a)=>i%2?pairs:[...pairs,[v.
 for(const required of ['config','out'])if(!args[required])throw new Error('Usage: node --experimental-strip-types gtm/prepare.mjs --config campaign.json --out private-output');
 const base=path.dirname(path.resolve(args.config));
 const read=file=>JSON.parse(fs.readFileSync(path.resolve(base,file),'utf8'));
+const receiptRoot=path.resolve(base,'..');
+function validateContactReceipts(contacts){
+  for(const contact of contacts){
+    const hasReceipt='source_receipt' in contact,hasHash='source_sha256' in contact;
+    if(!hasReceipt&&!hasHash)continue;
+    if(!hasReceipt||!hasHash||typeof contact.source_receipt!=='string'||!contact.source_receipt.trim()||
+      path.isAbsolute(contact.source_receipt)||!/^[a-f0-9]{64}$/i.test(contact.source_sha256??''))throw new Error('Invalid contact source receipt');
+    const receipt=path.resolve(base,contact.source_receipt),relative=path.relative(receiptRoot,receipt);
+    if(relative.startsWith('..'+path.sep)||path.isAbsolute(relative))throw new Error('Contact source receipt escapes campaign root');
+    let body;try{body=fs.readFileSync(receipt);}catch{throw new Error('Contact source receipt is unavailable');}
+    const digest=createHash('sha256').update(body).digest('hex');
+    if(digest!==contact.source_sha256.toLowerCase())throw new Error('Contact source receipt hash mismatch');
+  }
+}
 const config=read(path.basename(args.config));
 const contactFiles=[];
 if(config.contacts!==undefined)contactFiles.push(config.contacts);
@@ -28,6 +43,7 @@ const contacts=contactPaths.flatMap(file=>{
   if(!Array.isArray(rows))throw new Error('Each contact source must contain an array');
   return rows;
 });
+validateContactReceipts(contacts);
 let input={campaign:config.campaign,companies:read(config.companies),roles:read(config.roles),
   contacts,findings:config.findings?read(config.findings):[],
   suppressed:config.suppressed?read(config.suppressed):[],employer_permissions:config.employer_permissions?read(config.employer_permissions):[],candidates:[]};
