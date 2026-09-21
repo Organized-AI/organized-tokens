@@ -160,6 +160,9 @@ test('actual CLI normalizes consent, writes private review files, and works with
  const handoff=fs.readFileSync(path.join(dir,'out/engram-handoff.json'),'utf8');assert.doesNotMatch(handoff,/Riley|ev-002|public_url/);
  i.candidates[0].consent.matching=false;fs.writeFileSync(path.join(dir,'consent.json'),JSON.stringify(i.candidates[0].consent));run();
   assert.doesNotMatch(fs.readFileSync(path.join(dir,'out/campaign-review.json'),'utf8'),/Riley|ev-002|public_url/);
+ supplement.source_sha256=createHash('sha256').update('AIza12345678901234567890').digest('hex');fs.writeFileSync(path.join(dir,'receipt.html'),'AIza12345678901234567890');fs.writeFileSync(path.join(dir,'contacts-supplement.json'),JSON.stringify([supplement]));
+ assert.throws(run,/Contact source receipt contains a credential-like value/);
+ fs.writeFileSync(path.join(dir,'receipt.html'),receipt);
  supplement.source_sha256='0'.repeat(64);fs.writeFileSync(path.join(dir,'contacts-supplement.json'),JSON.stringify([supplement]));
  assert.throws(run,/Contact source receipt hash mismatch/);
 });
