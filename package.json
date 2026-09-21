@@ -10,7 +10,8 @@
     "gtm:test": "node --experimental-strip-types --test gtm/test/*.test.mjs",
     "gtm:prepare": "node --experimental-strip-types gtm/prepare.mjs",
     "gtm:collect-niceboard": "node --experimental-strip-types gtm/collect-niceboard.mjs",
-    "gtm:collect-jobs": "node --experimental-strip-types gtm/collect-jobs.mjs"
+    "gtm:collect-jobs": "node --experimental-strip-types gtm/collect-jobs.mjs",
+    "gtm:collect-partner-routes": "node --experimental-strip-types gtm/collect-partner-routes.mjs"
   },
   "devDependencies": {
     "wrangler": "^4.0.0"

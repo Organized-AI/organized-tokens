@@ -115,6 +115,19 @@ Named decision makers may also use `verification: "public-professional-profile-a
 
 The two draft stages retain distinct IDs and interests. Follow-up requires a recorded first send, no opt-out or negative response, a reviewed recipient, current role/consent evidence, and approved copy. Suppression inputs accept `{ "company_id": "..." }` or `{ "value": "email-or-profile-url" }`. Company suppression removes all drafts/matches; a suppressed route is removed case-insensitively. There is deliberately no automatic timing or sending in this release.
 
+### Provisional partner-route collection
+
+For an official partnership page already identified during research, the read-only collector creates a receipt and a **provisional** route. It does not discover pages by guessing URLs, submit a form, create a contact, or make a route eligible for a campaign.
+
+```sh
+npm run gtm:collect-partner-routes -- \
+  --config partner-sources.json \
+  --campaign-config campaign.json \
+  --out partner-route-receipts
+```
+
+Each source needs a company ID and name, exact HTTPS `source_url`, optional HTTPS `route_url`, and an exact excerpt that must appear in the current source text. The collector permits public DNS results only, rejects redirects, oversized responses, and credential-like content, then records `verification: "published-route-needs-review"`. A human must verify the company, purpose, and route before changing that value to `employer-published-role-and-route-reviewed` and adding the file through `contact_sources`.
+
 ## Engram integration point
 
 See [ENGRAM.md](ENGRAM.md). The handoff is a provider-independent research queue with account IDs, company URLs, next actions and blockers. It excludes candidate identities, profile evidence, contact addresses and draft bodies. Generating it does not upload it anywhere. Connectors can enrich accounts and return source-backed results; local review/consent rules remain authoritative.

@@ -12,6 +12,7 @@ import {render} from '../render.mjs';
 import {plainText} from '../text.mjs';
 import {reconcileAccounts} from '../reconcile-accounts.mjs';
 import {mergeRoleSources,reconcileRoleAliases,jobIdentity} from '../merge-sources.mjs';
+import {collectPartnerRoute} from '../partner-routes.mjs';
 import {sanitizeProfile} from '../../leaderboard/src/validate.js';
 const profile=JSON.parse(fs.readFileSync(new URL('../../leaderboard/test/fixtures/profile-v9.sample.json',import.meta.url)));
 const now=Date.parse('2026-09-17T23:00:00Z'),at='2026-09-17T22:00:00Z';
@@ -137,6 +138,25 @@ test('career JSON-LD and third-party imports preserve uncertain status',()=>{
  assert.equal(r.length,1);assert.equal(r[0].availability,'unknown');
  const imported=importedRoles(input().roles,'linkedin');assert.equal(imported[0].availability,'board-listed');assert.equal(imported[0].availability_source_url,null);
  assert.throws(()=>importedRoles([{...input().roles[0],collected_at:null}],'indeed'),/collected_at/);
+});
+test('partner-route collection records a safe receipt but requires human review before campaign use',async()=>{
+ const source={company_id:1,company_name:'Fictional',name:'Fictional partner program',source_url:'https://partners.example.test/apply',route_url:'https://partners.example.test/apply',evidence_excerpt:'Become a partner and explore partnership opportunities. You’re welcome.'};
+ const resolver=async()=>[{address:'93.184.216.34',family:4}];
+ const fetcher=async(url,options)=>{
+  assert.equal(url,source.source_url);assert.equal(options.redirect,'error');
+  return new Response("<h1>Become a partner and explore partnership opportunities. You're welcome.</h1>");
+ };
+ const collected=await collectPartnerRoute(source,{fetcher,resolver,now});
+ assert.equal(collected.contact.verification,'published-route-needs-review');
+ assert.equal(collected.contact.value,source.route_url);assert.equal(collected.source_sha256.length,64);
+ const i=input();i.contacts=[{...collected.contact,source_receipt:'receipt.html',source_sha256:collected.source_sha256}];
+ assert.equal(buildCampaign(i,now).counts.reviewed_routes,0);
+ await assert.rejects(collectPartnerRoute({...source,evidence_excerpt:'Absent excerpt'},{fetcher,resolver}),/not found/);
+ await assert.rejects(collectPartnerRoute({...source,source_url:'https://localhost/partners'},{fetcher,resolver}),/public/);
+ await assert.rejects(collectPartnerRoute(source,{resolver,fetcher:async()=>new Response('sk-12345678901234567890')}),/credential-like/);
+ await assert.rejects(collectPartnerRoute(source,{fetcher,resolver:async()=>[{address:'127.0.0.1',family:4}]}),/public/);
+ await assert.rejects(collectPartnerRoute(source,{fetcher,resolver:async()=>[{address:'100.86.248.8',family:4}]}),/public/);
+ await assert.rejects(collectPartnerRoute(source,{fetcher,resolver:async()=>[{address:'::ffff:127.0.0.1',family:6}]}),/public/);
 });
 test('actual CLI normalizes consent, writes private review files, and works with all network calls disabled',t=>{
  const dir=fs.mkdtempSync(path.join(os.tmpdir(),'organizedai-gtm-test-'));t.after(()=>fs.rmSync(dir,{recursive:true,force:true}));
