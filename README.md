@@ -150,3 +150,9 @@ ship.sh               place locally, push repo, register plugin
 ---
 
 MIT · Organized AI · [organizedai.vip](https://organizedai.vip)
+
+---
+
+Guide: [guide.organizedai.vip/organized-tokens/](https://guide.organizedai.vip/organized-tokens/)
+
+Maintained by Jordaaan Hill ([LinkedIn](https://www.linkedin.com/in/jordaaanhill)).
