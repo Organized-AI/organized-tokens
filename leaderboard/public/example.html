@@ -1,469 +1,897 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Example matching profile — Organized Proof</title>
-<meta name="description" content="A modeled sample profile rendered with the current assessment contract. Evidence derived from work, with an explicit statement of what it cannot establish.">
-<meta name="robots" content="noindex, nofollow">
-<meta property="og:title" content="Example matching profile — Organized Proof">
-<meta property="og:description" content="Show what you've built, not what you claim.">
-<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<title>Riley Okafor — Organized AI · Synthetic example matching profile</title>
 <style>
-:root{
-  --bg:#0E0D09; --s1:#1A1914; --s2:#111009; --bd:#2E2D28; --track:#232219;
-  --y:#F2C000; --yd:#B38A00; --teal:#1D9E75; --teal2:#0F6E56;
-  --coral:#D85A30; --purple:#7F77DD;
-  --tx:#D4D2C8; --mu:#888780; --dm:#5A5852;
-  --m:'Space Mono','Courier New',monospace;
-  --sans:system-ui,-apple-system,'Segoe UI',sans-serif;
-  --nav:212px;
-  --xs:4px; --sm:8px; --md:14px; --lg:22px; --xl:32px; --xxl:52px;
-}
-*{box-sizing:border-box;margin:0;padding:0}
-html{scroll-behavior:smooth}
-body{background:var(--bg);color:var(--tx);font:15px/1.62 var(--sans);-webkit-font-smoothing:antialiased}
-code{font-family:var(--m);font-size:.88em;color:#EF9F27;background:var(--s2);padding:1px 5px;border-radius:3px}
-a{color:var(--y);text-decoration:none}
-a:hover{text-decoration:underline}
-
-/* ---------- chrome ---------- */
-.topbar{position:fixed;top:0;left:0;right:0;height:52px;background:rgba(17,16,9,.95);
-  backdrop-filter:blur(8px);border-bottom:1px solid var(--bd);display:flex;align-items:center;
-  gap:11px;padding:0 var(--lg);font-family:var(--m);font-size:12.5px;z-index:100}
-.ini{background:var(--y);color:#0E0D09;font-weight:700;padding:3px 8px;border-radius:3px;letter-spacing:1px}
-.topbar .sep{color:var(--dm)}
-.topbar .r{margin-left:auto;color:var(--dm);font-size:10.5px}
-.topbar .r a{color:var(--dm)}
-.topbar .r a:hover{color:var(--y)}
-
-.side{position:fixed;top:52px;left:0;bottom:0;width:var(--nav);background:var(--s1);
-  border-right:1px solid var(--bd);overflow-y:auto;padding:var(--lg) 0}
-.side .g{font-family:var(--m);font-size:9.5px;color:var(--dm);padding:var(--md) var(--lg) 6px;letter-spacing:1.5px}
-.nl{display:block;padding:6px var(--lg);color:var(--mu);font-size:12.5px;border-left:2px solid transparent}
-.nl:hover{color:var(--tx);background:rgba(242,192,0,.04);text-decoration:none}
-.nl.on{color:var(--y);border-left-color:var(--y);background:rgba(242,192,0,.06)}
-
-main{margin-left:var(--nav);padding:52px 0 90px}
-.w{max-width:880px;padding:0 44px}
-
-/* ---------- type ---------- */
-.cm{font-family:var(--m);font-size:10.5px;color:var(--yd);letter-spacing:2px;margin-bottom:var(--md)}
-h1{font-family:var(--m);font-size:34px;color:var(--y);font-weight:700;letter-spacing:-.5px;line-height:1.15}
-h2{font-size:22px;color:var(--tx);font-weight:700;letter-spacing:-.2px;margin-bottom:var(--sm)}
-h3{font-size:15px;color:var(--tx);font-weight:700}
-.lead{color:var(--mu);max-width:620px;margin-bottom:var(--lg)}
-p{margin-bottom:var(--sm);max-width:680px;color:var(--mu)}
-.fine{font-size:12.5px;color:var(--dm);max-width:660px}
-
-.sec{padding:var(--xxl) 0;border-bottom:1px solid var(--bd)}
-.head{padding:var(--xxl) 0 var(--xl);border-bottom:1px solid var(--bd)}
-.head .hl{font-size:18px;color:var(--tx);margin-top:var(--md);max-width:620px;line-height:1.45}
-
-/* ---------- chips ---------- */
-.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:var(--md)}
-.chip{font-family:var(--m);font-size:9.5px;border:1px solid var(--bd);color:var(--dm);
-  padding:3px 9px;border-radius:3px;letter-spacing:.5px}
-.chip.t{color:var(--teal);border-color:var(--teal2)}
-
-/* ---------- notice ---------- */
-.notice{border:1px solid var(--bd);border-left:2px solid var(--yd);background:var(--s1);
-  border-radius:4px;padding:var(--md) var(--lg);margin-top:var(--lg)}
-.notice .k{font-family:var(--m);font-size:10px;color:var(--yd);letter-spacing:1.5px;margin-bottom:6px}
-.notice p{font-size:13px;margin:0}
-
-/* ---------- distribution ---------- */
-.dist{margin-bottom:var(--xl)}
-.dist .row{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
-.dist .lab{font-family:var(--m);font-size:11px;color:var(--y);letter-spacing:1px}
-.dist .pl{margin-left:auto;font-family:var(--m);font-size:10px;color:var(--dm)}
-.dist .val{font-family:var(--m);font-size:23px;color:var(--tx);font-weight:700;margin-top:var(--sm)}
-.dist .unit{font-size:12px;color:var(--dm);margin-left:8px;font-family:var(--sans)}
-.bar{position:relative;height:5px;background:var(--track);border-radius:3px;margin-top:var(--lg)}
-.bar .mid{position:absolute;top:0;height:100%;background:var(--teal2);border-radius:3px;width:0}
-.bar .you{position:absolute;top:-4px;width:2px;height:13px;background:var(--y);opacity:0}
-.bar .you::after{content:"YOU";position:absolute;bottom:16px;left:-9px;font-family:var(--m);
-  font-size:8.5px;color:var(--y);letter-spacing:1px}
-.ends{display:flex;justify-content:space-between;font-family:var(--m);font-size:9.5px;
-  color:var(--dm);margin-top:var(--md);position:relative}
-.ends .m{position:absolute;left:50%;transform:translateX(-50%)}
-.dist .note{font-size:12.5px;color:var(--dm);margin-top:var(--md)}
-
-/* ---------- activity calendar ---------- */
-.cal{margin-top:var(--lg)}
-.cal .months{display:grid;font-family:var(--m);font-size:9px;color:var(--dm);
-  margin-bottom:6px;letter-spacing:.5px}
-.cal .trk{margin-bottom:var(--md)}
-.cal .tl{font-family:var(--m);font-size:9.5px;color:var(--dm);letter-spacing:1.5px;margin-bottom:5px}
-.cal .grid{display:grid;grid-auto-flow:column;grid-template-rows:repeat(7,1fr);gap:2px}
-.cal .c{aspect-ratio:1;border-radius:2px;background:var(--track);opacity:0}
-.cal .corr{display:grid;grid-auto-flow:column;gap:2px;height:4px;margin-top:5px}
-.cal .corr i{border-radius:1px;background:transparent}
-.cal .lg{display:flex;align-items:center;gap:6px;font-family:var(--m);font-size:9px;
-  color:var(--dm);margin-top:var(--md)}
-.cal .lg b{width:9px;height:9px;border-radius:2px;display:inline-block}
-.cal .stat{display:flex;gap:var(--xl);margin-top:var(--md);flex-wrap:wrap}
-.cal .stat div{font-family:var(--m);font-size:11px;color:var(--dm)}
-.cal .stat b{color:var(--tx);font-size:15px;display:block;margin-bottom:2px}
-.cal .cap{font-size:12.5px;color:var(--dm);margin-top:var(--md);max-width:680px}
-
-/* ---------- split ---------- */
-.split{margin:var(--lg) 0}
-.split .lbl{display:flex;justify-content:space-between;font-family:var(--m);font-size:11px;margin-bottom:var(--sm)}
-.split .l{color:var(--y)} .split .rr{color:var(--purple)}
-.sbar{display:flex;height:11px;border-radius:3px;overflow:hidden;background:var(--track)}
-.sbar i{display:block;height:100%;width:0}
-.sbar .a{background:var(--y)} .sbar .b{background:var(--purple)}
-.split .sub{display:flex;justify-content:space-between;font-size:12px;color:var(--dm);margin-top:var(--sm)}
-
-/* ---------- measures ---------- */
-.quick{display:flex;gap:var(--xxl);margin:var(--lg) 0 var(--xl)}
-.quick div{display:flex;align-items:baseline;gap:10px}
-.quick b{font-family:var(--m);font-size:26px;color:var(--tx)}
-.quick span{font-size:12.5px;color:var(--dm);max-width:170px;line-height:1.4}
-
-.meas{display:flex;gap:var(--lg);padding:var(--md) 0;border-bottom:1px solid var(--bd)}
-.meas:last-child{border-bottom:none}
-.meas .n{font-family:var(--m);font-size:10px;color:var(--yd);width:130px;flex-shrink:0;
-  letter-spacing:1px;padding-top:4px}
-.meas .b{flex:1}
-.meas .v{font-family:var(--m);font-size:17px;color:var(--tx);font-weight:700;
-  width:60px;text-align:right;flex-shrink:0}
-.meas h3{margin-bottom:4px}
-.meas p{font-size:13px;margin:0}
-
-/* ---------- class grid ---------- */
-.cls{margin-bottom:var(--lg)}
-.cls .k{font-family:var(--m);font-size:10px;color:var(--yd);letter-spacing:1.5px;margin-bottom:var(--sm)}
-.cls .g{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--md)}
-.cls .g div b{display:block;font-size:13.5px;color:var(--tx);font-weight:700}
-.cls .g div i{font-family:var(--m);font-size:11px;color:var(--y);font-style:normal}
-
-/* ---------- steps ---------- */
-.steps{display:grid;grid-template-columns:1fr 1fr;gap:var(--lg);margin-top:var(--md)}
-.step{border-left:2px solid var(--bd);padding-left:var(--md)}
-.step .n{font-family:var(--m);font-size:10px;color:var(--yd)}
-.step h3{margin:4px 0}
-.step p{font-size:13px;margin:0}
-
-.char{margin-top:var(--xl)}
-.char div{margin-bottom:var(--md)}
-.char .k{font-family:var(--m);font-size:10px;letter-spacing:1.5px;color:var(--teal);margin-bottom:4px}
-.char .k.bend{color:var(--coral)}
-.char p{font-size:13.5px;margin:0}
-
-/* ---------- entries ---------- */
-.ent{padding:var(--lg) 0;border-bottom:1px solid var(--bd)}
-.ent:last-child{border-bottom:none}
-.ent .t{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
-.ent .t h3{font-size:15.5px}
-.ent .badge{margin-left:auto;font-family:var(--m);font-size:9.5px;color:var(--teal);letter-spacing:.5px}
-.ent .sub{font-size:12.5px;color:var(--dm);margin-top:3px}
-.ent .kv{margin-top:var(--md)}
-.ent .kv .k{font-family:var(--m);font-size:9.5px;color:var(--yd);letter-spacing:1.5px;margin-bottom:4px}
-.ent .kv p{font-size:13.5px;margin-bottom:var(--md)}
-
-.subj{padding:var(--md) 0;border-bottom:1px solid var(--bd)}
-.subj:last-child{border-bottom:none}
-.subj .t{display:flex;align-items:baseline;gap:12px}
-.subj .sup{margin-left:auto;font-family:var(--m);font-size:9.5px;color:var(--dm)}
-.subj p{font-size:13.5px;margin:5px 0 0}
-
-/* ---------- fit ---------- */
-.fit{padding:var(--lg) 0;border-bottom:1px solid var(--bd)}
-.fit:last-child{border-bottom:none}
-.fit .k{font-family:var(--m);font-size:10px;letter-spacing:1.5px;color:var(--y);margin-bottom:6px}
-.fit.no .k{color:var(--coral)}
-.fit p{font-size:13.5px;margin:5px 0 0}
-
-/* ---------- share card ---------- */
-.card{border:1px solid var(--bd);background:var(--s2);border-radius:4px;aspect-ratio:1200/627;
-  padding:26px 28px;display:flex;flex-direction:column;margin-top:var(--md)}
-.card .ct{display:flex;justify-content:space-between;font-family:var(--m);font-size:9.5px;color:var(--dm)}
-.card .ct em{color:var(--y);font-style:normal}
-.card .cb{display:flex;gap:var(--xl);flex:1;margin-top:var(--lg)}
-.card .cl{flex:1.3} .card .cr{flex:1}
-.card .nm{font-family:var(--m);font-size:22px;color:var(--y);font-weight:700}
-.card .hl{font-size:13px;color:var(--tx);margin-top:8px;line-height:1.45}
-.card .cs{margin-bottom:var(--md)}
-.card .cs .k{font-family:var(--m);font-size:9px;color:var(--yd);letter-spacing:1px}
-.card .cs .v{font-size:12.5px;color:var(--tx);font-weight:700;margin-top:2px;line-height:1.35}
-.card .cf{display:flex;justify-content:space-between;font-family:var(--m);font-size:8.5px;color:var(--dm)}
-.card .mini{margin-top:var(--md)}
-.card .mini .sbar{height:7px}
-.card .mini .cap{font-family:var(--m);font-size:9px;color:var(--dm);margin-top:6px}
-
-/* ---------- panel ---------- */
-.panel{border:1px solid var(--bd);border-left:2px solid var(--coral);background:var(--s1);
-  border-radius:4px;padding:var(--lg) var(--lg)}
-.panel.y{border-left-color:var(--yd)}
-.panel .k{font-family:var(--m);font-size:10px;color:var(--coral);letter-spacing:1.5px;margin-bottom:var(--md)}
-.panel.y .k{color:var(--yd)}
-.panel ul{list-style:none}
-.panel li{font-size:13.5px;color:var(--mu);padding:4px 0 4px 16px;position:relative}
-.panel li::before{content:"—";position:absolute;left:0;color:var(--dm)}
-.panel .nt{font-size:12.5px;color:var(--dm);font-style:italic;margin-top:var(--md);padding-top:var(--md);
-  border-top:1px dashed var(--bd)}
-
-/* ---------- evidence ---------- */
-.ev{display:flex;gap:var(--md);padding:var(--md) 0;border-bottom:1px solid var(--bd)}
-.ev:last-child{border-bottom:none}
-.ev .id{font-family:var(--m);font-size:11px;color:var(--y);font-weight:700;width:52px;flex-shrink:0}
-.ev .src{font-family:var(--m);font-size:9.5px;color:var(--dm);width:82px;flex-shrink:0;padding-top:2px}
-.ev p{font-size:13px;margin:0}
-
-.dl{display:flex;gap:var(--sm);margin-top:var(--lg);flex-wrap:wrap}
-.dl a{font-family:var(--m);font-size:11px;border:1px solid var(--bd);color:var(--mu);
-  padding:8px 14px;border-radius:4px}
-.dl a:hover{border-color:var(--yd);color:var(--y);text-decoration:none}
-
-footer{margin-left:var(--nav);padding:var(--lg) 44px var(--xxl);color:var(--dm);
-  font-family:var(--m);font-size:10.5px}
-
-@media(max-width:900px){
-  .side{display:none} main,footer{margin-left:0}
-  .w{padding:0 20px} h1{font-size:25px}
-  .steps,.cls .g{grid-template-columns:1fr}
-  .quick{flex-direction:column;gap:var(--md)}
-  .card{aspect-ratio:auto} .card .cb{flex-direction:column;gap:var(--lg)}
-  .meas{flex-direction:column;gap:var(--sm)} .meas .n{width:auto} .meas .v{text-align:left}
-}
+:root{--ink:#0a0a09;--surface:#11110f;--surface-2:#181713;--paper:#f4f0e8;--muted:#b8b0a3;--quiet:#928a7e;--line:#38342d;--hot:#F2C000;--green:#9ee0ad;--amber:#ffc66d;--red:#ff8a73;--content:1180px;--gutter:clamp(20px,4vw,56px);--display:"Avenir Next Condensed","Avenir Next",sans-serif;--body:"Avenir Next",Avenir,sans-serif;--mono:".SF NS Mono",Menlo,Consolas,monospace;color-scheme:dark}
+*{box-sizing:border-box}html{scroll-behavior:smooth;overflow-x:hidden}body{margin:0;overflow-x:hidden;background:linear-gradient(rgba(255,255,255,.018) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.015) 1px,transparent 1px),var(--ink);background-size:48px 48px;color:var(--paper);font:17px/1.55 var(--body)}a{color:inherit}button,input{font:inherit}.shell{width:min(var(--content),calc(100% - (var(--gutter) * 2)));margin-inline:auto}.site-head{position:sticky;top:0;z-index:50;display:flex;align-items:center;justify-content:space-between;gap:20px;min-height:68px;border-bottom:1px solid var(--line);background:rgba(10,10,9,.94);backdrop-filter:blur(18px)}.brand{display:inline-flex;align-items:center;gap:12px;text-decoration:none;font:700 12px/1 var(--mono);letter-spacing:.12em;text-transform:uppercase}.brand-mark{display:grid;place-items:center;width:25px;height:25px;border:1px solid var(--hot);color:var(--hot);transition:transform .3s ease}.brand:hover .brand-mark{transform:rotate(-8deg)}.view-switch{display:inline-flex;padding:3px;border:1px solid var(--line);background:#0e0e0c}.view-switch button{border:0;background:transparent;color:var(--muted);padding:9px 12px;cursor:pointer;font:700 10px/1 var(--mono);letter-spacing:.08em;text-transform:uppercase}.view-switch button[aria-pressed=true]{background:var(--paper);color:var(--ink)}.local-only-notice{border:1px solid var(--hot);background:rgba(255,77,0,.08);padding:12px 14px;margin-top:24px;font:12px/1.6 var(--mono)}.eyebrow,.source,.section-index,.source-markers{font:700 10px/1.4 var(--mono);letter-spacing:.1em;text-transform:uppercase}.eyebrow,.section-index{color:var(--hot)}.source{color:var(--quiet)}.hero{padding:clamp(72px,12vw,150px) 0 clamp(62px,9vw,110px)}.hero h1{max-width:1000px;margin:20px 0 0;font:700 clamp(68px,12vw,168px)/.78 var(--display);letter-spacing:-.065em;text-transform:uppercase}.hero h1 span{color:var(--hot)}.thesis{max-width:1040px;margin:38px 0 0;font-size:clamp(24px,3.2vw,43px);line-height:1.08;letter-spacing:-.035em}.hero-note{max-width:880px;margin:20px 0 0;color:var(--muted);font-size:16px}.section{padding:clamp(72px,10vw,124px) 0;border-bottom:1px solid var(--line);scroll-margin-top:82px}.section-continuation{padding-top:56px}.section-head{display:grid;grid-template-columns:210px minmax(0,1fr);gap:30px;margin-bottom:52px}.section-head h2{margin:-8px 0 0;font:700 clamp(44px,6vw,78px)/.9 var(--display);letter-spacing:-.045em;text-transform:uppercase}.section-head h2.long-title{font-size:clamp(40px,5vw,66px)}.section-head p{max-width:760px;margin:20px 0 0;color:var(--muted)}.source-markers{display:flex;flex-wrap:wrap;gap:6px;margin-top:14px;color:var(--quiet);letter-spacing:.04em}.source-markers i{font-style:normal;border:1px solid var(--line);padding:4px 6px}.cohort-gate{border-block:1px solid var(--line);background:var(--surface);padding:clamp(52px,7vw,84px) 0}.cohort-gate h2{max-width:850px;margin:16px 0 0;font:700 clamp(40px,6vw,72px)/.9 var(--display);text-transform:uppercase}.cohort-gate p{max-width:720px;color:var(--muted)}.empty-distribution{position:relative;display:grid;grid-template-columns:repeat(3,1fr);gap:28px;height:70px;margin-top:38px;border-bottom:1px solid var(--line)}.empty-distribution i{border-top:1px dashed var(--quiet);opacity:.45}.split-method{padding:30px;border:1px solid var(--line);background:rgba(255,77,0,.035)}.split-method-head{display:flex;justify-content:space-between;gap:22px;align-items:end}.split-method h3,.empty-state h3{margin:9px 0 0;font:700 clamp(28px,4vw,42px)/.95 var(--display);text-transform:uppercase}.split-method-head>span{color:var(--green);font:700 11px/1.4 var(--mono);letter-spacing:.07em;text-transform:uppercase}.split-bar{display:grid;min-height:76px;margin-top:22px;border:1px solid var(--line)}.split-segment{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;padding:17px;background:var(--paper);color:var(--ink);min-width:0}.split-segment+ .split-segment{border-left:1px solid var(--ink);background:var(--hot)}.split-segment b{font-size:14px}.split-segment strong{font:700 30px/.8 var(--display)}.split-facts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:10px}.split-facts div{display:flex;justify-content:space-between;gap:16px;padding:12px 16px;border:1px solid var(--line);color:var(--muted);font-size:13px}.split-facts b{color:var(--paper)}.split-method>p,.empty-state p{max-width:900px;margin:18px 0 0;color:var(--muted);font-size:14px}.limit-list{margin-top:20px;padding-left:18px;border-left:2px solid var(--amber)}.limit-list p{color:var(--muted);font-size:13px}.empty-state{padding:30px;border:1px solid var(--line);background:var(--surface)}.practice-lead{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(300px,.8fr);gap:clamp(42px,8vw,100px);padding-bottom:46px;border-bottom:1px solid var(--paper)}.practice-thesis{margin:0;max-width:780px;font:700 clamp(36px,5vw,64px)/.94 var(--display);letter-spacing:-.035em;text-transform:uppercase}.practice-stats{display:grid;grid-template-columns:1fr 1fr;border-top:1px solid var(--paper)}.practice-stat{padding:19px 16px 16px 0;border-bottom:1px solid var(--line)}.practice-stat:nth-child(even){border-left:1px solid var(--line);padding-left:16px}.practice-stat strong{display:block;color:var(--hot);font:700 38px/.9 var(--display)}.practice-stat>span:not(.source-markers){display:block;margin-top:8px;color:var(--muted);font-size:12px}.practice-flow{display:grid;grid-template-columns:repeat(4,1fr);border-bottom:1px solid var(--line)}.practice-step{min-height:182px;padding:28px 24px 26px 0}.practice-step+.practice-step{border-left:1px solid var(--line);padding-left:24px}.step-no{color:var(--hot);font:700 11px/1 var(--mono)}.practice-step h3{margin:24px 0 0;font:700 27px/.95 var(--display);text-transform:uppercase}.practice-step p{margin:12px 0 0;color:var(--muted);font-size:14px}.practice-proof{display:grid;grid-template-columns:210px minmax(0,1fr);gap:30px;padding:25px 0;border-bottom:1px solid var(--line)}.practice-proof h3{margin:0;font-size:18px}.practice-proof p{margin:0;color:var(--muted)}.industry-map,.expertise-matrix{border-top:1px solid var(--paper)}.industry-row,.expertise-item{display:grid;grid-template-columns:minmax(220px,.72fr) minmax(0,1.28fr) 150px;gap:34px;align-items:start;padding:30px 0;border-bottom:1px solid var(--line)}.industry-row h3{margin:0;font:700 28px/.95 var(--display);text-transform:uppercase}.industry-row h3 span{display:block;margin-top:10px;color:var(--muted);font:500 13px/1.35 var(--body);text-transform:none}.industry-blend{display:grid;grid-template-columns:1fr 1fr;gap:24px}.industry-blend p,.expertise-item p{margin:0;color:var(--muted);font-size:15px}.industry-blend b{display:block;margin-bottom:7px;color:var(--paper);font:700 10px/1.3 var(--mono);letter-spacing:.08em;text-transform:uppercase}.industry-depth,.evidence-type{color:var(--green);text-align:right;font:700 11px/1.4 var(--mono);letter-spacing:.07em;text-transform:uppercase}.industry-depth.context{color:var(--amber)}.expertise-item h3{margin:0;font-size:22px;line-height:1.1}.decision-grid{display:grid;grid-template-columns:1.15fr .95fr .9fr;border-top:1px solid var(--paper)}.decision-cell{padding:28px 28px 0 0}.decision-cell+.decision-cell{border-left:1px solid var(--line);padding-left:28px}.decision-cell h3{margin:16px 0 0;font:700 32px/.95 var(--display);text-transform:uppercase}.decision-cell p{margin:16px 0 0;color:var(--muted);font-size:15px}.decision-cell[data-tone=pair] .eyebrow{color:var(--amber)}.decision-cell[data-tone=gap] .eyebrow{color:var(--red)}.limits{border-top:1px solid var(--paper)}.limits article{padding:22px 0;border-bottom:1px solid var(--line)}.limits p{max-width:900px;margin:0;color:var(--muted)}details{margin-top:24px;border:1px solid var(--line);padding:18px}summary{cursor:pointer;color:var(--hot);font:700 11px var(--mono);letter-spacing:.08em;text-transform:uppercase}.evidence-index>div{display:grid;grid-template-columns:110px 100px 1fr;gap:18px;padding:14px 0;border-bottom:1px solid var(--line)}.evidence-index b,.evidence-index span{font:700 10px var(--mono);text-transform:uppercase}.evidence-index span{color:var(--hot)}.evidence-index p{margin:0;color:var(--muted);font-size:13px}.generated{color:var(--quiet);font:10px var(--mono);text-transform:uppercase}.local-upload form{display:grid;gap:18px;max-width:760px}.local-upload label,.local-upload fieldset{display:grid;gap:8px;color:var(--muted)}.local-upload input[type=email],.local-upload input[type=url]{width:100%;border:1px solid var(--line);background:var(--surface);color:var(--paper);padding:13px}.local-upload fieldset{border:1px solid var(--line);padding:16px}.local-upload fieldset label,.consent{display:flex;align-items:flex-start;gap:9px}.local-upload button{width:max-content;border:1px solid var(--hot);background:var(--hot);color:var(--ink);padding:13px 17px;cursor:pointer;font:700 11px var(--mono);letter-spacing:.08em;text-transform:uppercase}.share-actions{display:flex;align-items:center;gap:10px;margin:-24px 0 22px}.share-actions button{border:1px solid var(--hot);background:transparent;color:var(--paper);padding:11px 14px;cursor:pointer;font:700 10px var(--mono);letter-spacing:.08em;text-transform:uppercase}.share-actions button:first-child{background:var(--hot);color:var(--ink)}.share-actions span{margin-left:auto;color:var(--quiet);font:10px var(--mono);text-transform:uppercase}.share-frame{border:1px solid var(--line);background:#0a0a09;box-shadow:0 28px 70px rgba(0,0,0,.36);overflow:hidden}.share-frame svg{display:block;width:100%;height:auto}footer{min-height:110px;display:flex;align-items:center;justify-content:space-between;gap:20px;color:var(--muted);font:10px var(--mono);letter-spacing:.1em;text-transform:uppercase}footer b{color:var(--hot)}footer a{text-decoration:none;border-bottom:1px solid var(--line)}.toast{position:fixed;right:24px;bottom:24px;z-index:70;max-width:280px;transform:translateY(130%);opacity:0;background:var(--hot);color:var(--ink);padding:14px 16px;font:700 11px var(--mono);text-transform:uppercase;transition:.25s ease}.toast.show{transform:none;opacity:1}.reveal{opacity:1;transform:none}.full-only{display:none!important}body[data-view=full] .full-only{display:block!important}body[data-view=full] .industry-row.full-only,body[data-view=full] .expertise-item.full-only,body[data-view=full] .practice-proof.full-only,body[data-view=full] .practice-flow.full-only,body[data-view=full] .decision-cell.full-only{display:grid!important}body:not([data-view=full]) .industry-row{grid-template-columns:minmax(0,1fr) 150px}body:not([data-view=full]) .industry-blend{display:none}body:not([data-view=full]) .decision-grid{grid-template-columns:1fr}
+body:not([data-view=full]) .source-markers:not(.source-markers--summary){display:none}
+.section{padding:clamp(54px,7vw,88px) 0;border-bottom:0}.section-continuation{padding-top:30px}.section-head{grid-template-columns:1fr;gap:12px;margin-bottom:38px}.section-head h2{margin:0}.section-head p{margin-top:12px}.hero{padding-top:clamp(64px,9vw,112px);padding-bottom:clamp(52px,7vw,86px)}.cohort-gate{border:0;background:transparent;padding:12px 0}.cohort-card{border-left:2px solid var(--hot);padding:24px 0 24px 24px}.cohort-gate h2{margin:8px 0 0;font-size:clamp(28px,4vw,42px);line-height:.95}.cohort-gate p{margin:12px 0 0}.cohort-sample{max-width:none}.cohort-sample-head{display:flex;align-items:end;justify-content:space-between;gap:24px}.cohort-upload-link{display:inline-flex;min-height:44px;align-items:center;justify-content:center;border:1px solid var(--hot);padding:12px 16px;color:var(--paper);text-decoration:none;font:700 10px/1 var(--mono);letter-spacing:.08em;text-transform:uppercase;white-space:nowrap}.cohort-upload-link:hover{background:var(--hot);color:var(--ink)}.cohort-sample-rows{margin-top:24px;border-top:1px solid var(--line)}.cohort-sample-row{display:grid;grid-template-columns:minmax(220px,.65fr) minmax(320px,1.35fr);gap:32px;align-items:center;min-height:104px;border-bottom:1px solid var(--line)}.cohort-sample-value{display:grid;grid-template-columns:auto 1fr;gap:16px;align-items:baseline}.cohort-sample-value strong{color:var(--hot);font:700 40px/.8 var(--display)}.cohort-sample-value span{max-width:210px;color:var(--muted);font-size:13px;line-height:1.3}.cohort-sample-chart svg{display:block;width:100%;height:68px;overflow:visible}.cohort-sample-chart line{stroke:var(--quiet);stroke-width:1}.cohort-density-fill{fill:rgba(244,240,232,.12);stroke:var(--muted);stroke-width:1.5}.cohort-placement-line{stroke:var(--hot)!important;stroke-dasharray:3 4}.cohort-placement-dot{fill:var(--ink);stroke:var(--hot);stroke-width:3}.cohort-sample-chart text{fill:var(--hot);font:700 8px var(--mono);letter-spacing:.08em}.cohort-sample-note{color:var(--quiet)!important;font:700 9px/1.4 var(--mono);letter-spacing:.08em;text-transform:uppercase}.empty-distribution{display:none}
+.section-head--practice h2{max-width:940px;font-size:clamp(40px,5vw,64px)}.operating-signals{display:grid;grid-template-columns:repeat(var(--signal-count),minmax(0,1fr));border-top:1px solid var(--paper);border-bottom:1px solid var(--line)}.operating-signal{min-width:0;padding:24px 24px 24px 0}.operating-signal+.operating-signal{border-left:1px solid var(--line);padding-left:24px}.operating-signal>strong{display:block;margin-top:20px;color:var(--hot);font:700 clamp(44px,5vw,64px)/.8 var(--display)}.operating-signal h3{margin:16px 0 0;font:700 20px/1 var(--display);text-transform:uppercase}.operating-signal p{margin:12px 0 0;color:var(--muted);font-size:14px;line-height:1.45}.operating-signal small{display:block;margin-top:16px;color:var(--quiet);font:700 10px/1.4 var(--mono);letter-spacing:.04em;text-transform:uppercase}.operating-mixes{display:grid;grid-template-columns:repeat(var(--mix-count),minmax(0,1fr));gap:32px;padding:32px 0;border-bottom:1px solid var(--paper)}.operating-mix-head{display:flex;align-items:end;justify-content:space-between;gap:16px}.operating-mix-head h3{margin:0;font:700 22px/1 var(--display);text-transform:uppercase}.operating-mix-head span{color:var(--quiet);font:700 10px/1.4 var(--mono);letter-spacing:.05em;text-transform:uppercase}.operating-mix-bar{display:grid;height:16px;margin-top:16px;border:1px solid var(--line)}.operating-mix-bar i{display:block;background:var(--hot)}.operating-mix-bar i:nth-child(2){background:var(--paper)}.operating-mix-bar i:nth-child(3){background:var(--green)}.operating-mix-bar i:nth-child(4){background:var(--amber)}.operating-mix-bar i+i{border-left:1px solid var(--ink)}.operating-mix-labels{display:flex;flex-wrap:wrap;gap:8px 16px;margin-top:12px}.operating-mix-labels span{display:flex;gap:8px;color:var(--quiet);font-size:12px}.operating-mix-labels b{color:var(--muted);font-weight:600}.cohort-example-stamp{border:1px solid var(--hot);padding:8px 12px;color:var(--hot);font:700 10px/1 var(--mono);letter-spacing:.08em;text-transform:uppercase}.cohort-sample-row{grid-template-columns:minmax(220px,.65fr) minmax(320px,1.35fr);min-height:88px}.cohort-sample-value{display:block}.cohort-sample-value span{display:block;color:var(--paper);font:700 18px/1 var(--display);text-transform:uppercase}.cohort-sample-value strong{display:block;margin-top:8px;color:var(--quiet);font:700 10px/1.4 var(--mono);letter-spacing:.06em;text-transform:uppercase}.cohort-density-fill{fill:rgba(146,138,126,.08);stroke:var(--quiet);stroke-dasharray:4 5;opacity:.55}.cohort-sample-chart text{fill:var(--quiet);font-size:10px;opacity:.8}.cohort-sample-foot{display:flex;align-items:center;justify-content:space-between;gap:24px}.cohort-sample-foot .cohort-upload-link{margin-top:16px}.cohort-sample-note{margin-top:16px!important;font-size:10px}.cohort-upload-link:focus-visible{outline:2px solid var(--paper);outline-offset:4px}.cohort-placement-line,.cohort-placement-dot{display:none}
+@media(max-width:900px){.practice-lead{grid-template-columns:1fr}.operating-signals{grid-template-columns:1fr 1fr}.operating-signals[data-signal-count="1"]{grid-template-columns:1fr}.operating-signal:nth-child(3){border-left:0}.operating-signal:nth-child(n+3){border-top:1px solid var(--line)}.decision-grid{grid-template-columns:1fr}.decision-cell+.decision-cell{border-left:0;border-top:1px solid var(--line);padding-left:0}.industry-row,.expertise-item{grid-template-columns:minmax(200px,.7fr) minmax(0,1.3fr)}.industry-depth,.evidence-type{grid-column:2;text-align:left}.practice-flow{grid-template-columns:1fr 1fr}.practice-step:nth-child(3){border-left:0}.practice-step:nth-child(n+3){border-top:1px solid var(--line)}}
+@media(max-width:620px){body{font-size:16px}.shell{width:min(calc(100% - 32px),var(--content))}.site-head{align-items:flex-start;padding:14px 0}.brand>span:last-child{display:none}.view-switch button{padding:8px;font-size:9px}.hero{padding-top:68px}.hero h1{font-size:clamp(58px,21vw,92px)}.section-head{grid-template-columns:1fr;gap:18px}.split-method{padding:20px}.split-method-head{align-items:flex-start;flex-direction:column}.split-bar{grid-template-columns:1fr!important}.split-segment+.split-segment{border-left:0;border-top:1px solid var(--ink)}.split-facts,.practice-stats,.practice-flow{grid-template-columns:1fr}.split-facts div{align-items:flex-start;flex-direction:column}.practice-stat:nth-child(even),.practice-step+.practice-step{border-left:0;padding-left:0}.practice-step:nth-child(n+2){border-top:1px solid var(--line)}.practice-proof,.industry-row,.expertise-item,body:not([data-view=full]) .industry-row{grid-template-columns:1fr;gap:10px}.industry-blend{grid-template-columns:1fr}.industry-depth,.evidence-type{grid-column:auto;text-align:left}.evidence-index>div{grid-template-columns:1fr;gap:6px}.share-actions{align-items:stretch;flex-direction:column}.share-actions span{margin-left:0}.share-actions button{width:100%}footer{flex-direction:column;align-items:flex-start;padding-block:28px}.local-upload button{width:100%}}
+@media(max-width:620px){.site-head{align-items:center;min-height:58px;padding:8px 0}.hero{padding:48px 0 44px}.thesis{margin-top:28px}.section{padding:44px 0}.section-continuation{padding-top:22px}.section-head{gap:12px;margin-bottom:28px}.section-head p{margin-top:8px}.section-head--practice h2{font-size:36px}.cohort-gate{padding:4px 0}.cohort-card{padding:16px 0 16px 16px}.cohort-gate h2{font-size:30px}.cohort-gate p{margin-top:8px;line-height:1.45}.cohort-sample-head{display:block}.cohort-example-stamp{display:inline-block;margin-top:16px}.cohort-upload-link{width:100%;margin-top:16px}.cohort-sample-rows{margin-top:20px}.cohort-sample-row{grid-template-columns:1fr;gap:8px;min-height:0;padding:16px 0}.cohort-sample-value span{font-size:16px}.cohort-sample-value strong{margin-top:8px;font-size:10px}.cohort-sample-chart svg{height:56px}.cohort-sample-foot{display:block}.cohort-sample-note{margin-top:12px!important;font-size:10px}.operating-signals{grid-template-columns:1fr}.operating-signal{padding:24px 0}.operating-signal+.operating-signal{border-left:0;border-top:1px solid var(--line);padding-left:0}.operating-signal:nth-child(3){border-top:1px solid var(--line)}.operating-signal>strong{font-size:52px}.operating-mixes{grid-template-columns:1fr;gap:32px;padding:32px 0}.operating-mix-head{align-items:flex-start;flex-direction:column;gap:4px}.operating-mix-labels{display:grid;grid-template-columns:1fr}.operating-mix-labels span{justify-content:space-between}}
+.practice-stats{grid-template-columns:repeat(auto-fit,minmax(180px,1fr));margin-bottom:32px}.practice-stat:nth-child(even){border-left:0}.practice-stat+.practice-stat{border-left:1px solid var(--line);padding-left:16px}
+@media(max-width:620px){.practice-stats{grid-template-columns:1fr}.practice-stat+.practice-stat{border-left:0;padding-left:0}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*::before,*::after{animation:none!important;transition:none!important}.reveal{opacity:1;transform:none}}
+@media print{:root{--ink:#fff;--surface:#fff;--paper:#111;--muted:#444;--quiet:#555;--line:#bbb;--hot:#b33500}.site-head{position:static}.view-switch,.local-upload,.local-only-notice,.toast{display:none!important}.reveal{opacity:1;transform:none}.full-only{display:block!important}.industry-row.full-only,.expertise-item.full-only,.practice-proof.full-only{display:grid!important}.section{break-inside:avoid}}
 </style>
 </head>
-<body>
-
-<div class="topbar">
-  <span class="ini">OP</span><span class="sep">/</span><span>Matching Profile</span>
-  <span class="r"><a href="/">assessment.organizedai.vip</a></span>
-</div>
-
-<nav class="side">
-  <div class="g">// PROFILE</div>
-  <a class="nl" href="#top">Overview</a>
-  <a class="nl" href="#s1">01 Agent footprint</a>
-  <a class="nl" href="#mix">Matched window</a>
-  <a class="nl" href="#cal">Activity calendar</a>
-  <a class="nl" href="#s2">02 Operating profile</a>
-  <div class="g">// CONTEXT</div>
-  <a class="nl" href="#s3">03 Career &amp; industries</a>
-  <a class="nl" href="#s4">04 Subject matter</a>
-  <div class="g">// DECISION</div>
-  <a class="nl" href="#s5">05 Matching decision</a>
-  <a class="nl" href="#s6">06 Share</a>
-  <a class="nl" href="#s7">07 Sources &amp; limits</a>
-</nav>
-
-<main>
-<div class="w">
-
-  <div class="head" id="top">
-    <div class="cm">// PROJECT-FIT PROFILE</div>
-    <h1 id="nm"></h1>
-    <div class="hl" id="hl"></div>
-    <p class="fine" id="prov" style="margin-top:14px"></p>
-    <div class="chips" id="srcs"></div>
-    <div class="notice">
-      <div class="k">// SAMPLE NOTICE</div>
-      <p id="notice"></p>
+<body data-view="summary"><aside style="padding:20px;text-align:center;background:#F2C000;color:#171717;font:16px/1.6 system-ui"><strong>SYNTHETIC EXAMPLE</strong> — This fictional fixture demonstrates the report format. It is not a candidate assessment. <a style="color:inherit" href="/">Create your work profile →</a></aside>
+<header class="shell site-head">
+  <a class="brand" href="#top" id="brand-egg" aria-label="Organized AI · Synthetic example profile home"><span class="brand-mark">O</span><span>Organized AI · Synthetic example / Matching profile</span></a>
+  <div class="view-switch" aria-label="Profile detail level">
+    <button type="button" data-view-button="summary" aria-pressed="true">30-second read</button>
+    <button type="button" data-view-button="full" aria-pressed="false">Evidence detail</button>
+  </div>
+</header>
+<main id="top">
+  <!-- overflow-local-only-notice:start -->
+<div class="shell local-only-notice">Private preview. Nothing has been uploaded. Review this page before sharing it.</div>
+<!-- overflow-local-only-notice:end -->
+  <section class="shell hero reveal" aria-labelledby="profile-name">
+    <div>
+      <span class="eyebrow">Project-fit profile</span>
+      <h1 id="profile-name">Riley <span>Okafor</span></h1>
+      <p class="thesis">A three-time software founder who uses coding agents to decide what companies should own and gets those systems into use.</p>
+      <p class="hero-note">Career context comes from LinkedIn. Current depth comes from observed agent work.</p>
+      <span class="source-markers source-markers--summary" title="Evidence: ev-004, ev-003" aria-label="LinkedIn, Sessions. Evidence: ev-004, ev-003"><i>LinkedIn</i><i>Sessions</i></span>
     </div>
-  </div>
+  </section>
+  <section class="shell section reveal" id="agent-footprint" aria-labelledby="agent-footprint-title">
+    <div class="section-head"><span class="section-index">01 / Agent footprint</span><div><h2 id="agent-footprint-title">Observed agent activity.</h2><p>Activity counts use retained local history. Tool mix uses the same dates for both tools.</p></div></div>
+  </section>
 
-  <div class="sec" id="s1">
-    <div class="cm">// 01 AGENT FOOTPRINT</div>
-    <h2>Observed agent activity</h2>
-    <p class="lead" id="fpintro"></p>
-    <div id="dists"></div>
-    <div class="panel y">
-      <div class="k">// HOW THESE CURVES ARE BUILT</div>
-      <ul id="curvenotes"></ul>
+  <section class="shell section section-continuation reveal" id="normalized-mix" aria-label="Normalized agent source mix"><div class="split-method">
+    <div class="split-method-head"><div><span class="source">Matched-window comparison</span><h3>Normalized Claude / Codex mix</h3></div><span>44-day shared window</span></div>
+    <div class="split-bar" role="img" aria-label="Claude Code 36.5%, 196 sessions; Codex 63.5%, 341 sessions" style="grid-template-columns:36.5fr 63.5fr">
+      <div class="split-segment" data-source="claude" style="--segment:0"><b>Claude Code</b><strong>36.5%</strong></div><div class="split-segment" data-source="codex" style="--segment:1"><b>Codex</b><strong>63.5%</strong></div>
     </div>
-  </div>
+    <div class="split-facts"><div><span>Claude Code</span><b>196 · 4.5/day</b></div><div><span>Codex</span><b>341 · 7.8/day</b></div></div>
+    <p>Both counts use 2026-06-11–2026-07-24. 537 session records are inside the shared window. This is session-record share, not time, preference, quality, or completed work. Counts come from local session records. Fixed checks confirm the totals without reading the raw session text.</p>
 
-  <div class="sec" id="mix">
-    <div class="cm">// MATCHED-WINDOW COMPARISON</div>
-    <h2>Normalized tool mix</h2>
-    <p class="lead" id="mixwin"></p>
-    <div class="split">
-      <div class="lbl"><span class="l" id="ml"></span><span class="rr" id="mr"></span></div>
-      <div class="sbar"><i class="a" id="ba"></i><i class="b" id="bb"></i></div>
-      <div class="sub"><span id="msl"></span><span id="msr"></span></div>
+    <span class="source-markers source-markers--summary" title="Evidence: ev-001" aria-label="Assessment. Evidence: ev-001"><i>Assessment</i></span>
+  </div></section>
+  <section class="shell section reveal" id="agent-practice" aria-labelledby="agent-practice-title">
+    <div class="section-head section-head--practice"><span class="section-index">02 / Agent operating profile</span><div><h2 class="long-title" id="agent-practice-title">Acts as the director and reviewer of an agent delivery system.</h2><p>How this person delegates, coordinates, owns, and checks agent work.</p><span class="source-markers" title="Evidence: ev-002, ev-005" aria-label="Sessions, Assessment. Evidence: ev-002, ev-005"><i>Sessions</i><i>Assessment</i></span></div></div>
+    <div class="practice-stats" aria-label="Observed agent activity statistics"><article class="practice-stat"><strong>9</strong><span>median interactive sessions per active day</span></article><article class="practice-stat"><strong>24</strong><span>peak concurrent interactive sessions</span></article></div>
+    <div class="operating-signals" aria-label="Agent operating ratios" data-signal-count="4" style="--signal-count:4"><article class="operating-signal"><span class="source">01 / Delegation</span><strong>48%</strong><h3>Delegation rate</h3><p>94 of 196 scanned Claude Code sessions used subagents.</p><small>Same-source session count</small></article><article class="operating-signal"><span class="source">02 / Parallel work</span><strong>74.2%</strong><h3>Multi-session active days</h3><p>89 of 120 observed active days included more than one interactive session.</p><small>Active-day count · scheduled runs excluded</small></article><article class="operating-signal"><span class="source">03 / Delivery ownership</span><strong>3/3</strong><h3>Owned into real use</h3><p>3 of 3 work examples reached real use under this person&#39;s ownership; 2 continued into operation.</p><small>Work examples with retained evidence</small></article><article class="operating-signal"><span class="source">04 / Verification</span><strong>3/3</strong><h3>Independently checked work</h3><p>3 of 3 work examples show a separate review or acceptance check.</p><small>Retained evidence · unknown stays in the count</small></article></div>
+    <div class="operating-mixes" aria-label="Observed work mix" style="--mix-count:2"><div class="operating-mix"><div class="operating-mix-head"><h3>Primary work surface</h3><span>3 qualifying arcs</span></div><div class="operating-mix-bar" role="img" aria-label="Product Operations: 1 of 3; Application Software: 1 of 3; Workflow Integration: 1 of 3" style="grid-template-columns:1fr 1fr 1fr"><i title="Product Operations: 1 of 3"></i><i title="Application Software: 1 of 3"></i><i title="Workflow Integration: 1 of 3"></i></div><div class="operating-mix-labels"><span><b>Product Operations</b>1/3</span><span><b>Application Software</b>1/3</span><span><b>Workflow Integration</b>1/3</span></div></div><div class="operating-mix"><div class="operating-mix-head"><h3>Change type</h3><span>3 qualifying arcs</span></div><div class="operating-mix-bar" role="img" aria-label="Operational Automation: 1 of 3; New Capability: 1 of 3; Experience Improvement: 1 of 3" style="grid-template-columns:1fr 1fr 1fr"><i title="Operational Automation: 1 of 3"></i><i title="New Capability: 1 of 3"></i><i title="Experience Improvement: 1 of 3"></i></div><div class="operating-mix-labels"><span><b>Operational Automation</b>1/3</span><span><b>New Capability</b>1/3</span><span><b>Experience Improvement</b>1/3</span></div></div></div>
+    <div class="practice-flow full-only" aria-label="Observed agent workflow"><article class="practice-step"><span class="step-no">01</span><h3>Frame the outcome</h3><p>Starts with the operating problem, then sets scope and acceptance rules.</p></article><article class="practice-step"><span class="step-no">02</span><h3>Split owned work</h3><p>Assigns bounded workstreams with explicit ownership and completion tests.</p></article><article class="practice-step"><span class="step-no">03</span><h3>Check independently</h3><p>Uses a separate review before accepting material implementation results.</p></article><article class="practice-step"><span class="step-no">04</span><h3>Operate and repair</h3><p>Returns to delivered systems to fix failures and improve behavior.</p></article></div>
+    <div class="practice-proof"><h3>What is distinctive</h3><div><p>Uses coding agents for operating decisions as well as implementation work.</p></div></div>
+    <div class="practice-proof"><h3>Reusable operating system</h3><div><p>Reuses bounded reviewer briefs, source rules, and acceptance checks across projects.</p></div></div>
+    <div class="practice-proof full-only"><h3>Where the evidence bends</h3><div><p>The captured sessions show direction and review, not direct code authorship.</p></div></div>
+  </section>
+  <section class="shell section reveal" id="industries" aria-labelledby="industries-title">
+    <div class="section-head"><span class="section-index">03 / Career &amp; industries</span><div><h2 class="long-title" id="industries-title">Where their expertise comes from.</h2><p>Career context establishes duration and responsibility. Observed work shows what is active now.</p></div></div>
+    <div class="industry-map"><article class="industry-row">
+      <h3>AI consulting and custom software<span>Mid-market and private-equity-backed companies</span></h3>
+      <div class="industry-blend"><p><b>Career context</b>Led advisory work for mid-market and private-equity-backed companies with responsibility for product and operating decisions.</p><p><b>Observed work</b>Three classified arcs cover delivery systems, commercial workflows, client integrations, and post-launch operation.</p><span class="source-markers source-markers--summary" title="Evidence: ev-004, ev-003" aria-label="LinkedIn, Sessions. Evidence: ev-004, ev-003"><i>LinkedIn</i><i>Sessions</i></span></div>
+      <span class="industry-depth ">Deep · current</span>
+    </article><article class="industry-row">
+      <h3>Enterprise software and B2B SaaS<span>Mobile products and conversation intelligence</span></h3>
+      <div class="industry-blend"><p><b>Career context</b>Led enterprise product launches through two acquisitions and sustained commercial ownership.</p><p><b>Observed work</b>Current arcs cover CRM, delivery platforms, account reporting, data repair, and a cross-platform subscription product.</p><span class="source-markers source-markers--summary" title="Evidence: ev-004, ev-003" aria-label="LinkedIn, Sessions. Evidence: ev-004, ev-003"><i>LinkedIn</i><i>Sessions</i></span></div>
+      <span class="industry-depth ">Deep · sustained</span>
+    </article><article class="industry-row">
+      <h3>Commercial fabrication and interiors<span>Offices, hospitality, and public spaces</span></h3>
+      <div class="industry-blend"><p><b>Career context</b>Six years as founder and chairman of a wood-and-metal fabrication company.</p><p><b>Observed work</b>The retained agent window has no qualifying fabrication work arc, so current digital depth is not inferred.</p><span class="source-markers source-markers--summary" title="Evidence: ev-004, ev-005" aria-label="LinkedIn, Assessment. Evidence: ev-004, ev-005"><i>LinkedIn</i><i>Assessment</i></span></div>
+      <span class="industry-depth context">Career depth</span>
+    </article><article class="industry-row full-only">
+      <h3>Consumer software<span>Subscriptions and cross-platform release</span></h3>
+      <div class="industry-blend"><p><b>Career context</b>Product-company history establishes commercial ownership and adoption responsibility.</p><p><b>Observed work</b>Two arcs include payments, desktop notarization, mobile test distribution, and consumer application operations.</p><span class="source-markers source-markers--summary" title="Evidence: ev-004, ev-003" aria-label="LinkedIn, Sessions. Evidence: ev-004, ev-003"><i>LinkedIn</i><i>Sessions</i></span></div>
+      <span class="industry-depth ">Working · current</span>
+    </article></div>
+  </section>
+  <section class="shell section reveal" id="subject-matter" aria-labelledby="subject-matter-title">
+    <div class="section-head"><span class="section-index">04 / Subject matter</span><div><h2 id="subject-matter-title">What they know.</h2><p>Each area names the work that supports it. Generic tool use does not qualify.</p></div></div>
+    <div class="expertise-matrix"><article class="expertise-item"><h3>Commercial product formation</h3><div><p>Connects product definition, pricing, delivery, and adoption during the first operating stage.</p><span class="source-markers" title="Evidence: ev-004" aria-label="LinkedIn. Evidence: ev-004"><i>LinkedIn</i></span></div><span class="evidence-type">Reviewed career history</span></article><article class="expertise-item"><h3>Agent operating models</h3><div><p>Defines worker boundaries, reusable briefs, review gates, spend controls, model routing, and recurring jobs.</p><span class="source-markers" title="Evidence: ev-002, ev-003" aria-label="Sessions. Evidence: ev-002, ev-003"><i>Sessions</i></span></div><span class="evidence-type">Three observed work arcs</span></article><article class="expertise-item"><h3>Professional-services operations</h3><div><p>Builds staffing views, review preparation, account reporting, delivery vocabulary, and privacy boundaries.</p><span class="source-markers" title="Evidence: ev-003" aria-label="Sessions. Evidence: ev-003"><i>Sessions</i></span></div><span class="evidence-type">Two observed work arcs</span></article><article class="expertise-item full-only"><h3>Evidence and data integrity</h3><div><p>Works on schema compatibility, sync freshness, recovery, privacy limits, and reports that distinguish missing data.</p><span class="source-markers" title="Evidence: ev-003" aria-label="Sessions. Evidence: ev-003"><i>Sessions</i></span></div><span class="evidence-type">Three observed work arcs</span></article></div>
+  </section>
+  <section class="shell section reveal" id="matching-decision" aria-labelledby="matching-title"><div class="section-head"><span class="section-index">05 / Matching decision</span><div><h2 id="matching-title">How to use the profile.</h2><p>Make the staffing decision without turning uncertainty into a score.</p></div></div><div class="decision-grid"><article class="decision-cell" data-tone="fit"><span class="eyebrow">Strongest fit</span><h3>Founder or product operator for owned software</h3><p>Best for ambiguous company workflows that need a business decision, an agent operating model, and a working internal product.</p><span class="source-markers" title="Evidence: ev-004, ev-003, ev-002" aria-label="LinkedIn, Sessions. Evidence: ev-004, ev-003, ev-002"><i>LinkedIn</i><i>Sessions</i></span></article><article class="decision-cell full-only" data-tone="pair"><span class="eyebrow">Add a specialist</span><h3>When engineering risk dominates</h3><p>Pair with dedicated security, database-scale, testing, continuous-integration, or reliability ownership.</p><span class="source-markers" title="Evidence: ev-005" aria-label="Assessment. Evidence: ev-005"><i>Assessment</i></span></article><article class="decision-cell full-only" data-tone="gap"><span class="eyebrow">Not shown</span><h3>Direct code authorship</h3><p>The retained evidence does not establish how much code the person wrote directly.</p><span class="source-markers" title="Evidence: ev-005" aria-label="Assessment. Evidence: ev-005"><i>Assessment</i></span></article></div></section>
+  <section class="shell section reveal full-only share-studio" id="profile-share-card" aria-labelledby="share-card-title">
+    <div class="section-head"><span class="section-index">06 / Share</span><div><h2 id="share-card-title">Share the signal.</h2><p>A fixed LinkedIn card keeps the identity, tool mix, and three hiring signals readable.</p></div></div>
+    <div class="share-actions"><button type="button" data-profile-share-download data-filename="riley-okafor-profile.png">Download PNG</button><button type="button" data-profile-share-copy>Copy profile link</button><span data-profile-share-status aria-live="polite">1200 × 627</span></div>
+    <div class="share-frame">
+      <svg data-profile-share-svg viewBox="0 0 1200 627" role="img" aria-label="Organized AI · Synthetic example matching profile card for Riley Okafor" xmlns="http://www.w3.org/2000/svg">
+        <rect width="1200" height="627" fill="#0a0a09"/><path d="M0 0H1200V627H0Z" fill="none" stroke="#38342d"/>
+        <rect x="54" y="48" width="28" height="28" fill="none" stroke="#F2C000"/><text x="64" y="68" fill="#F2C000" font-family="monospace" font-size="14">O</text>
+        <text x="98" y="69" fill="#f4f0e8" font-family="monospace" font-size="15" font-weight="700" letter-spacing="2">ORGANIZED AI · SYNTHETIC EXAMPLE / MATCHING PROFILE</text>
+        <text x="1146" y="69" fill="#928a7e" text-anchor="end" font-family="monospace" font-size="12" letter-spacing="1">EVIDENCE, NOT VIBES</text>
+        <text x="54" y="166" fill="#f4f0e8" font-family="Arial Narrow,Arial,sans-serif" font-size="76" font-weight="800">RILEY OKAFOR</text>
+        <text x="54" y="222" fill="#b8b0a3" font-family="Arial,sans-serif" font-size="31"><tspan x="54" dy="0">A three-time software founder who</tspan><tspan x="54" dy="42">uses coding agents to decide what</tspan><tspan x="54" dy="42">companies should own and gets</tspan><tspan x="54" dy="42">those systems into use.</tspan></text>
+        <g transform="translate(700 150)"><text fill="#928a7e" font-family="monospace" font-size="12" letter-spacing="1">SHARED-WINDOW AGENT MIX</text>
+          <rect y="30" width="446" height="70" fill="#f4f0e8"/><rect x="162.79" y="30" width="283.21" height="70" fill="#ff4d00"/>
+          <text x="18" y="75" fill="#0a0a09" font-family="Arial,sans-serif" font-size="21" font-weight="700">CLAUDE 36.5%</text><text x="428" y="75" fill="#0a0a09" text-anchor="end" font-family="Arial,sans-serif" font-size="21" font-weight="700">CODEX 63.5%</text>
+          <text y="126" fill="#b8b0a3" font-family="monospace" font-size="13">537 retained records / 44 shared days · 12.2 / day</text>
+          <text y="150" fill="#928a7e" font-family="monospace" font-size="10">ACTIVITY DENSITY, NOT QUALITY OR TIME SPENT</text>
+        </g>
+        <g transform="translate(54 438)"><text fill="#ff4d00" font-family="monospace" font-size="11" letter-spacing="1">AGENT PRACTICE</text><text x="0" y="34" fill="#f4f0e8" font-family="Arial,sans-serif" font-size="20"><tspan x="0" dy="0">Acts as the director and</tspan><tspan x="0" dy="25">reviewer of an agent</tspan><tspan x="0" dy="25">delivery system.</tspan></text></g><g transform="translate(432 438)"><text fill="#ff4d00" font-family="monospace" font-size="11" letter-spacing="1">INDUSTRY</text><text x="0" y="34" fill="#f4f0e8" font-family="Arial,sans-serif" font-size="20"><tspan x="0" dy="0">AI consulting and custom</tspan><tspan x="0" dy="25">software</tspan></text></g><g transform="translate(810 438)"><text fill="#ff4d00" font-family="monospace" font-size="11" letter-spacing="1">STRONGEST FIT</text><text x="0" y="34" fill="#f4f0e8" font-family="Arial,sans-serif" font-size="20"><tspan x="0" dy="0">Founder or product operator</tspan><tspan x="0" dy="25">for owned software</tspan></text></g>
+        <line x1="54" y1="592" x2="1146" y2="592" stroke="#38342d"/><text x="54" y="616" fill="#928a7e" font-family="monospace" font-size="11">Career context + observed agent work</text><text x="1146" y="616" fill="#F2C000" text-anchor="end" font-family="monospace" font-size="11">AI WORK ASSESSMENT</text>
+      </svg>
     </div>
-    <p class="fine" id="mixnote"></p>
-  </div>
+    <span class="source-markers" title="Evidence: ev-004, ev-003, ev-002" aria-label="LinkedIn, Sessions. Evidence: ev-004, ev-003, ev-002"><i>LinkedIn</i><i>Sessions</i></span>
+  </section>
 
-  <div class="sec" id="cal">
-    <div class="cm">// ACTIVITY CAL_NDAR</div>
-    <h2>Rhythm, and where it is corroborated</h2>
-    <p class="lead">Observed sessions and authored GitHub activity over the same span.
-       Days carrying both have third-party timestamps behind them.</p>
-    <div class="cal" id="calwrap"></div>
-  </div>
-
-  <div class="sec" id="s2">
-    <div class="cm">// 02 AGENT OPERATING PROFILE</div>
-    <h2 id="ophead"></h2>
-    <p class="lead" id="opintro"></p>
-    <div class="quick" id="quick"></div>
-    <div id="measures"></div>
-
-    <div style="margin-top:var(--xl)" id="classes"></div>
-
-    <div class="cm" style="margin-top:var(--xl)">// HOW THE WORK GETS RUN</div>
-    <div class="steps" id="method"></div>
-
-    <div class="char" id="char"></div>
-  </div>
-
-  <div class="sec" id="s3">
-    <div class="cm">// 03 CAREER AND INDUSTRIES</div>
-    <h2>Where the expertise comes from</h2>
-    <p class="lead" id="carintro"></p>
-    <div id="inds"></div>
-  </div>
-
-  <div class="sec" id="s4">
-    <div class="cm">// 04 SUBJECT MATTER</div>
-    <h2>What they know</h2>
-    <p class="lead" id="subintro"></p>
-    <div id="subjs"></div>
-  </div>
-
-  <div class="sec" id="s5">
-    <div class="cm">// 05 MATCHING DECISION</div>
-    <h2>How to use this profile</h2>
-    <p class="lead" id="decintro"></p>
-    <div id="fits"></div>
-  </div>
-
-  <div class="sec" id="s6">
-    <div class="cm">// 06 SHARE</div>
-    <h2>Share the signal</h2>
-    <p class="lead" id="shintro"></p>
-    <div class="card" id="card"></div>
-    </div>
-
-  <div class="sec" id="s7">
-    <div class="cm">// 07 SOURCES AND LIMITS</div>
-    <h2>Where the data stops</h2>
-    <p class="lead" id="srcline"></p>
-    <div class="panel">
-      <div class="k">// OUTSIDE THIS EVIDENCE</div>
-      <ul id="limits"></ul>
-      <div class="nt">Every resume makes claims it cannot support. This one states its limits
-        so a reader knows how much weight to give it. Absence here is not evidence of
-        inability — it is evidence of what was not observed.</div>
-    </div>
-    <div class="cm" style="margin-top:var(--xl)">// EVIDENCE INDEX</div>
-    <div id="evs"></div>
-    <p class="fine" style="margin-top:var(--lg)" id="closing"></p>
-  </div>
-
-</div>
+  <section class="shell section full-only" id="sources-and-limits" aria-labelledby="limits-title">
+    <div class="section-head"><span class="section-index">07 / Sources &amp; limits</span><div><h2 id="limits-title">Where the data stops.</h2><p>Sources retained in this profile: LinkedIn, Sessions, Assessment.</p></div></div>
+    <div class="limits"><article><p>Cross-tool comparison uses only the 44-day shared window because source retention differs.</p><span class="source-markers" title="Evidence: ev-001" aria-label="Assessment. Evidence: ev-001"><i>Assessment</i></span></article><article><p>Career context is self-reported. Captured work remains the source for current depth.</p><span class="source-markers" title="Evidence: ev-004, ev-005" aria-label="LinkedIn, Assessment. Evidence: ev-004, ev-005"><i>LinkedIn</i><i>Assessment</i></span></article><article><p>The report does not independently verify business outcomes or sole authorship.</p><span class="source-markers" title="Evidence: ev-005" aria-label="Assessment. Evidence: ev-005"><i>Assessment</i></span></article></div>
+    <details><summary>Evidence index</summary><div class="evidence-index"><div><b>ev-004</b><span>LinkedIn</span><p>Reviewed career history supports founder, industry, operating, and product-formation context.</p></div><div><b>ev-003</b><span>Sessions</span><p>Three classified arcs support current delivery, operations, product, workflow, and data-integrity claims.</p></div><div><b>ev-002</b><span>Sessions</span><p>Observed sessions and tool metadata support the agent workflow, concurrency, subagent, and reusable-review claims.</p></div><div><b>ev-001</b><span>Assessment</span><p>Deterministic aggregation found 196 Claude and 341 Codex sessions in the exact shared 44-day window.</p></div><div><b>ev-005</b><span>Assessment</span><p>The retained evidence does not independently prove outcomes, sole authorship, or unobserved current industry work.</p></div></div></details>
+    <p class="generated">Generated 2026-08-02T12:00:00Z</p>
+  </section>
 </main>
-
-<footer>
-  Organized AI · derived from work, not self-reported ·
-  <span id="gen"></span>
-</footer>
-
-<script>
-const P = {
-  name:"Riley Okafor",
-  headline:"A three-time software founder who uses coding agents to decide what companies should own, and gets those systems into use.",
-  provenance:"Career context comes from LinkedIn. Current depth comes from observed agent work.",
-  sources:["LinkedIn","Sessions","Assessment"],
-  notice:"Modeled sample on the current assessment format. Names, employers, counts, and cohort placements are altered sample data. Nothing here represents a live cohort result.",
-  generated:"Generated 02 Aug 2026",
-  footprintIntro:"Cohort placement uses submitted profiles that follow the same rules. Tool mix uses identical date ranges for both tools.",
-  metrics:[
-    {label:"Captured agent activity",placement:"82nd pct · 64/64 reported",value:"580",unit:"agent sessions",you:580,low:40,high:1200,q1:160,q3:720,lowL:"40",highL:"1,200",q1L:"160",q3L:"720",note:"Captured sessions across the agent-tool windows reported in this profile."},
-    {label:"Delegation rate",placement:"76th pct · 64/64 reported",value:"48%",unit:"of scanned sessions",you:48,low:4,high:70,q1:18,q3:51,lowL:"4",highL:"70",q1L:"18",q3L:"51",note:"Same-source scanned sessions that used subagents."},
-    {label:"Parallel-work rate",placement:"88th pct · 64/64 reported",value:"74.2%",unit:"of active days",you:74.2,low:3,high:90,q1:16,q3:58,lowL:"3",highL:"90",q1L:"16",q3L:"58",note:"Observed active days with more than one interactive session."},
-    {label:"Owned into real use",placement:"95th pct · 64/64 reported",value:"100%",unit:"of work examples",you:100,low:0,high:100,q1:25,q3:75,lowL:"0",highL:"100",q1L:"25",q3L:"75",note:"Work examples that reached real use under this person's ownership."},
-    {label:"Independent verification",placement:"95th pct · 64/64 reported",value:"100%",unit:"of work examples",you:100,low:0,high:100,q1:20,q3:70,lowL:"0",highL:"100",q1L:"20",q3L:"70",note:"Work examples with a separate retained review or acceptance check."},
-    {label:"GitHub active months",placement:"91st pct · 64/64 reported",value:"12",unit:"active months",you:12,low:1,high:12,q1:5,q3:11,lowL:"1",highL:"12",q1L:"5",q3L:"11",note:"Months with authenticated authored GitHub activity in the sample year."}
+<footer class="shell"><span>Organized AI · Synthetic example / evidence-based profile</span></footer>
+<div class="toast" id="profile-toast" role="status" aria-live="polite">Fewer labels. Better decisions.</div>
+<script>(() => {
+  const body = document.body;
+  const buttons = [...document.querySelectorAll('[data-view-button]')];
+  buttons.forEach((button) => button.addEventListener('click', () => {
+    body.dataset.view = button.dataset.viewButton;
+    buttons.forEach((item) => item.setAttribute('aria-pressed', String(item === button)));
+  }));
+  const shareSvg = document.querySelector('[data-profile-share-svg]');
+  const shareDownload = document.querySelector('[data-profile-share-download]');
+  const shareCopy = document.querySelector('[data-profile-share-copy]');
+  const shareStatus = document.querySelector('[data-profile-share-status]');
+  if (shareSvg && shareDownload) shareDownload.addEventListener('click', () => {
+    const source = new XMLSerializer().serializeToString(shareSvg);
+    const blob = new Blob([source], { type: 'image/svg+xml;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const image = new Image();
+    image.onload = () => {
+      const canvas = document.createElement('canvas'); canvas.width = 1200; canvas.height = 627;
+      canvas.getContext('2d').drawImage(image, 0, 0, 1200, 627); URL.revokeObjectURL(url);
+      canvas.toBlob((png) => {
+        if (!png) return;
+        const downloadUrl = URL.createObjectURL(png); const link = document.createElement('a');
+        link.href = downloadUrl; link.download = shareDownload.dataset.filename || 'overflow-profile.png'; link.click();
+        setTimeout(() => URL.revokeObjectURL(downloadUrl), 1000);
+        if (shareStatus) shareStatus.textContent = 'PNG downloaded';
+      }, 'image/png');
+    };
+    image.onerror = () => { URL.revokeObjectURL(url); if (shareStatus) shareStatus.textContent = 'PNG export failed'; };
+    image.src = url;
+  });
+  if (shareCopy) shareCopy.addEventListener('click', async () => {
+    try { await navigator.clipboard.writeText(location.href); if (shareStatus) shareStatus.textContent = 'Profile link copied'; }
+    catch { if (shareStatus) shareStatus.textContent = 'Copy failed'; }
+  });
+  const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (reduced || !('IntersectionObserver' in window)) document.querySelectorAll('.reveal').forEach((item) => item.classList.add('is-visible'));
+  else {
+    const observer = new IntersectionObserver((entries) => entries.forEach((entry) => {
+      if (!entry.isIntersecting) return;
+      entry.target.classList.add('is-visible'); observer.unobserve(entry.target);
+    }), { threshold: .08 });
+    document.querySelectorAll('.reveal').forEach((item) => observer.observe(item));
+  }
+  let clicks = 0;
+  const mark = document.getElementById('brand-egg');
+  const toast = document.getElementById('profile-toast');
+  if (mark && toast) mark.addEventListener('click', () => {
+    clicks += 1;
+    if (clicks !== 5) return;
+    toast.classList.add('show'); setTimeout(() => toast.classList.remove('show'), 2800); clicks = 0;
+  });
+})();</script>
+<script type="application/json" id="profile-data">
+{
+  "schema_version": 9,
+  "prompt_version": 8,
+  "name": "Riley Okafor",
+  "focus": "A three-time software founder who uses coding agents to decide what companies should own and gets those systems into use.",
+  "headline": "A three-time software founder who uses coding agents to decide what companies should own and gets those systems into use.",
+  "generated_at": "2026-08-02T12:00:00Z",
+  "generated_by": {
+    "agent": "codex",
+    "model": "assessment-fixture"
+  },
+  "source_coverage": {
+    "sessions": {
+      "status": "included",
+      "usable_sessions": 580,
+      "from": "2025-08-19",
+      "to": "2026-07-24",
+      "limitations": [
+        "Retention differs by source."
+      ]
+    },
+    "github": {
+      "status": "included",
+      "collected_at": "2026-08-02",
+      "account_verified": true,
+      "limitations": []
+    },
+    "linkedin": {
+      "status": "included",
+      "collected_at": "2026-08-02",
+      "identity_verified": true,
+      "sections_seen": [
+        "about",
+        "experience"
+      ]
+    }
+  },
+  "windows": {
+    "claude": {
+      "from": "2026-06-11",
+      "to": "2026-07-24",
+      "sessions": 196,
+      "unknown_projects": 0
+    },
+    "codex": {
+      "from": "2025-08-19",
+      "to": "2026-07-24",
+      "sessions": 374,
+      "unknown_projects": 0
+    }
+  },
+  "cadence": {
+    "sessions_last_28d": 499,
+    "active_weeks_last_12": 12,
+    "sessions_per_observed_week": 47.5,
+    "last_session": "2026-07-24"
+  },
+  "activity_analysis": {
+    "coverage": {
+      "from": "2025-08-19",
+      "to": "2026-07-24",
+      "interactive_sessions": 570,
+      "scheduled_runs": 10,
+      "active_days": 120,
+      "comparability": "partial",
+      "source_windows": [
+        {
+          "source": "claude",
+          "from": "2026-06-11",
+          "to": "2026-07-24",
+          "sessions": 196,
+          "coverage_days": 44,
+          "retention": "retention-limited",
+          "limitations": []
+        },
+        {
+          "source": "codex",
+          "from": "2025-08-19",
+          "to": "2026-07-24",
+          "sessions": 374,
+          "coverage_days": 340,
+          "retention": "full-available",
+          "limitations": []
+        }
+      ],
+      "shared_window_sessions": [
+        {
+          "source": "claude",
+          "from": "2026-06-11",
+          "to": "2026-07-24",
+          "sessions": 196
+        },
+        {
+          "source": "codex",
+          "from": "2026-06-11",
+          "to": "2026-07-24",
+          "sessions": 341
+        }
+      ],
+      "limitations": [
+        "The cross-tool mix uses only the shared calendar window."
+      ]
+    },
+    "monthly": [],
+    "concurrency": {
+      "method": "15-minute event-activity buckets",
+      "median_interactive_sessions_per_active_day": 9,
+      "average_concurrent_sessions": 3.4,
+      "p95_concurrent_sessions": 12,
+      "peak_concurrent_sessions": 24,
+      "multi_session_days": 89,
+      "covered_active_days": 120,
+      "scheduled_runs_excluded": 10,
+      "limitations": []
+    },
+    "context_pressure": {},
+    "model_usage": [],
+    "trend_status": "partial",
+    "comparability_note": "Source retention differs, so the shared window is the only fair cross-tool comparison.",
+    "evolution_summary": "Agent activity is described, not scored."
+  },
+  "work_arcs": [
+    {
+      "id": "arc-1",
+      "label": "Professional-services operating platform",
+      "from": "2026-06-11",
+      "to": "2026-07-24",
+      "sources": [
+        "codex",
+        "claude"
+      ],
+      "delivery_state": "ongoing-operation",
+      "system_context": "established-system",
+      "primary_surface": "product-operations",
+      "secondary_surface": "data-models",
+      "change_type": "operational-automation",
+      "responsibility": "system-owner",
+      "authorship": "directed-reviewed",
+      "verification_mode": "independent",
+      "reviewer_governor": true,
+      "confidence": "high",
+      "evidence": [
+        "Repeated work covered delivery reporting, staffing views, review preparation, and data repair, with a separate acceptance review."
+      ],
+      "counterevidence": []
+    },
+    {
+      "id": "arc-2",
+      "label": "Cross-platform subscription product",
+      "from": "2026-06-18",
+      "to": "2026-07-24",
+      "sources": [
+        "codex"
+      ],
+      "delivery_state": "live-use",
+      "system_context": "early-system",
+      "primary_surface": "application-software",
+      "secondary_surface": "platform-infrastructure",
+      "change_type": "new-capability",
+      "responsibility": "system-owner",
+      "authorship": "directed-reviewed",
+      "verification_mode": "independent",
+      "reviewer_governor": true,
+      "confidence": "high",
+      "evidence": [
+        "Observed work covered payments, desktop notarization, mobile distribution, and an edge control plane, with a separate review pass."
+      ],
+      "counterevidence": []
+    },
+    {
+      "id": "arc-3",
+      "label": "Community matching and evidence platform",
+      "from": "2026-06-20",
+      "to": "2026-07-24",
+      "sources": [
+        "claude",
+        "codex"
+      ],
+      "delivery_state": "ongoing-operation",
+      "system_context": "established-system",
+      "primary_surface": "workflow-integration",
+      "secondary_surface": "product-operations",
+      "change_type": "experience-improvement",
+      "responsibility": "system-owner",
+      "authorship": "directed-reviewed",
+      "verification_mode": "independent",
+      "reviewer_governor": true,
+      "confidence": "high",
+      "evidence": [
+        "Observed work covered membership, outreach, events, profile evidence, and matching decisions, with independent checks before acceptance."
+      ],
+      "counterevidence": []
+    }
   ],
-  curveNotes:[
-    "Each curve uses only profiles reporting a compatible version of that metric, and appears once at least eight values are reported.",
-    "Agent-operating curves keep their source-compatible denominators.",
-    "Baseline activity metrics span older assessment versions.",
-    "This compares submitted evidence. It does not compare career seniority."
+  "skills": [
+    {
+      "tag": "agent-orchestration",
+      "label": "Agent orchestration",
+      "category": "practice",
+      "tier": "deep",
+      "authorship": "directed-reviewed",
+      "sessions": 220,
+      "sources": [
+        "sessions"
+      ],
+      "evidence": "Repeated parallel assignments, review gates, and recovery loops."
+    },
+    {
+      "tag": "product-operations",
+      "label": "Product operations",
+      "category": "practice",
+      "tier": "deep",
+      "authorship": "directed-reviewed",
+      "sessions": 150,
+      "sources": [
+        "sessions"
+      ],
+      "evidence": "Repeated work linked business decisions to running internal products."
+    },
+    {
+      "tag": "data-integrity",
+      "label": "Data integrity",
+      "category": "data",
+      "tier": "working",
+      "authorship": "directed-reviewed",
+      "sessions": 80,
+      "sources": [
+        "sessions",
+        "github"
+      ],
+      "evidence": "Observed schema compatibility, sync freshness, recovery, and reporting work."
+    }
   ],
-  mix:{left:"Claude Code",right:"Codex",lp:36.5,rp:63.5,ls:"196 records · 4.5/day",rs:"341 records · 7.8/day",
-    windowDays:44,cap:"537 RECORDS / 44 SHARED DAYS · 12.2 PER DAY",
-    note:"Both counts use 2026-06-11 to 2026-07-24. 537 session records fall inside the shared window. This is session-record share — not time spent, preference, quality, or completed work. Counts come from local session records, and fixed checks confirm the totals without reading the raw session text."},
-  operating:{
-    head:"Acts as the director and reviewer of an agent delivery system.",
-    intro:"How this person delegates, coordinates, owns, and checks agent work.",
-    quick:[["9","median interactive sessions per active day"],["24","peak concurrent interactive sessions"]],
-    measures:[
-      ["01 / delegation","Delegation rate","94 of 196 scanned sessions used subagents. Same-source session count.","48%"],
-      ["02 / parallel work","Multi-session active days","89 of 120 observed active days included more than one interactive session. Scheduled runs excluded.","74.2%"],
-      ["03 / delivery ownership","Owned into real use","3 of 3 work examples reached real use under this person's ownership; 2 continued into operation.","3/3"],
-      ["04 / verification","Independently checked work","3 of 3 work examples show a separate review or acceptance check. Unknown stays in the count.","3/3"]
+  "agent_practice": {
+    "tool_call_coverage": [
+      {
+        "source": "claude",
+        "from": "2026-06-11",
+        "to": "2026-07-24",
+        "sessions_scanned": 196,
+        "sessions_with_tool_metadata": 196,
+        "observed_calls": 612,
+        "limitations": [
+          "Coverage is limited to retained Claude sessions."
+        ]
+      }
     ],
-    method:[
-      ["01","Frame the outcome","Starts from the operating problem, then sets scope and acceptance rules."],
-      ["02","Split owned work","Assigns bounded workstreams with explicit ownership and completion tests."],
-      ["03","Check independently","Uses a separate review before accepting material implementation results."],
-      ["04","Operate and repair","Returns to delivered systems to fix failures and improve behaviour."]
+    "tool_categories": [
+      {
+        "tag": "subagents",
+        "label": "Subagents",
+        "intensity": "recurring",
+        "active_sessions": 94,
+        "observed_calls": 612,
+        "sources": [
+          "claude"
+        ],
+        "evidence": "Parallel investigation and implementation runs recur with a separate review pass."
+      }
     ],
-    character:[
-      ["what is distinctive","Uses coding agents for operating decisions as well as implementation work.",false],
-      ["reusable operating system","Reuses bounded reviewer briefs, source rules, and acceptance checks across projects.",false],
-      ["where the evidence bends","The captured sessions show direction and review, not direct code authorship.",true]
+    "reusable_assets": [],
+    "permission_practice": {
+      "coverage": [],
+      "modes": [],
+      "elevated_requests": [],
+      "finding": "Permission behavior varies by harness and is not ranked.",
+      "guardrail_pattern": "Uses bounded roles and explicit review rules.",
+      "limitations": []
+    },
+    "interaction_metadata": {},
+    "limitations": []
+  },
+  "profile_view": {
+    "hero": {
+      "thesis": "A three-time software founder who uses coding agents to decide what companies should own and gets those systems into use.",
+      "source_note": "Career context comes from LinkedIn. Current depth comes from observed agent work.",
+      "evidence_ids": [
+        "ev-004",
+        "ev-003"
+      ]
+    },
+    "agent_footprint": {
+      "normalized_mix": {
+        "from": "2026-06-11",
+        "to": "2026-07-24",
+        "calendar_days": 44,
+        "total_sessions": 537,
+        "items": [
+          {
+            "source": "claude",
+            "sessions": 196,
+            "share": 0.365,
+            "sessions_per_calendar_day": 4.5
+          },
+          {
+            "source": "codex",
+            "sessions": 341,
+            "share": 0.635,
+            "sessions_per_calendar_day": 7.8
+          }
+        ],
+        "limitations": [
+          "This is session-record share, not time, preference, quality, or completed work."
+        ],
+        "evidence_ids": [
+          "ev-001"
+        ]
+      }
+    },
+    "agent_practice": {
+      "role": {
+        "summary": "Acts as the director and reviewer of an agent delivery system.",
+        "evidence_ids": [
+          "ev-002"
+        ]
+      },
+      "statistics": [
+        {
+          "tag": "median-active-day",
+          "label": "median interactive sessions per active day",
+          "value": 9,
+          "source_field": "/activity_analysis/concurrency/median_interactive_sessions_per_active_day",
+          "evidence_ids": [
+            "ev-002"
+          ]
+        },
+        {
+          "tag": "peak-concurrency",
+          "label": "peak concurrent interactive sessions",
+          "value": 24,
+          "source_field": "/activity_analysis/concurrency/peak_concurrent_sessions",
+          "evidence_ids": [
+            "ev-002"
+          ]
+        },
+        {
+          "tag": "subagent-sessions",
+          "label": "Claude sessions using subagents, of 196 scanned",
+          "value": 94,
+          "source_field": "/agent_practice/tool_categories/0/active_sessions",
+          "evidence_ids": [
+            "ev-002"
+          ]
+        }
+      ],
+      "workflow": [
+        {
+          "label": "Frame the outcome",
+          "summary": "Starts with the operating problem, then sets scope and acceptance rules.",
+          "evidence_ids": [
+            "ev-002"
+          ]
+        },
+        {
+          "label": "Split owned work",
+          "summary": "Assigns bounded workstreams with explicit ownership and completion tests.",
+          "evidence_ids": [
+            "ev-002"
+          ]
+        },
+        {
+          "label": "Check independently",
+          "summary": "Uses a separate review before accepting material implementation results.",
+          "evidence_ids": [
+            "ev-002"
+          ]
+        },
+        {
+          "label": "Operate and repair",
+          "summary": "Returns to delivered systems to fix failures and improve behavior.",
+          "evidence_ids": [
+            "ev-002"
+          ]
+        }
+      ],
+      "distinctive_fact": {
+        "summary": "Uses coding agents for operating decisions as well as implementation work.",
+        "evidence_ids": [
+          "ev-002"
+        ]
+      },
+      "reusable_system": {
+        "summary": "Reuses bounded reviewer briefs, source rules, and acceptance checks across projects.",
+        "evidence_ids": [
+          "ev-002"
+        ]
+      },
+      "limitation": {
+        "summary": "The captured sessions show direction and review, not direct code authorship.",
+        "evidence_ids": [
+          "ev-005"
+        ]
+      }
+    },
+    "industries": [
+      {
+        "tag": "ai-consulting",
+        "label": "AI consulting and custom software",
+        "context": "Mid-market and private-equity-backed companies",
+        "career_context": "Led advisory work for mid-market and private-equity-backed companies with responsibility for product and operating decisions.",
+        "observed_work": "Three classified arcs cover delivery systems, commercial workflows, client integrations, and post-launch operation.",
+        "depth": "deep-current",
+        "sources": [
+          "linkedin",
+          "sessions"
+        ],
+        "evidence_ids": [
+          "ev-004",
+          "ev-003"
+        ]
+      },
+      {
+        "tag": "enterprise-software",
+        "label": "Enterprise software and B2B SaaS",
+        "context": "Mobile products and conversation intelligence",
+        "career_context": "Led enterprise product launches through two acquisitions and sustained commercial ownership.",
+        "observed_work": "Current arcs cover CRM, delivery platforms, account reporting, data repair, and a cross-platform subscription product.",
+        "depth": "deep-sustained",
+        "sources": [
+          "linkedin",
+          "sessions"
+        ],
+        "evidence_ids": [
+          "ev-004",
+          "ev-003"
+        ]
+      },
+      {
+        "tag": "commercial-fabrication",
+        "label": "Commercial fabrication and interiors",
+        "context": "Offices, hospitality, and public spaces",
+        "career_context": "Six years as founder and chairman of a wood-and-metal fabrication company.",
+        "observed_work": "The retained agent window has no qualifying fabrication work arc, so current digital depth is not inferred.",
+        "depth": "career-depth",
+        "sources": [
+          "linkedin",
+          "assessment"
+        ],
+        "evidence_ids": [
+          "ev-004",
+          "ev-005"
+        ]
+      },
+      {
+        "tag": "consumer-software",
+        "label": "Consumer software",
+        "context": "Subscriptions and cross-platform release",
+        "career_context": "Product-company history establishes commercial ownership and adoption responsibility.",
+        "observed_work": "Two arcs include payments, desktop notarization, mobile test distribution, and consumer application operations.",
+        "depth": "working-current",
+        "sources": [
+          "linkedin",
+          "sessions"
+        ],
+        "evidence_ids": [
+          "ev-004",
+          "ev-003"
+        ]
+      }
+    ],
+    "subject_matter": [
+      {
+        "tag": "commercial-product-formation",
+        "label": "Commercial product formation",
+        "summary": "Connects product definition, pricing, delivery, and adoption during the first operating stage.",
+        "evidence_label": "Reviewed career history",
+        "evidence_ids": [
+          "ev-004"
+        ]
+      },
+      {
+        "tag": "agent-operating-models",
+        "label": "Agent operating models",
+        "summary": "Defines worker boundaries, reusable briefs, review gates, spend controls, model routing, and recurring jobs.",
+        "evidence_label": "Three observed work arcs",
+        "evidence_ids": [
+          "ev-002",
+          "ev-003"
+        ]
+      },
+      {
+        "tag": "professional-services-operations",
+        "label": "Professional-services operations",
+        "summary": "Builds staffing views, review preparation, account reporting, delivery vocabulary, and privacy boundaries.",
+        "evidence_label": "Two observed work arcs",
+        "evidence_ids": [
+          "ev-003"
+        ]
+      },
+      {
+        "tag": "evidence-data-integrity",
+        "label": "Evidence and data integrity",
+        "summary": "Works on schema compatibility, sync freshness, recovery, privacy limits, and reports that distinguish missing data.",
+        "evidence_label": "Three observed work arcs",
+        "evidence_ids": [
+          "ev-003"
+        ]
+      }
+    ],
+    "matching": {
+      "strongest_fit": {
+        "label": "Founder or product operator for owned software",
+        "summary": "Best for ambiguous company workflows that need a business decision, an agent operating model, and a working internal product.",
+        "evidence_ids": [
+          "ev-004",
+          "ev-003",
+          "ev-002"
+        ]
+      },
+      "add_specialist": {
+        "label": "When engineering risk dominates",
+        "summary": "Pair with dedicated security, database-scale, testing, continuous-integration, or reliability ownership.",
+        "evidence_ids": [
+          "ev-005"
+        ]
+      },
+      "not_shown": {
+        "label": "Direct code authorship",
+        "summary": "The retained evidence does not establish how much code the person wrote directly.",
+        "evidence_ids": [
+          "ev-005"
+        ]
+      }
+    },
+    "limits": [
+      {
+        "summary": "Cross-tool comparison uses only the 44-day shared window because source retention differs.",
+        "evidence_ids": [
+          "ev-001"
+        ]
+      },
+      {
+        "summary": "Career context is self-reported. Captured work remains the source for current depth.",
+        "evidence_ids": [
+          "ev-004",
+          "ev-005"
+        ]
+      },
+      {
+        "summary": "The report does not independently verify business outcomes or sole authorship.",
+        "evidence_ids": [
+          "ev-005"
+        ]
+      }
     ]
   },
-  classification:[
-    ["primary work surface · 3 qualifying arcs",[["Product Operations","1/3"],["Application Software","1/3"],["Workflow Integration","1/3"]]],
-    ["change type · 3 qualifying arcs",[["Operational Automation","1/3"],["New Capability","1/3"],["Experience Improvement","1/3"]]]
+  "evidence_index": [
+    {
+      "id": "ev-004",
+      "source": "linkedin",
+      "kind": "career-context",
+      "summary": "Reviewed career history supports founder, industry, operating, and product-formation context.",
+      "from": "2009-01-01",
+      "to": "2026-08-02",
+      "arc_ids": []
+    },
+    {
+      "id": "ev-003",
+      "source": "sessions",
+      "kind": "work-arc",
+      "summary": "Three classified arcs support current delivery, operations, product, workflow, and data-integrity claims.",
+      "from": "2026-06-11",
+      "to": "2026-07-24",
+      "arc_ids": [
+        "arc-1",
+        "arc-2",
+        "arc-3"
+      ]
+    },
+    {
+      "id": "ev-002",
+      "source": "sessions",
+      "kind": "agent-practice",
+      "summary": "Observed sessions and tool metadata support the agent workflow, concurrency, subagent, and reusable-review claims.",
+      "from": "2026-06-11",
+      "to": "2026-07-24",
+      "arc_ids": [
+        "arc-1",
+        "arc-2",
+        "arc-3"
+      ]
+    },
+    {
+      "id": "ev-001",
+      "source": "assessment",
+      "kind": "activity",
+      "summary": "Deterministic aggregation found 196 Claude and 341 Codex sessions in the exact shared 44-day window.",
+      "from": "2026-06-11",
+      "to": "2026-07-24",
+      "arc_ids": []
+    },
+    {
+      "id": "ev-005",
+      "source": "assessment",
+      "kind": "limitation",
+      "summary": "The retained evidence does not independently prove outcomes, sole authorship, or unobserved current industry work.",
+      "from": "2026-06-11",
+      "to": "2026-08-02",
+      "arc_ids": []
+    }
   ],
-  careerIntro:"Career context establishes duration and responsibility. Observed work shows what is active now.",
-  industries:[
-    {t:"AI consulting and custom software",s:"Mid-market and private-equity-backed companies",
-     c:"Led advisory work for mid-market and private-equity-backed companies with responsibility for product and operating decisions.",
-     o:"Three classified arcs cover delivery systems, commercial workflows, client integrations, and post-launch operation.",
-     chips:["LinkedIn","Sessions"],badge:"Deep · current"},
-    {t:"Enterprise software and B2B SaaS",s:"Mobile products and conversation intelligence",
-     c:"Led enterprise product launches through two acquisitions and sustained commercial ownership.",
-     o:"Current arcs cover CRM, delivery platforms, account reporting, data repair, and a cross-platform subscription product.",
-     chips:["LinkedIn","Sessions"],badge:"Deep · sustained"},
-    {t:"Commercial fabrication and interiors",s:"Offices, hospitality, and public spaces",
-     c:"Six years as founder and chairman of a wood-and-metal fabrication company.",
-     o:"The retained agent window contains no qualifying fabrication arc, so current digital depth is not inferred.",
-     chips:["LinkedIn","Assessment"],badge:"Career depth"},
-    {t:"Consumer software",s:"Subscriptions and cross-platform release",
-     c:"Product-company history establishes commercial ownership and adoption responsibility.",
-     o:"Two arcs include payments, desktop notarization, mobile test distribution, and consumer application operations.",
-     chips:["LinkedIn","Sessions"],badge:"Working · current"}
-  ],
-  subjectIntro:"Each area names the work that supports it. Generic tool use does not qualify.",
-  subjects:[
-    {t:"Commercial product formation",sup:"Reviewed career history",x:"Connects product definition, pricing, delivery, and adoption during the first operating stage."},
-    {t:"Agent operating models",sup:"Three observed work arcs",x:"Defines worker boundaries, reusable briefs, review gates, spend controls, model routing, and recurring jobs."},
-    {t:"Professional-services operations",sup:"Two observed work arcs",x:"Builds staffing views, review preparation, account reporting, delivery vocabulary, and privacy boundaries."},
-    {t:"Evidence and data integrity",sup:"Three observed work arcs",x:"Works on schema compatibility, sync freshness, recovery, privacy limits, and reports that distinguish missing data from recorded zero."}
-  ],
-  decisionIntro:"Make the staffing decision without turning uncertainty into a score.",
-  fit:[
-    ["Strongest fit","Founder or product operator for owned software","Best for ambiguous company workflows that need a business decision, an agent operating model, and a working internal product.",["LinkedIn","Sessions"],false],
-    ["Add a specialist","When engineering risk dominates","Pair with dedicated security, database-scale, testing, continuous-integration, or reliability ownership.",["Assessment"],false],
-    ["Not shown","Direct code authorship","The retained evidence does not establish how much code this person wrote directly.",["Assessment"],true]
-  ],
-  shareIntro:"A fixed card keeps the identity, tool mix, and three hiring signals readable at feed size.",
-  cardSignals:[["agent practice","Acts as the director and reviewer of an agent delivery system."],
-               ["industry","AI consulting and custom software"],
-               ["strongest fit","Founder or product operator for owned software"]],
-  limits:[
-    "Cross-tool comparison uses only the 44-day shared window, because source retention differs between tools.",
-    "Career context is self-reported. Captured work remains the source for current depth.",
-    "This report does not independently verify business outcomes or sole authorship."
-  ],
-  evidence:[
-    {id:"ev-001",src:"Assessment",x:"Deterministic aggregation found 196 Claude and 341 Codex sessions in the exact shared 44-day window."},
-    {id:"ev-002",src:"Sessions",x:"Observed sessions and tool metadata support the agent workflow, concurrency, subagent, and reusable-review claims."},
-    {id:"ev-003",src:"Sessions",x:"Three classified arcs support current delivery, operations, product, workflow, and data-integrity claims."},
-    {id:"ev-004",src:"LinkedIn",x:"Reviewed career history supports founder, industry, operating, and product-formation context."},
-    {id:"ev-005",src:"Assessment",x:"The retained evidence does not independ                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      
+  "matching_index": {
+    "industries": [
+      {
+        "tag": "ai-consulting",
+        "label": "AI consulting and custom software",
+        "depth": "deep",
+        "sources": [
+          "linkedin",
+          "sessions"
+        ],
+        "evidence_ids": [
+          "ev-004",
+          "ev-003"
+        ]
+      },
+      {
+        "tag": "enterprise-software",
+        "label": "Enterprise software and B2B SaaS",
+        "depth": "deep",
+        "sources": [
+          "linkedin",
+          "sessions"
+        ],
+        "evidence_ids": [
+          "ev-004",
+          "ev-003"
+        ]
+      },
+      {
+        "tag": "commercial-fabrication",
+        "label": "Commercial fabrication and interiors",
+        "depth": "career-context",
+        "sources": [
+          "linkedin"
+        ],
+        "evidence_ids": [
+          "ev-004"
+        ]
+      }
+    ],
+    "capabilities": [
+      {
+        "tag": "agent-orchestration",
+        "label": "Agent orchestration",
+        "depth": "deep",
+        "authorship": "directed-reviewed",
+        "arc_ids": [
+          "arc-1",
+          "arc-2",
+          "arc-3"
+        ],
+        "evidence_ids": [
+          "ev-002",
+          "ev-003"
+        ]
+      },
+      {
+        "tag": "product-operations",
+        "label": "Product operations",
+        "depth": "deep",
+        "authorship": "directed-reviewed",
+        "arc_ids": [
+          "arc-1",
+          "arc-2"
+        ],
+        "evidence_ids": [
+          "ev-003"
+        ]
+      }
+    ],
+    "delivery_states": [
+      {
+        "state": "ongoing-operation",
+        "arc_count": 2,
+        "arc_ids": [
+          "arc-1",
+          "arc-3"
+        ],
+        "evidence_ids": [
+          "ev-003"
+        ]
+      },
+      {
+        "state": "live-use",
+        "arc_count": 1,
+        "arc_ids": [
+          "arc-2"
+        ],
+        "evidence_ids": [
+          "ev-003"
+        ]
+      }
+    ],
+    "risk_gaps": [
+      {
+        "tag": "direct-authorship",
+        "label": "Direct code authorship",
+        "status": "unclear",
+        "implication": "Pair or verify when the project requires extensive direct coding by one named person.",
+        "evidence_ids": [
+          "ev-005"
+        ]
+      },
+      {
+        "tag": "specialist-risk",
+        "label": "Specialist engineering risk",
+        "status": "shallow",
+        "implication": "Add focused security, scale, testing, or reliability ownership when those risks dominate.",
+        "evidence_ids": [
+          "ev-005"
+        ]
+      }
+    ]
+  }
+}
+</script>
+</body>
+</html>

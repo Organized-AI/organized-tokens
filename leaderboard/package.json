@@ -7,11 +7,16 @@
     "deploy": "wrangler deploy",
     "db:local": "wrangler d1 execute organized-tokens-leaderboard --local --file=./schema.sql",
     "db:remote": "wrangler d1 execute organized-tokens-leaderboard --remote --file=./schema.sql",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "node --experimental-strip-types --test test/*.test.mjs",
+    "assessment:sync": "node scripts/sync-assessment.mjs",
+    "assessment:check": "node scripts/sync-assessment.mjs --check"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^5.20260722.1",
     "typescript": "^5.5.0",
-    "wrangler": "^4.0.0"
-  }
+    "wrangler": "^4.0.0",
+    "ai-work-assessment": "github:Organized-AI/ai-work-assessment#040b197732b12048b3a8287c053759742b968e64"
+  },
+  "type": "module"
 }
